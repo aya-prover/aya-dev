@@ -31,8 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.BiFunction;
 
 /// Index-safe telescope
+///
+/// Dblity annotation can be applied to this type, and an AbstractTele is considered [Closed] if:
+/// * For i-th (count from `0`) parameter `p`, `p.instTele(i closed terms)` is [Closed]
+/// * the [#result] is treated as `telescopeSize()-th` parameter.
 public interface AbstractTele {
-  /// Replace [org.aya.syntax.core.term.FreeTerm] in {@param tele} with appropriate index
+  /// Replace [org.aya.syntax.core.term.FreeTerm] in {@param tele} with appropriate index.
+  /// {@param tele} is [Closed] after call, for the definition of [Closed], see [AbstractTele].
   ///
   /// @implNote it will call [Seq#sliceView] several times on {@param binds} so it's not a good idea to
   /// take it as a view.
@@ -62,7 +67,7 @@ public interface AbstractTele {
   }
 
   /// @param teleArgs the arguments before {@param i}, for constructor, it also contains the arguments to the data
-  default @NotNull @Closed Term telescope(int i, @Closed Term[] teleArgs) {
+  default @NotNull Term telescope(int i, @Closed Term[] teleArgs) {
     return telescope(i, ArraySeq.wrap(teleArgs));
   }
 
@@ -71,14 +76,14 @@ public interface AbstractTele {
   ///
   /// @param teleArgs the arguments to the former parameters
   /// @return the type of {@param i}-th parameter.
-  default @NotNull @Closed Term telescope(int i, Seq<@Closed Term> teleArgs) {
+  default @NotNull Term telescope(int i, Seq<@Closed Term> teleArgs) {
     return Panic.unreachable();
   }
 
   /// Get the result of this signature
   ///
   /// @param teleArgs the arguments to all parameters.
-  @NotNull @Closed Term result(Seq<@Closed Term> teleArgs);
+  @NotNull Term result(Seq<@Closed Term> teleArgs);
 
   /// Return the amount of parameters.
   int telescopeSize();
@@ -100,7 +105,7 @@ public interface AbstractTele {
     return new Param(telescopeName(i), telescope(i, teleArgs), telescopeLicit(i));
   }
 
-  default @NotNull @Closed Term result(@Closed Term... teleArgs) {
+  default @NotNull Term result(@Closed Term... teleArgs) {
     return result(ArraySeq.wrap(teleArgs));
   }
 
@@ -109,11 +114,11 @@ public interface AbstractTele {
       .view().mapToObj(this::telescopeName);
   }
 
-  default @NotNull @Closed Term makePi() {
+  default @NotNull Term makePi() {
     return makePi(Seq.empty());
   }
 
-  default @NotNull @Closed Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
+  default @NotNull Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
     return new PiBuilder(this).make(0, initialArgs);
   }
 
@@ -141,7 +146,10 @@ public interface AbstractTele {
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
       return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
-    @Override public @NotNull Term result(Seq<Term> teleArgs) { return result.instTele(teleArgs.view()); }
+    @Override public @NotNull Term result(Seq<Term> teleArgs) {
+      assert teleArgs.sizeEquals(telescopeSize());
+      return result.instTele(teleArgs.view());
+    }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
     }

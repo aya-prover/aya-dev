@@ -10,6 +10,7 @@ import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.tyck.error.UnifyError;
 import org.aya.tyck.error.UnifyInfo;
 import org.aya.unify.TermComparator;
+import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
@@ -34,7 +35,7 @@ public interface Unifiable extends Problematic, Stateful {
   ) {
     var unifier = unifier(pos, ord);
     var result = unifier.compare(lower, upper, type);
-    if (!result) return unifier.getFailure();
+    if (result != Decision.YES) return unifier.getFailure();
     return null;
   }
 

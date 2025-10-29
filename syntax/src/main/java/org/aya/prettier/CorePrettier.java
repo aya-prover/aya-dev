@@ -133,7 +133,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case DimTyTerm _ -> KW_INTERVAL;
       case MemberCall term -> visitCoreApp(null, visitAccessHead(term),
-        term.args().view(), outer,
+        term.projArgs().view(), outer,
         optionImplicit());
       case MetaPatTerm(var ref) -> {
         if (ref.solution().get() == null) yield varDoc(generateName(null));

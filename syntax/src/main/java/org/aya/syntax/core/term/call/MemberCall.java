@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
@@ -17,15 +17,18 @@ public record MemberCall(
   @NotNull Term of,
   @Override @NotNull MemberDefLike ref,
   @Override int ulift,
-  @Override @NotNull ImmutableSeq<@NotNull Term> args
+  @NotNull ImmutableSeq<@NotNull Term> projArgs
 ) implements Callable.Tele, BetaRedex {
   private Term update(Term clazz, ImmutableSeq<Term> newArgs, UnaryOperator<Term> f) {
-    return clazz == of && newArgs.sameElements(args, true) ? this
+    return clazz == of && newArgs.sameElements(projArgs, true) ? this
       : new MemberCall(clazz, ref, ulift, newArgs).make(f);
   }
 
+  @Override public @NotNull ImmutableSeq<@NotNull Term> args() {
+    return projArgs.prepended(of);
+  }
   @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, of), Callable.descent(args, f), term -> f.apply(0, term));
+    return update(f.apply(0, of), Callable.descent(projArgs, f), term -> f.apply(0, term));
   }
 
   public static @NotNull Term make(
@@ -55,15 +58,17 @@ public record MemberCall(
     return switch (of()) {
       case NewTerm neu -> {
         var impl = neu.inner().get(ref);
-        assert impl != null;    // NewTerm is always fully applied
+        assert impl != null; // NewTerm is always fully applied
+        // FIXME: apply the projArgs
         yield mapper.apply(impl.apply(neu));
       }
       case ClassCastTerm cast -> {
         var impl = cast.get(ref);
+        // FIXME: apply the projArgs
         if (impl != null) yield mapper.apply(impl.apply(cast));
         // no impl, try inner
         assert !(cast.subterm() instanceof ClassCastTerm) : "eliminated by ClassCastTerm#make";
-        yield update(cast.subterm(), args, mapper);
+        yield update(cast.subterm(), projArgs, mapper);
       }
       default -> this;
     };

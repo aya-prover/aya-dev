@@ -16,12 +16,12 @@ import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnClauseBody;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
@@ -89,7 +89,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// Then we apply the inserted pats to the body  (essentially using [#allPats()]) to complete it.
   public record LhsResult(
     @NotNull LocalCtx localCtx,
-    @NotNull @Closed Term result,
+    @Closed @NotNull Term result,
     @NotNull ImmutableSeq<@Closed Pat> tyckedPats,
     @NotNull ImmutableSeq<@Closed Pat> missingPats,
     @Override @NotNull SourcePos sourcePos,
@@ -111,10 +111,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       // Sanity check
       assert asSubst.parent() == null;
       teleBinds.forEachWith(paramSubst, (ref, subst) -> {
-        exprTycker.localLet().put(ref, subst, inline);
-        if (subst.type() instanceof ClassCall clazz) {
-          exprTycker.instanceSet.put(new LetFreeTerm(ref, subst), clazz);
-        }
+        exprTycker.addLetBind(ref, subst, inline, false);
       });
       asSubst.let().forEach((ref, subst) ->
         exprTycker.localLet().put(ref, subst.definedAs(), inline));
@@ -122,9 +119,12 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   public record WorkerResult(FnClauseBody wellTyped, boolean hasLhsError) { }
+
+  /// @param telescope the user defined telescope, the whole telescope should be [Closed].
+  /// @param unpi      the result of unpi on user defined result, should be [Closed] under [#telescope].
   public record Worker(
     @NotNull ClauseTycker parent,
-    @NotNull ImmutableSeq<Param> telescope,
+    @NotNull ImmutableSeq<@Bound Param> telescope,
     @NotNull DepTypeTerm.Unpi unpi,
     @NotNull ImmutableSeq<LocalVar> teleVars,
     @NotNull ImmutableSeq<LocalVar> elims,
@@ -132,7 +132,6 @@ public final class ClauseTycker implements Problematic, Stateful {
   ) {
     public @NotNull WorkerResult check(@NotNull SourcePos overallPos) {
       var lhs = checkAllLhs();
-
       ImmutableSeq<PatClass.Seq<Term, Pat>> classes;
       var hasError = lhs.anyMatch(LhsResult::hasError);
       if (!hasError) {
@@ -199,7 +198,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       var paramSubst = curLhs.paramSubst.map(jdg -> jdg.map(lets));
       lets.let().let().forEach(curLhs.asSubst::put);
       return new LhsResult(
-        sibling, lets.apply(curLhs.result),
+        sibling, lets.accept(curLhs.result),
         newPatterns.take(curLhs.userPatSize()),
         // We previously assume all the "inserted patterns" are `Pat.Bind`, which is not true after refinement
         newPatterns.drop(curLhs.userPatSize()),
@@ -304,7 +303,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     @NotNull ImmutableSeq<LocalVar> teleBinds,
     @NotNull LhsResult result
   ) {
-    try (var _ = exprTycker.subscope(true, true, false)) {
+    try (var _ = exprTycker.subscope(true, true, true)) {
       var bodyExpr = result.body;
       Term wellBody;
       var bindCount = 0;
@@ -332,6 +331,7 @@ public final class ClauseTycker implements Problematic, Stateful {
 
         // bind all pat bindings
         var patWithTypeBound = Pat.collectVariables(pats);
+        // pat is now Bound
         pats = patWithTypeBound.component2().view();
         var patBindTele = patWithTypeBound.component1();
 
@@ -406,7 +406,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   /// contain let bindings from real let expressions,
   ///
   /// @param term a free term
-  public static @NotNull Term makeLet(@NotNull LocalLet lets, @NotNull @Closed Term term) {
+  public static @NotNull Term makeLet(@NotNull LocalLet lets, @Closed @NotNull Term term) {
     // only one level
     return lets.let()
       .toSeq()

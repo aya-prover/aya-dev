@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.repr;
 
@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.stmt.Shaped;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
@@ -33,10 +34,12 @@ public record ListTerm(
       recog.getCon(CodeShape.GlobalId.NIL), recog.getCon(CodeShape.GlobalId.CONS), type);
   }
 
+  /// @return the dblity inherits from [#type]
   @Override public @NotNull ListTerm makeNil() {
     return new ListTerm(ImmutableSeq.empty(), nil, cons, type);
   }
 
+  /// @return the dblity inherits from [#type], {@param x} and {@param last}
   @Override public @NotNull Term
   makeCons(@NotNull Term x, @NotNull Term last) {
     return new RuleReducer.Con(new ListOps.ConRule(cons, makeNil()), 0,

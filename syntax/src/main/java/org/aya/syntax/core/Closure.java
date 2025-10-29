@@ -38,7 +38,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// @param term must be [Closed]
   /// @return which db-closeness inherits from this closure
   @Override Term apply(@Closed Term term);
-  default @NotNull Term apply(LocalVar var) { return apply(new FreeTerm(var)); }
+  default @NotNull Term apply(LocalVar var) { return apply(FreeTerm.of(var)); }
 
   default @NotNull Closure.Locns toLocns() {
     return reapply(UnaryOperator.identity());
@@ -88,7 +88,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
       return new Locns(result);
     }
 
-    @Override public Term apply(Term term) { return body.instantiate(term); }
+    @Override public Term apply(@Closed Term term) { return body.instantiate(term); }
     @Override public @NotNull Closure.Locns toLocns() { return this; }
   }
 }

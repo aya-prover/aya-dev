@@ -24,7 +24,7 @@ public abstract non-sealed class JitFn extends JitTele implements FnDefLike {
   /**
    * Unfold this function
    */
-  abstract public @NotNull @Closed Term invoke(@NotNull UnaryOperator<@Closed Term> pre, @NotNull Seq<@NotNull @Closed Term> args);
+  abstract public @Closed @NotNull Term invoke(@NotNull UnaryOperator<@Closed Term> pre, @NotNull Seq<@Closed @NotNull Term> args);
   @Override public boolean is(@NotNull Modifier mod) {
     return (modifiers & (1 << mod.ordinal())) != 0;
   }

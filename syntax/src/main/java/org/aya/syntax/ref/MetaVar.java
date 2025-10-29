@@ -9,6 +9,7 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
@@ -44,9 +45,10 @@ public record MetaVar(
     return new MetaCall(typed, args);
   }
 
-  /** @see MetaCall#asDt(UnaryOperator, String, String, DTKind) */
+  /// @return the dblity inherits from `args`
+  /// @see MetaCall#asDt(UnaryOperator, String, String, DTKind)
   public @Nullable DepTypeTerm
-  asDt(UnaryOperator<Term> whnf, String dom, String cod, DTKind kind, ImmutableSeq<Term> args) {
+  asDt(UnaryOperator<@Closed Term> whnf, String dom, String cod, DTKind kind, ImmutableSeq<Term> args) {
     var newReq = req.asDepTypeReq(whnf);
     if (newReq == null) return null;
     var domMeta = new MetaVar(name + dom, pos, ctxSize, newReq, false);

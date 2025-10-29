@@ -6,6 +6,7 @@ import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import org.aya.prettier.FindUsage;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.LamTerm;
 import org.aya.syntax.core.term.SortTerm;
@@ -16,7 +17,10 @@ import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarError;
+import org.aya.util.Decision;
 import org.aya.util.Ordering;
+import org.aya.util.Panic;
+import org.aya.util.RelDec;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,8 @@ public final class Unifier extends TermComparator {
     return new Unifier(state, localCtx().derive(), reporter, pos, ordering, allowDelay);
   }
 
-  @Override protected @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  @Override protected @Closed @NotNull RelDec<Term>
+  doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
     // Assumption: rhs is in whnf
     var spine = meta.args();
 
@@ -57,16 +62,32 @@ public final class Unifier extends TermComparator {
         break;
       } else {
         reportBadSpine(meta, rhs);
-        return null;
+        return RelDec.no();
       }
     }
 
-    var returnType = computeReturnType(meta, rhs, type);
+    Term returnType;
+    switch (computeReturnType(meta, rhs, type)) {
+      case RelDec.Claim<Term> c -> {
+        switch (c.downgrade()) {
+          case NO -> {
+            return RelDec.no();
+          }
+          case UNSURE -> {
+            // computeReturnType does not return UNSURE
+            return Panic.unreachable();
+          }
+          // fallthrough
+          case YES -> {}
+        }
+        returnType = null;
+      }
+      case RelDec.Proof(var p) -> returnType = p;
+    }
     if (wantToReturn) {
       state.addEqn(createEqn(meta, rhs, returnType));
-      return returnType;
+      return RelDec.yes(returnType);
     }
-    if (returnType == null) return null;
 
     // In this case, the solution may not be unique (see #608),
     // so we may delay its resolution to the end of the tycking when we disallow delayed unification.
@@ -74,10 +95,10 @@ public final class Unifier extends TermComparator {
     if (!allowVague && overlap.anyMatch(var -> FindUsage.free(tmpRhs, var) > 0)) {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs, returnType));
-        return returnType;
+        return RelDec.yes(returnType);
       } else {
         reportBadSpine(meta, rhs);
-        return null;
+        return RelDec.no();
       }
     }
     // Now we are sure that the variables in overlap are all unused.
@@ -89,32 +110,30 @@ public final class Unifier extends TermComparator {
     }
     if (findUsage.termUsage > 0) {
       fail(new MetaVarError.BadlyScopedError(meta, rhs, inverted));
-      return null;
+      return RelDec.no();
     }
     if (findUsage.metaUsage > 0) {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs, returnType));
-        return returnType;
+        return RelDec.yes(returnType);
       } else {
         fail(new MetaVarError.BadlyScopedError(meta, rhs, inverted));
-        return null;
+        return RelDec.no();
       }
     }
     var ref = meta.ref();
     if (FindUsage.meta(rhs, ref) > 0) {
       fail(new MetaVarError.RecursionError(meta, rhs));
-      return null;
+      return RelDec.no();
     }
     var candidate = rhs.bindTele(inverted.view());
     // It might have extra arguments, in those cases we need to abstract them out.
     solve(ref, LamTerm.make(spine.size() - ref.ctxSize(), candidate));
-    return returnType;
+    return RelDec.yes(returnType);
   }
 
-  /**
-   * @return null if ill-typed
-   */
-  private @Nullable Term computeReturnType(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  private @Closed @NotNull RelDec<Term>
+  computeReturnType(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
     var needUnify = true;
     var returnType = type;
     var ref = meta.ref();
@@ -128,14 +147,14 @@ public final class Unifier extends TermComparator {
           case MetaCall rMeta -> {
             if (!checker.synthesizer().isTypeMeta(rMeta.ref().req())) {
               reportIllTyped(meta, rhs);
-              return null;
+              return RelDec.no();
             }
           }
           default -> {
             var synthesize = checker.synthesizer().trySynth(rhs);
             if (!(synthesize instanceof SortTerm)) {
               reportIllTyped(meta, rhs);
-              return null;
+              return RelDec.no();
             }
             if (returnType == null) returnType = synthesize;
           }
@@ -144,9 +163,9 @@ public final class Unifier extends TermComparator {
       }
       case MetaVar.OfType(var target) -> {
         target = MetaCall.appType(meta, target);
-        if (type != null && !compare(type, target, null)) {
+        if (type != null && compare(type, target, null) != Decision.YES) {
           reportIllTyped(meta, rhs);
-          return null;
+          return RelDec.no();
         }
         returnType = freezeHoles(target);
       }
@@ -167,8 +186,8 @@ public final class Unifier extends TermComparator {
         }
       }
     }
-    if (!needUnify && returnType == null) return SortTerm.Type0;
-    else return returnType;
+    if (!needUnify && returnType == null) return RelDec.yes();
+    return RelDec.of(returnType);
   }
 
   private void reportBadSpine(@NotNull MetaCall meta, @NotNull Term rhs) {

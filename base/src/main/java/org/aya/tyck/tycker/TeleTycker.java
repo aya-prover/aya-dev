@@ -9,6 +9,8 @@ import kala.collection.mutable.MutableSeq;
 import org.aya.normalize.Finalizer;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.SortTerm;
@@ -31,9 +33,9 @@ public sealed interface TeleTycker {
    *
    * @return well-typed type or {@link ErrorTerm}
    */
-  @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult);
+  @Closed @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult);
   void addWithTerm(@NotNull Expr.WithTerm with, @NotNull SourcePos pos, @NotNull Term type);
-  void putLocal(@NotNull LocalVar var, @NotNull Term type);
+  void putLocal(@NotNull LocalVar var, @Closed @NotNull Term type);
 
   /**
    * @return a locally nameless signature computed from what's in the localCtx.
@@ -46,27 +48,28 @@ public sealed interface TeleTycker {
     var locals = cTele.view().map(Expr.Param::ref).toSeq();
     var checkedParam = checkTele(cTele);
     var checkedResult = checkType(result, true).bindTele(locals.view());
-    return new Signature(new AbstractTele.Locns(checkedParam, checkedResult), cTele.map(Expr.Param::sourcePos));
+    // clearly telescope is Closed
+    @Closed var telescope = new AbstractTele.Locns(checkedParam, checkedResult);
+    return new Signature(telescope, cTele.map(Expr.Param::sourcePos));
   }
 
-  /**
-   * Does not zonk the result. Need <emph>you</emph> to zonk them.
-   */
-  default @NotNull ImmutableSeq<Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
+  /// Does not zonk the result. Need <emph>you</emph> to zonk them.
+  ///
+  /// @return a [Closed] telescope (with bound parameters), for the definition of [Closed], see [AbstractTele].
+  default @NotNull ImmutableSeq<@Bound Param> checkTele(@NotNull ImmutableSeq<Expr.Param> cTele) {
     var tele = checkTeleFree(cTele);
     var locals = cTele.map(Expr.Param::ref);
+    // the **whole** tele is now Closed after `bindTele`
     AbstractTele.bindTele(locals, tele);
     return tele.toSeq();
   }
 
-  /**
-   * Check the tele with free variables remaining in the localCtx.
-   * Does not zonk!
-   */
+  /// Check the tele with free variables remaining in the localCtx.
+  /// Does not zonk!
   @Contract(pure = true)
   default @NotNull MutableSeq<Param> checkTeleFree(ImmutableSeq<Expr.Param> cTele) {
     return MutableSeq.from(cTele.view().map(p -> {
-      var pTy = checkType(p.typeExpr(), false);
+      @Closed var pTy = checkType(p.typeExpr(), false);
       addWithTerm(p, p.sourcePos(), pTy);
       putLocal(p.ref(), pTy);
       return new Param(p.ref().name(), pTy, p.explicit());

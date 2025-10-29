@@ -46,7 +46,7 @@ public record AppTycker<Ex extends Exception>(
   /// ```
   @FunctionalInterface
   public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], Term, Jdg>, Jdg, Ex> {
+    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg>, Jdg, Ex> {
   }
 
   public AppTycker(

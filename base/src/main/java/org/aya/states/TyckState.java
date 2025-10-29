@@ -4,14 +4,12 @@ package org.aya.states;
 
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableStack;
 import org.aya.generic.AyaDocile;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -19,10 +17,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarError;
 import org.aya.unify.Unifier;
-import org.aya.util.DynamicForest;
-import org.aya.util.Ordering;
-import org.aya.util.Panic;
-import org.aya.util.PrettierOptions;
+import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -89,7 +84,7 @@ public final class TyckState {
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
 
   @ApiStatus.Internal
-  public boolean solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
+  public @NotNull Decision solveEqn(@NotNull Reporter reporter, @NotNull Eqn eqn, boolean allowDelay) {
     var unifier = new Unifier(this, eqn.localCtx, reporter, eqn.pos, eqn.cmp, allowDelay);
     // We're at the end of the type checking, let's solve something that we didn't want to solve before
     if (!allowDelay) unifier.allowVague = true;
@@ -98,19 +93,20 @@ public final class TyckState {
 
   public void solveMetas(@NotNull Reporter reporter) {
     int postSimplificationSize = -1;
+    // equations that are solved by nonstandard methods
     var evilEqns = MutableList.<Eqn>create();
     while (eqns.isNotEmpty()) {
       //noinspection StatementWithEmptyBody
       while (simplify(reporter)) ;
       var frozenEqns = eqns.toSeq();
+      // are we making progress?
       if (postSimplificationSize == frozenEqns.size()) {
-        // TODO: report error, cannot solve eqns
         reporter.report(new MetaVarError.CannotSolveEquations(frozenEqns));
         return;
       } else postSimplificationSize = frozenEqns.size();
       // If the standard 'pattern' fragment cannot solve all equations, try to use a nonstandard method
       if (frozenEqns.isNotEmpty()) for (var eqn : frozenEqns) {
-        if (solveEqn(reporter, eqn, false)) evilEqns.append(eqn);
+        if (solveEqn(reporter, eqn, false) == Decision.YES) evilEqns.append(eqn);
       }
     }
     if (evilEqns.isNotEmpty()) {

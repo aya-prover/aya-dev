@@ -8,8 +8,10 @@ import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-public record LetFreeTerm(@Override @NotNull LocalVar name, @NotNull @Closed Jdg definedAs) implements FreeTermLike {
-  public @NotNull LetFreeTerm update(@NotNull Jdg definedAs) {
+/// @param definedAs never get bind in the lifecycle of [LetFreeTerm]
+@Closed
+public record LetFreeTerm(@Override @NotNull LocalVar name, @Closed @NotNull Jdg definedAs) implements FreeTermLike {
+  public @NotNull LetFreeTerm update(@Closed @NotNull Jdg definedAs) {
     return definedAs.wellTyped() == definedAs().wellTyped()
       ? this
       : new LetFreeTerm(name, definedAs);

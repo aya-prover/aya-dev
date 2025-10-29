@@ -5,11 +5,15 @@ package org.aya.tyck;
 import kala.collection.mutable.MutableStack;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.ctx.LocalLet;
+import org.aya.tyck.error.ClassError;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Unifiable;
 import org.aya.unify.TermComparator;
@@ -116,5 +120,26 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
     var old = localLet;
     this.localLet = let;
     return old;
+  }
+
+  /// Add a record which introduced by a [Expr.LetBind].
+  /// This method will trying to add this record to [#instanceSet].
+  ///
+  /// @apiNote this method also modified [#instanceSet], so make sure you provide `true` in [#subscope(boolean, boolean, boolean)]
+  public void addLetBind(
+    @NotNull LocalVar ref, @Closed @NotNull Jdg subst,
+    boolean inline, boolean reallyWant
+  ) {
+    localLet().put(ref, subst, inline);
+    if (subst.type() instanceof ClassCall call) {
+      instanceSet.putParam(ref, call);
+    } else if (reallyWant) {
+      var whnf = whnf(subst.type());
+      if  (whnf instanceof ClassCall call2) {
+        instanceSet.putParam(ref, call2);
+      } else {
+        fail(new ClassError.NotInstance(ref.definition(), subst.type(), this));
+      }
+    }
   }
 }

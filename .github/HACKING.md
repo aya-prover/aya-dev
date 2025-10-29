@@ -1,10 +1,10 @@
 # Hacking Aya
 
-[Java 22]: https://jdk.java.net/22
+[Java 25]: https://jdk.java.net/25
 
 > [!IMPORTANT]
 >
-> Since you need [Java 22] to set this project up, in case your choice
+> Since you need [Java 25] to set this project up, in case your choice
 > of IDE is IntelliJ IDEA, version 2024.2 or higher is required.
 
 We use gradle to build the compiler. It comes with a wrapper script (`gradlew` or `gradlew.bat` in the root of the

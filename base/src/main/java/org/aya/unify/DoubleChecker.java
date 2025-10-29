@@ -17,6 +17,7 @@ import org.aya.tyck.error.UnifyInfo;
 import org.aya.tyck.tycker.AbstractTycker;
 import org.aya.tyck.tycker.Contextful;
 import org.aya.tyck.tycker.Unifiable;
+import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.aya.util.Panic;
 import org.aya.util.position.SourcePos;
@@ -92,7 +93,7 @@ public record DoubleChecker(
         ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
         : failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
 
-      default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null);
+      default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null) == Decision.YES;
     };
   }
   private boolean failF(@NotNull Problem problem) {

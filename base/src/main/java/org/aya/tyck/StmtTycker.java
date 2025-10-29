@@ -18,6 +18,8 @@ import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.*;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
@@ -111,11 +113,11 @@ public record StmtTycker(
             var signature = fnRef.signature;
             // In the ordering, we guarantee that expr bodied fn are always checked as a whole
             assert tycker != null;
-            var expectedType = signature.result().instTeleVar(teleVars.view());
-            var result = tycker.inherit(expr, expectedType).wellTyped();
+            @Closed var expectedType = signature.result(teleVars.view());
+            @Closed var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
             var zonker = new Finalizer.Zonk<>(tycker);
-            var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
+            @Bound var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
             fnRef.signature = fnRef.signature.descent(zonker::zonk);
             yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
@@ -128,6 +130,7 @@ public record StmtTycker(
             // we do not load signature here, so we need a fresh ExprTycker
             tycker = mkTycker();
             var userTeleSize = fnDecl.telescope.size();
+            // we did pusheen in checkHeader
             var userTele = signature.params().take(userTeleSize);
             var pusheenTele = signature.params().drop(userTeleSize);
             var clauseTycker = new ClauseTycker.Worker(new ClauseTycker(tycker),
@@ -219,7 +222,9 @@ public record StmtTycker(
         if (signature.result() instanceof SortTerm userSort) sort = userSort;
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
           _ -> Doc.plain("universe")));
-        data.ref.signature = new Signature(new AbstractTele.Locns(signature.params(), sort), signature.pos());
+        // cause signature is Closed
+        @Closed var closedDataSig = new AbstractTele.Locns(signature.params(), sort);
+        data.ref.signature = new Signature(closedDataSig, signature.pos());
       }
       case FnDecl fn -> {
         var teleTycker = new TeleTycker.Default(tycker);
@@ -290,7 +295,7 @@ public record StmtTycker(
     var ownerBinds = dataRef.concrete.telescope.map(Expr.Param::ref);
     // dataTele already in localCtx
     // The result that a con should be, unless it is a Path result
-    var freeDataCall = new DataCall(dataDef, 0, ownerBinds.map(FreeTerm::new));
+    @Closed DataCall freeDataCall = new DataCall(dataDef, 0, ownerBinds.map(FreeTerm::new));
 
     var wellPats = ImmutableSeq.<Pat>empty();
     if (con.patterns.isNotEmpty()) {
@@ -321,6 +326,10 @@ public record StmtTycker(
       loadTele(ownerBinds.view(), dataSig, tycker);
     }
 
+    // now: tycker.localCtx() includes all owner binds:
+    // * it is all pattern bindings          if [con] has patterns
+    // * it is all bindings of [con.dataRef] otherwise
+
     var teleTycker = new TeleTycker.Con(tycker, (SortTerm) dataSig.result());
     var selfTele = teleTycker.checkTele(con.telescope);
     var selfTelePos = con.telescope.map(Expr.Param::sourcePos);
@@ -339,7 +348,7 @@ public record StmtTycker(
       var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
-        var fresh = new FreeTerm("i");
+        @Closed FreeTerm fresh = new FreeTerm("i");
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
@@ -359,25 +368,32 @@ public record StmtTycker(
     // the result will refer to the telescope of con if it has patterns,
     // the path result may also refer to it, so we need to bind both
     var zonker = new Finalizer.Zonk<>(tycker);
-    var boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
+    // lives in `Gamma = [tycker.localCtx()]` and `Delta = [selfBinds]`
+    @Bound DataCall boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
     if (boundaries != null) boundaries = (EqTerm) zonker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
-    var wholeSig = new AbstractTele.Locns(zonker.zonk(selfTele), new TupTerm(
+
+    // this lives in top-level after bind
+    var hackyWholeSig = new AbstractTele.Locns(zonker.zonk(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       boundDataCall, boundariesWithDummy))
       // TODO[kala]: replace with .view().zip
       .bindTele(ownerBinds.zip(ownerTele, AbstractTele.VarredParam::new).view());
-    var wholeSigResult = (TupTerm) wholeSig.result();
+
+    var wholeSigResult = (TupTerm) hackyWholeSig.result();
+    // now lives in `Gamma = Empty` and `Delta = [hackyWholeSig.telescope()]`
     boundDataCall = (DataCall) wholeSigResult.lhs();
     if (boundaries != null) boundaries = (EqTerm) wholeSigResult.rhs();
 
+    // closed cause boundDataCall lives in [hackyWholeSig.telescope()]
+    @Closed AbstractTele.Locns fullTele = new AbstractTele.Locns(hackyWholeSig.telescope(), boundDataCall);
+
     // The signature of con should be full (the same as [konCore.telescope()])
-    ref.signature = new Signature(new AbstractTele.Locns(wholeSig.telescope(), boundDataCall),
-      ownerTelePos.appendedAll(selfTelePos));
+    ref.signature = new Signature(fullTele, ownerTelePos.appendedAll(selfTelePos));
     new ConDef(dataDef, ref, wellPats, boundaries,
       ownerTele,
-      wholeSig.telescope().drop(ownerTele.size()),
+      hackyWholeSig.telescope().drop(ownerTele.size()),
       boundDataCall, false);
   }
 

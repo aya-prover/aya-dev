@@ -79,7 +79,7 @@ public final class ExprTycker extends ScopedTycker {
   /**
    * @param type may not be in whnf, because we want unnormalized type to be used for unification.
    */
-  public @NotNull @Closed Jdg inherit(@NotNull WithPos<Expr> expr, @NotNull @Closed Term type) {
+  public @Closed @NotNull Jdg inherit(@NotNull WithPos<Expr> expr, @Closed @NotNull Term type) {
     return switch (expr.data()) {
       case Expr.Lambda lam -> {
         var ref = lam.ref();
@@ -106,7 +106,7 @@ public final class ExprTycker extends ScopedTycker {
             yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
           }
           case MetaCall metaCall -> {
-            var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
+            @Closed DepTypeTerm pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
             if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
             unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
             try (var _ = subscope(ref, pi.param())) {
@@ -129,7 +129,7 @@ public final class ExprTycker extends ScopedTycker {
         yield new Jdg.Default(freshHole, type);
       }
       case Expr.LitInt(var end) -> {
-        var ty = whnf(type);
+        @Closed Term ty = whnf(type);
         if (ty == DimTyTerm.INSTANCE) {
           if (end == 0 || end == 1) yield new Jdg.Default(end == 0 ? DimTerm.I0 : DimTerm.I1, ty);
           else yield fail(expr.data(), new PrimError.BadInterval(expr.sourcePos(), end));
@@ -137,8 +137,8 @@ public final class ExprTycker extends ScopedTycker {
         yield inheritFallbackUnify(ty, synthesize(expr), expr);
       }
       case Expr.BinTuple(var lhs, var rhs) -> switch (whnf(type)) {
-        case DepTypeTerm(var kind, var lhsT, var rhsTClos) when kind == DTKind.Sigma -> {
-          var lhsX = inherit(lhs, lhsT).wellTyped();
+        case DepTypeTerm(var kind, Term lhsT, Closure rhsTClos) when kind == DTKind.Sigma -> {
+          @Closed Term lhsX = inherit(lhs, lhsT).wellTyped();
           var rhsX = inherit(rhs, rhsTClos.apply(lhsX)).wellTyped();
           yield new Jdg.Default(new TupTerm(lhsX, rhsX), type);
         }
@@ -150,7 +150,7 @@ public final class ExprTycker extends ScopedTycker {
         && state.shapeFactory.find(dataCall.ref()).getOrNull() instanceof ShapeRecognition recog
         && recog.shape() == AyaShape.LIST_SHAPE -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
-        var elementTy = dataCall.args().get(0);
+        @Closed Term elementTy = dataCall.args().get(0);
         var results = ImmutableTreeSeq.from(arrayBlock.exprList().map(
           element -> inherit(element, elementTy).wellTyped()));
         yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
@@ -247,9 +247,9 @@ public final class ExprTycker extends ScopedTycker {
    * @param result wellTyped + actual type from synthesize
    * @param expr   original expr, used for error reporting
    */
-  private @NotNull Jdg inheritFallbackUnify(@NotNull @Closed Term type, @NotNull @Closed Jdg result, @NotNull WithPos<Expr> expr) {
+  private @NotNull Jdg inheritFallbackUnify(@Closed @NotNull Term type, @Closed @NotNull Jdg result, @NotNull WithPos<Expr> expr) {
     type = whnf(type);
-    var resultType = result.type();
+    @Closed Term resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
     if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
       if (whnf(resultType) instanceof EqTerm eq) {
@@ -301,7 +301,7 @@ public final class ExprTycker extends ScopedTycker {
 
   /// @return true if the coercion is successful
   private boolean isConvertiblePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod) {
-    var ref = new FreeTerm(new LocalVar("i"));
+    @Closed FreeTerm ref = new FreeTerm(new LocalVar("i"));
     var wellTyped = false;
     try (var _ = subscope(ref.name(), DimTyTerm.INSTANCE)) {
       wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
@@ -312,7 +312,7 @@ public final class ExprTycker extends ScopedTycker {
     return true;
   }
 
-  public @NotNull @Closed Term ty(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Term ty(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Hole hole -> {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
@@ -346,7 +346,7 @@ public final class ExprTycker extends ScopedTycker {
     return new Jdg.Sort(sort(expr, ty(expr)));
   }
 
-  private @NotNull SortTerm sort(@NotNull WithPos<Expr> errorMsg, @NotNull Term term) {
+  private @NotNull SortTerm sort(@NotNull WithPos<Expr> errorMsg, @Closed @NotNull Term term) {
     return switch (whnf(term)) {
       case SortTerm u -> u;
       case MetaCall hole -> {
@@ -360,7 +360,7 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  public @NotNull @Closed Jdg synthesize(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Jdg synthesize(@NotNull WithPos<Expr> expr) {
     var result = doSynthesize(expr);
     if (expr.data() instanceof Expr.WithTerm with) {
       addWithTerm(with, expr.sourcePos(), result.type());
@@ -368,7 +368,7 @@ public final class ExprTycker extends ScopedTycker {
     return result;
   }
 
-  public @NotNull @Closed Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
+  public @Closed @NotNull Jdg doSynthesize(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
       case Expr.Sugar s -> throw new Panic(s.getClass() + " is desugared, should be unreachable");
       case Expr.App(var f, var a) -> {
@@ -386,16 +386,17 @@ public final class ExprTycker extends ScopedTycker {
         }
       }
       case Expr.Proj(var p, var ix, _, _) -> {
-        var result = synthesize(p);
-        var wellP = result.wellTyped();
+        @Closed Jdg result = synthesize(p);
+        @Closed Term wellP = result.wellTyped();
 
         yield ix.fold(iix -> {
           if (iix != ProjTerm.INDEX_FST && iix != ProjTerm.INDEX_SND) {
             return fail(expr.data(), new ClassError.ProjIxError(expr, iix));
           }
+
           return switch (whnf(result.type())) {
             case MetaCall metaCall -> {
-              var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
+              @Closed var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
               if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
               unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, sigma, null);
               if (iix == ProjTerm.INDEX_FST) {
@@ -460,7 +461,7 @@ public final class ExprTycker extends ScopedTycker {
         var defs = state.shapeFactory.findImpl(AyaShape.LIST_SHAPE);
         if (defs.isEmpty()) yield fail(arr, new NoRuleError(expr, null));
         if (defs.sizeGreaterThan(1)) {
-          var elMeta = freshMeta("el_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
+          @Closed MetaCall elMeta = freshMeta("el_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
           var tyMeta = freshMeta("arr_ty", expr.sourcePos(), MetaVar.Misc.IsType, false);
           var results = elements.map(element -> inherit(element, elMeta).wellTyped());
           yield new Jdg.Default(new MetaLitTerm(expr.sourcePos(), results, defs, tyMeta), tyMeta);
@@ -471,7 +472,7 @@ public final class ExprTycker extends ScopedTycker {
         // List (A : Type)
         var sort = def.signature().telescopeRich(0);
         // the sort of type below.
-        var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()), false);
+        @Closed MetaCall elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()), false);
 
         // do type check
         var results = ImmutableTreeSeq.from(elements.map(element -> inherit(element, elementTy).wellTyped()));
@@ -524,15 +525,17 @@ public final class ExprTycker extends ScopedTycker {
     return switch (f) {
       case LocalVar ref when localLet().contains(ref) -> {
         var definedAs = localLet().get(ref);
-        var jdg = definedAs.definedAs();
-        var term = definedAs.inline()
+        @Closed Jdg jdg = definedAs.definedAs();
+        @Closed var term = definedAs.inline()
           ? jdg.wellTyped()
           : new LetFreeTerm(ref, jdg);
-        var start = new Jdg.Default(term, jdg.type());
+        @Closed var start = new Jdg.Default(term, jdg.type());
         yield ArgsComputer.generateApplication(this, args, start).lift(lift);
       }
-      case LocalVar lVar -> ArgsComputer.generateApplication(this, args,
-        new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar))).lift(lift);
+      case LocalVar lVar -> {
+        @Closed var jdg = new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar));
+        yield ArgsComputer.generateApplication(this, args, jdg).lift(lift);
+      }
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
       case DefVar<?, ?> defVar -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
@@ -553,7 +556,7 @@ public final class ExprTycker extends ScopedTycker {
    *
    * @param checker check the type of the body of {@param let}
    */
-  private @NotNull @Closed Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, @Closed Jdg> checker) {
+  private @Closed @NotNull Jdg checkLet(@NotNull Expr.Let let, @NotNull Function<WithPos<Expr>, @Closed Jdg> checker) {
     // pushing telescopes into lambda params, for example:
     // `let f (x : A) : B x` is desugared to `let f : Pi (x : A) -> B x`
     var letBind = let.bind();
@@ -570,14 +573,19 @@ public final class ExprTycker extends ScopedTycker {
 
     // Now everything is in form `let f : G := g in h`
 
-    var type = freezeHoles(ty(typeExpr));
-    var definedAs = inherit(definedAsExpr, type);
+    @Closed var type = freezeHoles(ty(typeExpr));
+    @Closed var definedAs = inherit(definedAsExpr, type);
 
     addWithTerm(letBind, letBind.sourcePos(), definedAs.type());
 
     try (var _ = subLocalLet()) {
-      localLet().put(bindName, definedAs, false);
-      var result = checker.apply(let.body());
+      if (letBind.isClassCandidate()) {
+        addLetBind(bindName, definedAs, false, true);
+      } else {
+        localLet().put(bindName, definedAs, false);
+      }
+
+      @Closed var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
       var typeLet = LetTerm.bind(letFree, result.type());

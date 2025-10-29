@@ -42,7 +42,7 @@ public record DepTypeTerm(
   ///   i : I |- B i a
   ///```
   /// It's not the case that {@param a} contains {@param i}, {@param i} only appears in `A` and `B a`
-  private Closure.@NotNull Locns abstractBia(@NotNull LocalVar i, Closure a) {
+  private Closure.@NotNull Locns abstractBia(@NotNull LocalVar i, @Closed Closure a) {
     return body.apply(a.apply(i)).bind(i);
   }
 
@@ -113,24 +113,25 @@ public record DepTypeTerm(
   public record UnpiNamed(
     @NotNull Seq<Term> params,
     @NotNull Seq<LocalVar> names,
-    @NotNull Term body
+    @Closed @NotNull Term body
   ) { }
   @ForLSP public static @NotNull UnpiNamed
-  unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre) {
+  unpi(@NotNull DTKind kind, @Closed @NotNull Term term, @NotNull UnaryOperator<@Closed Term> pre) {
     return unpi(kind, term, pre, new Renamer());
   }
   @ForLSP public static @NotNull UnpiNamed
-  unpi(@NotNull DepTypeTerm term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
+  unpi(@Closed @NotNull DepTypeTerm term, @NotNull UnaryOperator<@Closed Term> pre, @NotNull Renamer nameGen) {
     return unpi(term.kind(), term, pre, nameGen);
   }
   @ForLSP public static @NotNull UnpiNamed
-  unpi(@NotNull DTKind kind, @NotNull Term term, @NotNull UnaryOperator<Term> pre, @NotNull Renamer nameGen) {
+  unpi(@NotNull DTKind kind, @Closed @NotNull Term term, @NotNull UnaryOperator<@Closed Term> pre, @NotNull Renamer nameGen) {
     var params = MutableList.<Term>create();
     var names = MutableList.<LocalVar>create();
     while (pre.apply(term) instanceof DepTypeTerm(var kk, var param, var body) && kk == kind) {
       params.append(param);
       var var = nameGen.bindName(param);
       names.append(var);
+      // body is Closed since pre.apply(term) is Closed
       term = body.apply(var);
     }
 
@@ -152,8 +153,8 @@ public record DepTypeTerm(
     }
   }
 
-  public static @NotNull @Closed Unpi unpiAndBind(
-    @NotNull @Closed Term term, @NotNull UnaryOperator<@Closed Term> pre,
+  public static @Closed @NotNull Unpi unpiAndBind(
+    @Closed @NotNull Term term, @NotNull UnaryOperator<@Closed Term> pre,
     @NotNull MutableList<LocalVar> names
   ) {
     var params = MutableList.<Param>create();
@@ -209,8 +210,8 @@ public record DepTypeTerm(
           ? SortTerm.ISet : Panic.unreachable();
   }
 
-  public static @NotNull Term substBody(@NotNull Term pi, @NotNull SeqView<Term> args) {
-    for (var arg : args) {
+  public static @NotNull Term substBody(@NotNull Term pi, @NotNull SeqView<@Closed Term> args) {
+    for (@Closed Term arg : args) {
       if (pi instanceof DepTypeTerm realPi) pi = realPi.body.apply(arg);
       else Panic.unreachable();
     }

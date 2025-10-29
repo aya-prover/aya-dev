@@ -16,6 +16,7 @@ import org.aya.prelude.GeneratedVersion;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.repl.*;
+import org.aya.repl.IO;
 import org.aya.syntax.core.def.TopLevelDef;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.util.reporter.Problem;

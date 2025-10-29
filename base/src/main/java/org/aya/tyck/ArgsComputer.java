@@ -8,6 +8,7 @@ import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -30,14 +31,14 @@ public class ArgsComputer {
   public final @NotNull ExprTycker tycker;
   public final @NotNull SourcePos pos;
   public final @NotNull ImmutableSeq<Expr.NamedArg> args;
-  public final @NotNull AbstractTele params;
+  public final @Closed @NotNull AbstractTele params;
 
   // internal state
   private int argIx = 0;
   private int paramIx = 0;
   private @Nullable Term firstTy = null;
   private final @NotNull Term @NotNull [] result;
-  private Param param;
+  private @Closed Param param;
 
   public ArgsComputer(
     @NotNull ExprTycker tycker,
@@ -76,26 +77,26 @@ public class ArgsComputer {
     }
   }
 
-  static @NotNull Jdg generateApplication(
+  static @Closed @NotNull Jdg generateApplication(
     @NotNull ExprTycker tycker,
-    @NotNull ImmutableSeq<Expr.NamedArg> args, Jdg start
+    @NotNull ImmutableSeq<Expr.NamedArg> args, @Closed Jdg start
   ) throws ExprTycker.NotPi {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) tycker.fail(new LicitError.BadNamedArg(arg));
       switch (tycker.whnf(acc.type())) {
-        case DepTypeTerm(var kind, var piParam, var body) when kind == DTKind.Pi -> {
-          var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
+        case DepTypeTerm(var kind, @Closed var piParam, @Closed var body) when kind == DTKind.Pi -> {
+          @Closed var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }
         case EqTerm eq -> {
-          var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
+          @Closed var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
-        case MetaCall metaCall -> {
+        case @Closed MetaCall metaCall -> {
           // dom is solved immediately by the `inherit` below
-          var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
+          @Closed var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
           if (pi == null) throw new ExprTycker.NotPi(acc.type());
-          var argJdg = tycker.inherit(arg.arg(), pi.param());
+          @Closed var argJdg = tycker.inherit(arg.arg(), pi.param());
           var cod = pi.body().apply(argJdg.wellTyped());
           tycker.unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
@@ -105,13 +106,14 @@ public class ArgsComputer {
     });
   }
 
-  private @NotNull Jdg kon(@NotNull BiFunction<Term[], @Nullable Term, Jdg> k) {
+  private @Closed @NotNull Jdg kon(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) {
     return k.apply(result, firstTy);
   }
 
-  @NotNull Jdg boot(@NotNull BiFunction<Term[], @Nullable Term, Jdg> k) throws ExprTycker.NotPi {
+  @NotNull Jdg boot(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) throws ExprTycker.NotPi {
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
+      // dblity inherits from params
       param = params.telescopeRich(paramIx, result);
       // Implicit insertion
       if (arg.explicit() != param.explicit()) {
