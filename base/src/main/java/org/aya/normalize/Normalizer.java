@@ -169,7 +169,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             continue;
           }
           // Already in fullNormalize mode
-          return term.descent(this);
+          return call.descent(this);
         }
         case PrimCall prim -> {
           var newArgs = Callable.descent(prim.args(), this);
