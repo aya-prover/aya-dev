@@ -69,11 +69,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    *
    * @param rhs in whnf
    */
-  protected abstract @Nullable Term doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
+  protected abstract @Closed @NotNull RelDec<Term>
+  doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
 
   /// The "flex-flex" case with identical meta ref.
   /// Already knows that {@param meta} and {@param rMeta} have the same ref.
-  private @Closed @NotNull RelDec<Term> sameMeta(@Closed @NotNull MetaCall meta, @Closed @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
+  private @Closed @NotNull RelDec<Term>
+  sameMeta(@Closed @NotNull MetaCall meta, @Closed @Nullable Term type, @Closed @NotNull MetaCall rMeta) {
     if (meta.args().size() != rMeta.args().size()) return RelDec.no();
     var ret = Decision.YES;
     for (var i = 0; i < meta.args().size(); i++) {
@@ -94,25 +96,24 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
-  protected @Closed @NotNull RelDec<Term> solveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
+  protected @Closed @NotNull RelDec<Term>
+  solveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     rhs = whnf(rhs);
     if (rhs instanceof @Closed MetaCall rMeta && rMeta.ref() == meta.ref())
       return sameMeta(meta, type, rMeta);
 
     if (solveMetaInstances && solveMetaForApprox) {
-      // TODO: refactor Unifier#doSolveMeta
       var result = doSolveMeta(meta, rhs, type);
-      if (result == null) fail(meta, rhs);
-
-      // TODO: compatibility shit, remove this
-      if (result == null) {
-        return RelDec.no();
-      } else {
-        return RelDec.of(result);
-      }
+      if (!result.isYes()) fail(meta, rhs);
+      return result;
     } else {
-      weWillSee.peek().append(createEqn(meta, rhs, type));
-      return type != null ? RelDec.of(type) : RelDec.yes();
+      if (!solveMetaForApprox) {
+        weWillSee.peek().append(createEqn(meta, rhs, type));
+        return type != null ? RelDec.of(type) : RelDec.yes();
+      }
+      /*if (!solveMetaInstances)*/
+      // ^ this condition is always true
+      return RelDec.unsure();
     }
   }
 

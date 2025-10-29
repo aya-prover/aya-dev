@@ -10,8 +10,8 @@ import java.util.function.UnaryOperator;
 
 public sealed interface RelDec<T> {
   sealed interface Strict<T> extends RelDec<T> {
-    @Override default RelDec.@NotNull Strict<T> map(@NotNull UnaryOperator<T> f) { return this; }
-    RelDec.@NotNull Strict<T> flatMap(@NotNull Function<T, Strict<T>> bind);
+    @Override default @NotNull Strict<T> map(@NotNull UnaryOperator<T> f) { return this; }
+    @NotNull Strict<T> flatMap(@NotNull Function<T, Strict<T>> bind);
     @Override @NotNull RelDec.Strict<T> lub(@NotNull Decision state);
   }
 
@@ -44,6 +44,7 @@ public sealed interface RelDec<T> {
   }
   enum YesClaim implements Claim<Object> {
     INSTANCE;
+    @Override public @NotNull YesClaim map(@NotNull UnaryOperator<Object> f) { return this; }
     @Override public @NotNull Decision downgrade() { return Decision.YES; }
     @Override public @NotNull Object getOrNull() { return Panic.unreachable(); }
     @Override public @NotNull RelDec<Object> lub(@NotNull Decision state) {
@@ -53,13 +54,19 @@ public sealed interface RelDec<T> {
   }
   static <T> Proof<T> of(T proof) { return new Proof<>(proof); }
   static <T> Claim<T> from(@NotNull Decision claim) {
-    if (claim == Decision.YES) return yes();
-    return new StrictClaim<>(claim);
+    return switch (claim) {
+      case NO -> no();
+      case UNSURE -> unsure();
+      case YES -> yes();
+    };
   }
+  @NotNull StrictClaim<Object> UNSURE_INSTANCE = new StrictClaim<>(Decision.UNSURE);
+  @NotNull StrictClaim<Object> NO_INSTANCE = new StrictClaim<>(Decision.NO);
   static <T> Claim<T> yes() { return (Claim<T>) YesClaim.INSTANCE; }
-  static <T> StrictClaim<T> unsure() { return new StrictClaim<>(Decision.UNSURE); }
-  static <T> StrictClaim<T> no() { return new StrictClaim<>(Decision.NO); }
-  static <T> RelDec.@NotNull Strict<T> ofNullable(@Nullable T maybeProof) {
+  static <T> StrictClaim<T> unsure() { return (StrictClaim<T>) UNSURE_INSTANCE; }
+  static <T> StrictClaim<T> no() { return (StrictClaim<T>) NO_INSTANCE; }
+
+  static @NotNull <T> Strict<T> ofNullable(@Nullable T maybeProof) {
     if (maybeProof != null) return of(maybeProof);
     return no();
   }
@@ -74,11 +81,9 @@ public sealed interface RelDec<T> {
   @Nullable T getOrNull();
 
   default @NotNull T get() {
-    if (!(this instanceof RelDec.Proof<T>(var proof))) return Panic.unreachable();
+    if (!(this instanceof Proof<T>(var proof))) return Panic.unreachable();
     return proof;
   }
 
-  default @NotNull RelDec<T> map(@NotNull UnaryOperator<T> f) {
-    return this;
-  }
+  @NotNull RelDec<T> map(@NotNull UnaryOperator<T> f);
 }
