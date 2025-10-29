@@ -4,7 +4,7 @@ package org.aya.gradle
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -14,7 +14,7 @@ class GenerateVersionTask extends DefaultTask {
     group = "build setup"
   }
 
-  final @InputDirectory File dotGitDir = project.rootProject.file(".git")
+  final @InputFiles File dotGitDir = project.rootProject.file(".git")
   @OutputDirectory File outputDir
   @Input String className
   @Input def basePackage = project.group
@@ -22,10 +22,13 @@ class GenerateVersionTask extends DefaultTask {
   @Input int jdkVersion
 
   @TaskAction def run() {
-    String stdout = "unknown"
-    if (dotGitDir.exists())
+    def stdout = "__COMMIT_HASH__"
+    def commitHashJavadoc = "/// .git missing, maybe in some sandbox environment (e.g. Nix), use a placeholder for substitution"
+    if (dotGitDir.exists()) {
       // This will be trimmed inside BuildUtil.gitRev
       stdout = BuildUtil.gitRev(project.rootDir)
+      commitHashJavadoc = "/// Generated from git rev output"
+    }
     def code = """\
       package ${basePackage}.prelude;
       import ${basePackage}.util.Version;
@@ -33,6 +36,7 @@ class GenerateVersionTask extends DefaultTask {
       import org.jetbrains.annotations.NonNls;
       public class $className {
         public static final @NotNull @NonNls String VERSION_STRING = "$taskVersion";
+        $commitHashJavadoc
         public static final @NotNull @NonNls String COMMIT_HASH = "$stdout";
         public static final @NotNull @NonNls String JDK_VERSION = "$jdkVersion";
         public static final @NotNull Version VERSION = Version.create(VERSION_STRING);
