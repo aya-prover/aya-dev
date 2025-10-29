@@ -65,14 +65,14 @@ public record ResolveInfo(
       MutableMap.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
   }
   public @NotNull TyckState makeTyckState() {
-    return new TyckState(shapeFactory, primFactory, new InstanceSet(instancesSet));
+    return new TyckState(shapeFactory, primFactory);
   }
 
   public @NotNull ModulePath modulePath() { return thisModule.modulePath(); }
 
   public ExprTycker newTycker() { return newTycker(opSet.reporter); }
   public ExprTycker newTycker(@NotNull Reporter reporter) {
-    return new ExprTycker(makeTyckState(), reporter, modulePath());
+    return new ExprTycker(makeTyckState(), new InstanceSet(instancesSet), reporter, modulePath());
   }
 
   public record ImportInfo(@NotNull ResolveInfo resolveInfo, boolean reExport) { }

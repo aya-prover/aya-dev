@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.gradle
 
@@ -9,6 +9,7 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.annotations.Nullable
 
 import java.text.SimpleDateFormat
 
@@ -16,22 +17,23 @@ import java.text.SimpleDateFormat
  * @author ice1000, kiva
  */
 final class CommonTasks {
-  static TaskProvider<Jar> fatJar(Project project, String mainClass) {
+  static TaskProvider<Jar> fatJar(Project project, @Nullable String mainClass) {
     project.tasks.register('fatJar', Jar) {
-      archiveClassifier.set 'fat'
-      from project.configurations.runtimeClasspath.collect {
+      it.archiveClassifier.set 'fat'
+      it.from project.configurations.runtimeClasspath.collect {
         if (it.isDirectory()) it else project.zipTree(it)
       }
-      duplicatesStrategy = DuplicatesStrategy.INCLUDE
-      exclude '**/module-info.class'
-      exclude '*.html'
-      exclude 'META-INF/ECLIPSE_.*'
-      manifest.attributes(
+      it.duplicatesStrategy = DuplicatesStrategy.INCLUDE
+      it.exclude '**/module-info.class'
+      it.exclude '*.html'
+      it.exclude 'META-INF/ECLIPSE_.*'
+      def build = new SimpleDateFormat('yyyy/M/dd HH:mm:ss').format(new Date())
+      if (mainClass != null) it.manifest.attributes(
         'Main-Class': mainClass,
-        'Build': new SimpleDateFormat('yyyy/M/dd HH:mm:ss').format(new Date())
-      )
+        'Build': build
+      ) else it.manifest.attributes('Build': build)
       def jar = project.tasks.jar
-      dependsOn(jar)
+      it.dependsOn(jar)
       //noinspection GroovyAssignabilityCheck
       with jar
     }

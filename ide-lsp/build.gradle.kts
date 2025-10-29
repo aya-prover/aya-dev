@@ -7,7 +7,9 @@ import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.*
 
-CommonTasks.fatJar(project, Constants.mainClassQName)
+plugins {
+  id("org.beryx.jlink")
+}
 
 dependencies {
   // NOTE: use `api`. IntelliJ plugin needs it temporarily (should depend on ide instead of lsp).
@@ -19,9 +21,7 @@ dependencies {
   annotationProcessor(libs.picocli.codegen)
 }
 
-plugins {
-  id("org.beryx.jlink")
-}
+CommonTasks.fatJar(project, Constants.mainClassQName)
 
 tasks.withType<JavaCompile>().configureEach {
   doFirst {

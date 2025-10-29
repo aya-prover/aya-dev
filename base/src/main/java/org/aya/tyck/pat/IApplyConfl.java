@@ -54,10 +54,10 @@ public record IApplyConfl<Tycker extends Unifiable & Contextful>(
     var matching = matchings.get(i);
     var pats = matching.data().patterns().view();
     var ctx = new DimInPatsPermutation.CtxExtractinator(new MapLocalCtx(), MutableList.create());
-    ctx.visit(pats);
+    var instPats = ctx.visit(pats);
     tycker.setLocalCtx(ctx.ctx());
 
-    DimInPatsPermutation.forEach(pats, args -> {
+    DimInPatsPermutation.forEach(instPats.view(), args -> {
       var nth = i + 1;
       doCompare(chillMatcher, args, matching, nth);
     });

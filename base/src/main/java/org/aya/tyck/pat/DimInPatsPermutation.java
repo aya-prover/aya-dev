@@ -41,24 +41,31 @@ public interface DimInPatsPermutation {
     @NotNull LocalCtx ctx,
     @NotNull MutableList<Term> subst
   ) {
-    private void visit(Pat pat) {
-      switch (pat) {
+    private Pat visit(Pat pat) {
+      return switch (pat) {
         case Pat.Bind(var bind, var ty) -> {
           var fresh = new FreeTerm(bind);
-          ctx.put(bind, ty.instTele(subst.view()));
+          var instTy = ty.instTele(subst.view());
+          ctx.put(bind, instTy);
           subst.append(fresh);
+          yield new Pat.Bind(bind, instTy);
         }
         case Pat.Tuple(var l, var r) -> {
-          visit(l);
-          visit(r);
+          l = visit(l);
+          r = visit(r);
+          yield new Pat.Tuple(l, r);
         }
-        case Pat.Con con -> visit(con.args().view());
-        case Pat.Misc _, Pat.ShapedInt _ -> { }
+        case Pat.Con con -> {
+          var head = con.head().instantiateTele(subst.view());
+          var conArgs = visit(con.args().view());
+          yield new Pat.Con(conArgs, head);
+        }
+        case Pat.Misc _, Pat.ShapedInt _ -> pat;
         default -> Panic.unreachable();
-      }
+      };
     }
-    public void visit(@NotNull SeqView<Pat> pats) {
-      pats.forEach(this::visit);
+    public ImmutableSeq<Pat> visit(@NotNull SeqView<Pat> pats) {
+      return pats.map(this::visit).toSeq();
     }
   }
 

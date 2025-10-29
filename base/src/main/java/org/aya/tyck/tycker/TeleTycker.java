@@ -86,7 +86,7 @@ public sealed interface TeleTycker {
       var ty = param.type().instTeleVar(tele.view());
       tycker.localCtx().put(ref, ty);
       if (ty instanceof ClassCall clazz) {
-        tycker.state.instanceSet.put(ref, clazz);
+        tycker.instanceSet.putParam(ref, clazz);
       }
       tele.append(ref);
     });
@@ -97,7 +97,7 @@ public sealed interface TeleTycker {
     @Override default void putLocal(@NotNull LocalVar var, @NotNull Term type) {
       tycker().localCtx().put(var, type);
       if (type instanceof ClassCall clazz) {
-        tycker().state.instanceSet.put(var, clazz);
+        tycker().instanceSet.putParam(var, clazz);
       }
     }
   }

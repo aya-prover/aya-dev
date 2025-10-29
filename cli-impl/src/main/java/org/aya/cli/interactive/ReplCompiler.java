@@ -67,6 +67,7 @@ public class ReplCompiler {
   private final @NotNull GenericAyaFile.Factory fileManager;
   private final @NotNull AyaBinOpSet opSet;
   private final @NotNull TyckState tcState;
+  private final @NotNull GlobalInstanceSet replInstances;
 
   public ReplCompiler(
     @NotNull ImmutableSeq<Path> modulePaths,
@@ -88,8 +89,8 @@ public class ReplCompiler {
     var parser = new AyaParserImpl(reporter);
     this.loader = new CachedModuleLoader<>(new ModuleListLoader(reporter, this.modulePaths.map(path ->
       new FileModuleLoader(this.locator, path, reporter, parser, fileManager, primFactory))));
-    var replInstances = new GlobalInstanceSet();
-    tcState = new TyckState(shapeFactory, primFactory, new InstanceSet(replInstances));
+    replInstances = new GlobalInstanceSet();
+    tcState = new TyckState(shapeFactory, primFactory);
   }
 
   private @NotNull ExprResolver.LiterateResolved
@@ -225,7 +226,8 @@ public class ReplCompiler {
     if (jdg == null) try (var delayedReporter = new DelayedReporter(reporter)) {
       tcState.clearTmp();
       var desugar = desugarExpr(resolvedExpr, delayedReporter);
-      var tycker = new TeleTycker.InlineCode(new ExprTycker(tcState, delayedReporter, context.modulePath()));
+      var exprTycker = new ExprTycker(tcState, new InstanceSet(replInstances), delayedReporter, context.modulePath());
+      var tycker = new TeleTycker.InlineCode(exprTycker);
       jdg = tycker.checkInlineCode(desugar.params(), desugar.expr());
     }
     return new Normalizer(tcState).normalize(isType ? jdg.type() : jdg.wellTyped(), mode);

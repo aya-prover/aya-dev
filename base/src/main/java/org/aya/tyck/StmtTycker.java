@@ -68,8 +68,8 @@ public record StmtTycker(
   @NotNull GlobalInstanceSet globalInstances
 ) implements Problematic {
   private @NotNull ExprTycker mkTycker() {
-    var tyckState = new TyckState(shapeFactory, primFactory, new InstanceSet(globalInstances));
-    return new ExprTycker(tyckState, reporter, fileModule);
+    var tyckState = new TyckState(shapeFactory, primFactory);
+    return new ExprTycker(tyckState, new InstanceSet(globalInstances), reporter, fileModule);
   }
   public StmtTycker(
     @NotNull Reporter reporter, @NotNull ModulePath fileModule,
@@ -249,7 +249,7 @@ public record StmtTycker(
     var self = classRef.concrete.self;
     var classCall = new ClassCall(new ClassDef.Delegate(classRef), 0, ImmutableSeq.empty());
     tycker.localCtx().put(self, classCall);
-    tycker.state.pushThis(self, classCall);
+    tycker.pushThis(self, classCall);
     var teleTycker = new TeleTycker.Default(tycker);
     var result = member.result;
     assert result != null; // See AyaProducer
@@ -259,7 +259,7 @@ public record StmtTycker(
     signature = signature.pusheen(tycker::whnf)
       .descent(zonker::zonk)
       .bindTele(
-        tycker.state.popThis(),
+        tycker.popThis(),
         new Param("self", classCall, false),
         classRef.concrete.nameSourcePos()
       );

@@ -3,13 +3,14 @@
 package org.aya.util;
 
 import kala.control.Option;
+import kala.tuple.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /// A map-like container that has a scope structure,
 /// this is designed to be growable, but not shrinkable or modify existing record.
@@ -27,14 +28,15 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
 
   /// Fold from bottom, you may treat a [Scoped] as a telescope, then
   /// this method is exactly `foldRight`.
-  default <R> R fold(R acc, BiFunction<This, R, R> folder) {
+  default <R> @Nullable R findFirst(Function<This, @Nullable R> folder) {
     @Nullable var scope = self();
     while (scope != null) {
-      acc = folder.apply(scope, acc);
+      var acc = folder.apply(scope);
+      if (acc != null) return acc;
       scope = scope.parent();
     }
 
-    return acc;
+    return null;
   }
 
   default void forEach(@NotNull Consumer<This> consumer) {
@@ -57,16 +59,17 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
   }
 
   default @NotNull V get(@NotNull K key) {
-    return fold(Option.<V>none(), (self, acc) -> acc.orElse(() -> self.getLocal(key)))
-      .getOrThrow(() -> new Panic("¿: Not in scope: " + key));
+    var found = findFirst(self -> self.getLocal(key).getOrNull());
+    assert found != null : "¿: Not in scope: " + key;
+    return found;
   }
 
   default void put(@NotNull K key, @NotNull V value) {
-    if (contains(key)) throw new Panic("Existing " + key);
+    assert !contains(key) : "Existing " + key;
     putLocal(key, value);
   }
 
   default boolean contains(@NotNull K key) {
-    return fold(false, (self, acc) -> acc || self.containsLocal(key));
+    return findFirst(self -> self.containsLocal(key) ? Unit.INSTANCE : null) != null;
   }
 }

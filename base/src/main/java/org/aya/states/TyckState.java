@@ -37,10 +37,8 @@ public final class TyckState {
   private final @NotNull MutableList<Eqn> eqns = MutableList.create();
   private final @NotNull MutableList<WithPos<MetaVar>> activeMetas = MutableList.create();
   public final @NotNull MutableMap<MetaVar, Term> solutions = MutableMap.create();
-  public final @NotNull MutableStack<LocalVar> classThis = MutableStack.create();
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
-  public final @NotNull InstanceSet instanceSet;
   private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
 
   public static final DynamicForest.Handle I0 = DynamicForest.create();
@@ -48,23 +46,10 @@ public final class TyckState {
 
   public TyckState(
     @NotNull ShapeFactory shapeFactory,
-    @NotNull PrimFactory primFactory,
-    @NotNull InstanceSet instanceSet
+    @NotNull PrimFactory primFactory
   ) {
     this.shapeFactory = shapeFactory;
     this.primFactory = primFactory;
-    this.instanceSet = instanceSet;
-  }
-
-  public void pushThis(@NotNull LocalVar thisVar, @NotNull ClassCall type) {
-    classThis.push(thisVar);
-    instanceSet.put(thisVar, type);
-  }
-
-  public @NotNull LocalVar popThis() {
-    var thisVar = classThis.pop();
-    instanceSet.remove(thisVar);
-    return thisVar;
   }
 
   private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
