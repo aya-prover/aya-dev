@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
@@ -9,6 +9,7 @@ import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.NewTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,7 @@ public record ClassCall(
   @NotNull ClassDefLike ref,
   @Override int ulift,
   @NotNull ImmutableSeq<Closure> args
-) implements StableWHNF, Formation {
+) implements StableWHNF, Formation, BindingIntro {
   public ClassCall(@NotNull ClassDefLike ref) {
       this(ref, 0, ImmutableSeq.empty());
   }

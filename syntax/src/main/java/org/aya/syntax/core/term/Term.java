@@ -118,7 +118,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// --------------------------
   /// Γ ⊢ fn (a : A) => (b : B)
   ///```
-  /// `f` will apply to `b``, but the context of `b`: `Γ, a : A` has a new binding,
+  /// `f` will apply to `b`, but the context of `b`: `Γ, a : A` has a new binding,
   /// therefore the implementation should be `f.apply(1, b)`.
   /// In the other hand, a [AppTerm]:
   ///```
@@ -130,13 +130,16 @@ public sealed interface Term extends Serializable, AyaDocile
   /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
   ///
   /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
-  ///                   The index indicates how many new bindings are introduced.
-  /// @implNote implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
+  ///          The index indicates how many new bindings are introduced.
+  /// @implNote Implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
   ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
-  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm],
+  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm] (see [BindingIntro]),
   ///          therefore your {@param f} should be able to handle them,
   ///          or don't [#descent] on [Term] that contains [Bound] term if your {@param f} cannot handle them.
   ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
+  ///
+  /// @see BindingIntro
+  /// @see Closure
   @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
 
   @ApiStatus.NonExtendable

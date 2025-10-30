@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
@@ -7,6 +7,7 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ public record ClassCastTerm(
   @NotNull Term subterm,
   @NotNull ImmutableSeq<Closure> remember,
   @NotNull ImmutableSeq<Closure> forget
-) implements StableWHNF, Term {
+) implements StableWHNF, Term, BindingIntro {
   public ClassCastTerm {
     // forget cannot be empty, I think it is not good because we can make an infinite size term,
     // i.e. fix (\x => cast x [] [])
