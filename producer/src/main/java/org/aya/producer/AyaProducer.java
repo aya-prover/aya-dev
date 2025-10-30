@@ -951,9 +951,10 @@ public record AyaProducer(
     var result = typeOrHole(node.peekChild(TYPE), bind.sourcePos());
     var body = expr(node.child(EXPR));
     var ref = LocalVar.from(bind);
+    var isInstance = node.peekChild(KW_INSTANCE) != null;
 
     // The last element is a placeholder, which is meaningless
-    return new Expr.LetBind(pos, ref, teles, result, body, new AssociatedNode<>(node));
+    return new Expr.LetBind(pos, ref, teles, result, body, new AssociatedNode<>(node), isInstance);
   }
 
   public @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> patterns(@NotNull GenericNode<?> node) {

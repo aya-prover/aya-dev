@@ -569,6 +569,7 @@ public sealed interface Expr extends AyaDocile {
     @Override public @NotNull LetBind param() { return bind; }
   }
 
+  /// @param isClassCandidate can be extended to a modifier list in the future
   record LetBind(
     @NotNull SourcePos sourcePos,
     @NotNull LocalVar bindName,
@@ -576,23 +577,9 @@ public sealed interface Expr extends AyaDocile {
     @NotNull WithPos<Expr> result,
     @NotNull WithPos<Expr> definedAs,
     @NotNull MutableValue<Term> theCoreType,
-    boolean isClassCandidate      // can be extended to a modifier list in the future
+    boolean isClassCandidate
   ) implements SourceNode, Named, WithTerm {
-    public LetBind(
-      @NotNull SourcePos sourcePos,
-      @NotNull LocalVar bindName,
-      @NotNull ImmutableSeq<Param> telescope,
-      @NotNull WithPos<Expr> result,
-      @NotNull WithPos<Expr> definedAs,
-      @NotNull MutableValue<Term> theCoreType
-    ) {
-      this(sourcePos, bindName, telescope, result, definedAs, theCoreType, false);
-    }
-
-    @Override
-    public @NotNull SourcePos nameSourcePos() {
-      return bindName.sourcePos();
-    }
+    @Override public @NotNull SourcePos nameSourcePos() { return bindName.sourcePos(); }
 
     public @NotNull LetBind update(@NotNull ImmutableSeq<Param> telescope, @NotNull WithPos<Expr> result, @NotNull WithPos<Expr> definedAs) {
       return telescope().sameElements(telescope, true) && result() == result && definedAs() == definedAs
