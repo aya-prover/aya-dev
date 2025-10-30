@@ -111,6 +111,8 @@ BLOCK_COMMENT_END   = "*/"
   "coerce"              { return KW_COERCE; }
   "opaque"              { return KW_OPAQUE; }
   "inline"              { return KW_INLINE; }
+  "instance"            { return KW_INSTANCE; }
+  "noninstance"         { return KW_NONINSTANCE; }
   "overlap"             { return KW_OVERLAP; }
   "override"            { return KW_OVERRIDE; }
   "completed"           { return KW_COMPLETED; }

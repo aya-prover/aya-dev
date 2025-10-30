@@ -18,3 +18,6 @@ def norm1 : Kontainer::walue {subtype} = 0 => refl
 // -> 0 (it is recorded in the ClassCastTerm!)
 
 def projTest (a : Kontainer) => Kontainer::walue
+
+def letTest (f : Nat -> Kontainer) =>
+  let instance x := f 0 in Kontainer::Taipe

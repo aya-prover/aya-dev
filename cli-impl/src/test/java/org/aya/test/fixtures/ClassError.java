@@ -40,4 +40,9 @@ public interface ClassError {
     open class A | foo : Type
     def test (a b : A) => foo
     """;
+
+  @Language("Aya") String testNotInstance = """
+    open inductive Unit | unit
+    def test => let instance u := unit in u
+    """;
 }

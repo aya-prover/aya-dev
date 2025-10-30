@@ -1247,35 +1247,43 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // weakId lambdaTele* type? DEFINE_AS expr
+  // KW_INSTANCE? weakId lambdaTele* type? DEFINE_AS expr
   public static boolean letBind(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "letBind")) return false;
-    if (!nextTokenIs(b, ID)) return false;
+    if (!nextTokenIs(b, "<let bind>", ID, KW_INSTANCE)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = weakId(b, l + 1);
-    r = r && letBind_1(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, LET_BIND, "<let bind>");
+    r = letBind_0(b, l + 1);
+    r = r && weakId(b, l + 1);
     r = r && letBind_2(b, l + 1);
+    r = r && letBind_3(b, l + 1);
     r = r && consumeToken(b, DEFINE_AS);
     r = r && expr(b, l + 1, -1);
-    exit_section_(b, m, LET_BIND, r);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // KW_INSTANCE?
+  private static boolean letBind_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind_0")) return false;
+    consumeToken(b, KW_INSTANCE);
+    return true;
+  }
+
   // lambdaTele*
-  private static boolean letBind_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "letBind_1")) return false;
+  private static boolean letBind_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind_2")) return false;
     while (true) {
       int c = current_position_(b);
       if (!lambdaTele(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "letBind_1", c)) break;
+      if (!empty_element_parsed_guard_(b, "letBind_2", c)) break;
     }
     return true;
   }
 
   // type?
-  private static boolean letBind_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "letBind_2")) return false;
+  private static boolean letBind_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "letBind_3")) return false;
     type(b, l + 1);
     return true;
   }
@@ -1284,7 +1292,6 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // letBind | (BAR letBind)+
   public static boolean letBindBlock(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "letBindBlock")) return false;
-    if (!nextTokenIs(b, "<let bind block>", BAR, ID)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LET_BIND_BLOCK, "<let bind block>");
     r = letBind(b, l + 1);

@@ -83,6 +83,8 @@ public class AyaParserDefinitionBase extends ParserDefBase.WithFile {
     AyaPsiElementTypes.KW_OVERLAP,
     AyaPsiElementTypes.KW_OVERRIDE,
     AyaPsiElementTypes.KW_PARTIAL,
+    AyaPsiElementTypes.KW_INSTANCE,
+    AyaPsiElementTypes.KW_NONINSTANCE,
     AyaPsiElementTypes.KW_PI,
     AyaPsiElementTypes.KW_PRIM,
     AyaPsiElementTypes.KW_PRIVATE,

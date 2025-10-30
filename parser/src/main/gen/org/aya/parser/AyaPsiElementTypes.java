@@ -146,6 +146,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_INFIXL = new AyaPsiTokenType("infixl");
   IElementType KW_INFIXR = new AyaPsiTokenType("infixr");
   IElementType KW_INLINE = new AyaPsiTokenType("inline");
+  IElementType KW_INSTANCE = new AyaPsiTokenType("instance");
   IElementType KW_ISET = new AyaPsiTokenType("ISet");
   IElementType KW_LAMBDA = new AyaPsiTokenType("fn");
   IElementType KW_LET = new AyaPsiTokenType("let");
@@ -153,6 +154,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_MATCH = new AyaPsiTokenType("match");
   IElementType KW_MODULE = new AyaPsiTokenType("module");
   IElementType KW_NEW = new AyaPsiTokenType("new");
+  IElementType KW_NONINSTANCE = new AyaPsiTokenType("noninstance");
   IElementType KW_NONTERMINATING = new AyaPsiTokenType("nonterminating");
   IElementType KW_OPAQUE = new AyaPsiTokenType("opaque");
   IElementType KW_OPEN = new AyaPsiTokenType("open");
