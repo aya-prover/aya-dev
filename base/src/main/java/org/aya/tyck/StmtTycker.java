@@ -345,7 +345,7 @@ public record StmtTycker(
       selfTelePos = selfTelePos.appendedAll(ImmutableSeq.fill(pusheenResult.params().size(), conTy.sourcePos()));
 
       selfBinds = selfBinds.appendedAll(pusheenResult.names());
-      var tyResult = tycker.whnf(pusheenResult.body());
+      @Closed var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
         @Closed FreeTerm fresh = new FreeTerm("i");
@@ -417,10 +417,11 @@ public record StmtTycker(
     }
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
-    tycker.unifyTermReported(
-      DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result()),
-      // No checks, slightly faster than TeleDef.defType
-      DepTypeTerm.makePi(core.telescope().view().map(Param::type), core.result()),
+    // the following makePi are Closed cause [tele] and [core.telescope] are Closed
+    @Closed var lPi = DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result());
+    // No checks, slightly faster than TeleDef.defType
+    @Closed var rPi = DepTypeTerm.makePi(core.telescope().view().map(Param::type), core.result());
+    tycker.unifyTermReported(lPi, rPi,
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     var zonker = new Finalizer.Zonk<>(tycker);

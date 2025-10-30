@@ -15,6 +15,7 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.def.Matchy;
@@ -95,7 +96,7 @@ public final class ExprTycker extends ScopedTycker {
             }
           }
           case EqTerm eq -> {
-            Closure.Locns core;
+            @Closed Closure.Locns core;
             try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
               addWithTerm(lam, expr.sourcePos(), DimTyTerm.INSTANCE);
               core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
@@ -157,11 +158,15 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.Match(var discriminant, var clauses, var returns) -> {
         var wellArgs = discriminant.map(d -> synthesize(d.discr()));
-        Term storedTy;
+        @Bound Term storedTy;
         // Type check the type annotation
         if (returns != null) {
           storedTy = matchReturnTy(discriminant, wellArgs, returns);
-          unifyTyReported(type, storedTy.instTele(wellArgs.view().map(Jdg::wellTyped)), returns);
+
+          var erase = storedTy;
+          @Closed var instedTy = erase.instTele(wellArgs.view().map(Jdg::wellTyped));
+
+          unifyTyReported(type, instedTy, returns);
         } else {
           storedTy = type;
         }
@@ -178,7 +183,8 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @NotNull Term matchReturnTy(
+  /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level
+  private @Bound @NotNull Term matchReturnTy(
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
     ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns
   ) {
@@ -265,8 +271,9 @@ public final class ExprTycker extends ScopedTycker {
         var kind, var dom, var cod
       ) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
         if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
-        var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
-          : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));
+        @Closed var closure = result.wellTyped() instanceof LamTerm(var clos)
+          ? clos    // closed cause [result] is closed
+          : new Closure.Jit(i -> new AppTerm(result.wellTyped(), i));   // closed cause [result] is closed
         var isOk = checkBoundaries(eq, closure, expr.sourcePos(), msg ->
           new CubicalError.BoundaryDisagree(expr, msg, new UnifyInfo(state)));
         var resultTerm = new LamTerm(closure);
@@ -300,7 +307,7 @@ public final class ExprTycker extends ScopedTycker {
   }
 
   /// @return true if the coercion is successful
-  private boolean isConvertiblePiPath(@NotNull WithPos<Expr> expr, EqTerm eq, Closure cod) {
+  private boolean isConvertiblePiPath(@NotNull WithPos<Expr> expr, @Closed @NotNull EqTerm eq, @Closed @NotNull Closure cod) {
     @Closed FreeTerm ref = new FreeTerm(new LocalVar("i"));
     var wellTyped = false;
     try (var _ = subscope(ref.name(), DimTyTerm.INSTANCE)) {

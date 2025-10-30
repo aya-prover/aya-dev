@@ -4,6 +4,7 @@ package org.aya.unify;
 
 import org.aya.generic.term.DTKind;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
@@ -36,7 +37,7 @@ public record DoubleChecker(
 ) implements Contextful, Unifiable {
   public DoubleChecker(@NotNull Unifier unifier) { this(unifier, new Synthesizer(unifier.nameGen, unifier)); }
 
-  public boolean inherit(@NotNull Term preterm, @NotNull Term expected) {
+  public boolean inherit(@Closed @NotNull Term preterm, @Closed @NotNull Term expected) {
     return switch (preterm) {
       case ErrorTerm _ -> true;
       case DepTypeTerm(var kind, var pParam, var pBody) -> switch (kind) {
@@ -79,7 +80,8 @@ public record DoubleChecker(
       };
       case TupTerm _ -> failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
       case MetaCall(var ref, var args) when !(ref.req() instanceof MetaVar.OfType) -> {
-        var newMeta = new MetaCall(new MetaVar(
+        // dblity depends on args
+        @Closed var newMeta = new MetaCall(new MetaVar(
           ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType(expected), false), args);
         // Intends for solving meta only, should always success
         unifier.compare(preterm, newMeta, null);

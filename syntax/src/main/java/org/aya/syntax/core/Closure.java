@@ -75,10 +75,11 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// because sometimes descent have side-effects. An example is find-usages in meta resolution,
   /// it relies on descent and counting the number of free vars along the way.
   /// So it is important to immediately descent into the body, which we do so using [#toLocns()].
-  /// TODO: I was wondering if [lam] should be `UnaryOperator<@Closed Term>`
-  record Jit(@NotNull UnaryOperator<Term> lam) implements Closure {
+  /// TODO: I was wondering if [lam] should be `UnaryOperator<@Closed Term>`.
+  /// I believe it is at least `Function<@Closed Term, Term>``
+  record Jit(@NotNull UnaryOperator<@Closed Term> lam) implements Closure {
     @Override public Closure descent(IndexedFunction<Term, Term> f) { return toLocns().descent(f); }
-    @Override public Term apply(Term term) { return lam.apply(term); }
+    @Override public Term apply(@Closed Term term) { return lam.apply(term); }
   }
 
   record Locns(@Bound Term body) implements Closure {

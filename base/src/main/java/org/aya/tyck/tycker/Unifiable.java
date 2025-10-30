@@ -4,6 +4,7 @@ package org.aya.tyck.tycker;
 
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
@@ -30,7 +31,7 @@ public interface Unifiable extends Problematic, Stateful {
    * @return failure data, null if success
    */
   default @Nullable TermComparator.FailureData unifyTerm(
-    @NotNull Term upper, @NotNull Term lower, @Nullable Term type,
+    @Closed @NotNull Term upper, @Closed @NotNull Term lower, @Closed @Nullable Term type,
     @NotNull SourcePos pos, Ordering ord
   ) {
     var unifier = unifier(pos, ord);
@@ -44,7 +45,7 @@ public interface Unifiable extends Problematic, Stateful {
    * @see Unifiable#unifyTerm
    */
   default boolean unifyTyReported(
-    @NotNull Term upper, @NotNull Term lower, @NotNull SourcePos pos,
+    @Closed @NotNull Term upper, @Closed @NotNull Term lower, @NotNull SourcePos pos,
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(upper, lower, null, pos, Ordering.Lt);
@@ -53,7 +54,7 @@ public interface Unifiable extends Problematic, Stateful {
   }
 
   default boolean checkBoundaries(
-    EqTerm eq, Closure core, @NotNull SourcePos pos,
+    @Closed @NotNull EqTerm eq, @Closed @NotNull Closure core, @NotNull SourcePos pos,
     @NotNull Function<UnifyInfo.Comparison, Problem> report
   ) {
     var lhs = unifyTermReported(core.apply(DimTerm.I0), eq.a(), eq.appA(DimTerm.I0), pos, report);
@@ -62,7 +63,7 @@ public interface Unifiable extends Problematic, Stateful {
   }
 
   default boolean unifyTermReported(
-    @NotNull Term lhs, @NotNull Term rhs, @Nullable Term type, @NotNull SourcePos pos,
+    @Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @Nullable Term type, @NotNull SourcePos pos,
     @NotNull Function<UnifyInfo.Comparison, Problem> pc
   ) {
     var result = unifyTerm(lhs, rhs, type, pos, Ordering.Eq);
@@ -70,7 +71,7 @@ public interface Unifiable extends Problematic, Stateful {
     return result == null;
   }
 
-  default boolean unifyTyReported(@NotNull Term upper, @NotNull Term lower, @NotNull WithPos<Expr> expr) {
+  default boolean unifyTyReported(@Closed @NotNull Term upper, @Closed @NotNull Term lower, @NotNull WithPos<Expr> expr) {
     return unifyTyReported(upper, lower, expr.sourcePos(),
       cp -> new UnifyError.Type(expr.data(), expr.sourcePos(), cp, new UnifyInfo(state())));
   }

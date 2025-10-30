@@ -49,7 +49,7 @@ public record DepTypeTerm(
   /// Perform {@code coe} on a dependent type.
   ///
   /// @param i the parameter of {@link CoeTerm#type()}
-  public @NotNull Term coe(@NotNull LocalVar i, CoeTerm coe) {
+  public @NotNull Term coe(@NotNull LocalVar i, @Closed @NotNull CoeTerm coe) {
     // We may suppose: pi/sigma = `(a : A i), B i a`,
     // this is i : I |- A i
     var A = param.bind(i);
@@ -67,7 +67,7 @@ public record DepTypeTerm(
           // We still need to construct the body of lambda of type `B s x`.
           // Recall that we have `f : (a : A r) -> B r a`, we can obtain `A r` by coe `x : A s` backward.
           // coe^{s -> r}_A x : A r
-          var fArg = coe.inverse(A).app(x);
+          @Closed var fArg = coe.inverse(A).app(x);
           // f fArg : B r fArg
           var fApp = AppTerm.make(f, fArg);
 
@@ -76,7 +76,7 @@ public record DepTypeTerm(
           //   if you look `fArg` closer you may find that if we replace `r` with `j`,
           //   then `fArg = x` when `j` is substituted with `s`
           // a' : coe^{s -> j}_A x
-          var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.s(), j).app(x));
+          @Closed var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.s(), j).app(x));
           // coe^{r -> s}_{\j. B j a'} : B r a'[r/j] -> B s x
           var recoe = coe.recoe(j -> abstractBia(i, aPrime).apply(j));
           return recoe.app(fApp);
@@ -101,7 +101,7 @@ public record DepTypeTerm(
         // a path that agree both side:
         //   We need `a'` such that `a'[r/i] = p.0` and `a'[s/i] = a`
         // a' = coe^{r -> j}_A p.0 : A j
-        var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.r(), j).app(fst));
+        @Closed var aPrime = new Closure.Jit(j -> new CoeTerm(A, coe.r(), j).app(fst));
         // coe^{r -> s}_{\j. B j a'} p.1 : B s a
         var b = coe.recoe(j -> abstractBia(i, aPrime).apply(j)).app(snd);
         return new TupTerm(a, b);

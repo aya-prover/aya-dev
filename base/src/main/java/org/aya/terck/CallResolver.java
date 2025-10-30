@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSet;
 import kala.value.MutableValue;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
@@ -51,7 +52,7 @@ public record CallResolver(
     this(state, fn, targets, MutableValue.create(), graph);
   }
 
-  private void resolveCall(@NotNull Callable.Tele callable) {
+  private void resolveCall(@NotNull Callable.@Closed Tele callable) {
     if (!(callable.ref() instanceof TyckAnyDef<?> calleeDef)) return;
     var callee = calleeDef.core();
     if (!targets.contains(callee)) return;
@@ -61,18 +62,19 @@ public record CallResolver(
     graph.put(matrix);
   }
 
-  private void fillMatrix(@NotNull Callable callable, CallMatrix<?, TyckDef> matrix) {
+  private void fillMatrix(@Closed @NotNull Callable callable, CallMatrix<?, TyckDef> matrix) {
     var currentPatterns = currentClause.get();
     assert currentPatterns != null;
     currentPatterns.patterns().forEachIndexed((domParamIx, pat) ->
-      callable.args().forEachIndexed((codParamIx, term) -> {
+      callable.args().forEachIndexed((int codParamIx, @Closed Term term) -> {
+        // term is Closed cause [callable] is Closed.
         var relation = compare(term, pat);
         matrix.set(domParamIx, codParamIx, relation);
       }));
   }
 
   /** foetus dependencies */
-  private @NotNull Relation compare(@NotNull Term term, @NotNull Pat pat) {
+  private @NotNull Relation compare(@Closed @NotNull Term term, @NotNull Pat pat) {
     return switch (pat) {
       case Pat.Con con -> {
         if (term instanceof ConCallLike con2) {
@@ -94,7 +96,8 @@ public record CallResolver(
           case ConCallLike con2 -> compare(con2, con);
           // This is related to the predicativity issue mentioned in #907
           case PAppTerm papp -> {
-            var head = papp.fun();
+            // closed by [papp]
+            @Closed var head = papp.fun();
             while (head instanceof PAppTerm papp2) head = papp2.fun();
             yield compare(head, con);
           }
@@ -144,11 +147,15 @@ public record CallResolver(
   @Override public void accept(@NotNull Term.Matching matching) {
     this.currentClause.set(matching);
     var vars = Pat.collectVariables(matching.patterns().view()).component1();
-    visitTerm(matching.body().instTeleVar(vars.view()));
+    // all binding of body is insted.
+    var erase = matching.body().instTeleVar(vars.view());
+    @Closed var instedBody = erase;
+
+    visitTerm(instedBody);
     this.currentClause.set(null);
   }
 
-  private void visitTerm(@NotNull Term term) {
+  private void visitTerm(@Closed @NotNull Term term) {
     if (stopOnBinders(term)) return;
 
     // TODO: Improve error reporting to include the original call
@@ -158,13 +165,14 @@ public record CallResolver(
     if (stopOnBinders(term)) return;
     if (term instanceof Callable.Tele call) resolveCall(call);
     term.descent((_, child) -> {
+      // FIXME: ?
       visitTerm(child);
       return child;
     });
   }
 
   /// Special handling of all binding structures
-  private boolean stopOnBinders(@NotNull Term term) {
+  private boolean stopOnBinders(@Closed @NotNull Term term) {
     switch (term) {
       case LamTerm(var body) -> {
         visitTerm(body.apply(new LocalVar("_")));

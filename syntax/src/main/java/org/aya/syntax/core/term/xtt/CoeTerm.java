@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.Term;
@@ -22,7 +23,7 @@ public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) i
 
   public @NotNull CoeTerm inverse(Closure newTy) { return new CoeTerm(newTy, s, r); }
   public @NotNull CoeTerm recoe(Closure cover) { return new CoeTerm(cover, r, s); }
-  public @NotNull CoeTerm recoe(UnaryOperator<Term> cover) { return recoe(new Closure.Jit(cover)); }
+  public @NotNull CoeTerm recoe(UnaryOperator<@Closed Term> cover) { return recoe(new Closure.Jit(cover)); }
   public @NotNull Term family() { return PrimDef.familyI2J(type, r, s); }
   public @NotNull Term app(Term x) { return new AppTerm(this, x); }
 }
