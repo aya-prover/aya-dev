@@ -11,8 +11,12 @@ fi
 eval $(nix build .#Aya.mitmCache.updateScript --no-link --print-out-paths)
 
 # Check whether nix/deps.json is modified or not
-git diff --exit-code nix/deps.json || \
+if ! git diff --quiet nix/deps.json; then
   if [[ -n $CI ]]; then
-    printf "ERROR: Outdated nix/deps.json detected.
-    Please run .github/workflows/check-nix-gradle.lock.sh and commit changes."
+    printf "ERROR: Outdated nix/deps.json detected.\n"
+    printf "Please run .github/workflows/check-nix-gradle-lock.sh and commit changes.\n"
+    exit 1
   fi
+fi
+
+
