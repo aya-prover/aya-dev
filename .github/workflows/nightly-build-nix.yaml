@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   check-deps-lock:
-    uses: aya-prover/aya-dev/.github/workflows/check-deps-lock.yaml@main
+    uses: ./.github/workflows/check-deps-lock.yaml
 
   nightly-build-nix:
     needs: [check-deps-lock]
