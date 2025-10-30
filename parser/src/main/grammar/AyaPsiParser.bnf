@@ -53,6 +53,8 @@
     KW_COERCE = 'coerce'
     KW_OPAQUE = 'opaque'
     KW_INLINE = 'inline'
+    KW_INSTANCE = 'instance'
+    KW_NONINSTANCE = 'noninstance'
     KW_NONTERMINATING = 'nonterminating'
     KW_OVERLAP = 'overlap'
     KW_TAILREC = 'tailrec'
@@ -297,7 +299,7 @@ sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 selfExpr ::= KW_SELF (AT qualifiedId)?
 partialExpr ::= KW_PARTIAL expr
 
-letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
+letBind ::= KW_INSTANCE? weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
