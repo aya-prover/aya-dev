@@ -1,0 +1,32 @@
+name: check if deps.json is up-to-date
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+    types: [checks_requested]
+jobs:
+  check-deps-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable apparmor user namespace restrictions
+        run: |
+          # workaround https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces
+          sudo sysctl -w kernel.unprivileged_userns_clone=1
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_unconfined=0
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Nix
+        uses: cachix/install-nix-action@v31
+        # This action will raise `error: opening lock file '/nix/var/nix/db/big-lock': Read-only file system`,
+        # which could be caused by single-user installation.
+        # uses: nixbuild/nix-quick-install-action@v34
+
+      - name: Check if nix/deps.json is up-to-date
+        run: |
+          bash .github/workflows/check-nix-gradle-lock.sh

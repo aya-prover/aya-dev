@@ -3,8 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # Provide jdk22
-    nixpkgs-jdk.url = "github:NixOS/nixpkgs/release-24.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -12,19 +10,19 @@
     {
       self,
       nixpkgs,
-      nixpkgs-jdk,
       flake-utils,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        pkgs-jdk = nixpkgs-jdk.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          inherit system;
+        };
 
         # Parse gradle/libs.versions.toml for required project/jdk versions
         inherit (builtins.fromTOML (builtins.readFile ./gradle/libs.versions.toml)) versions;
 
-        jdk = pkgs-jdk."jdk${versions.java}";
+        jdk = pkgs."jdk${versions.java}";
         gradle = pkgs.gradle_9;
       in
       {
