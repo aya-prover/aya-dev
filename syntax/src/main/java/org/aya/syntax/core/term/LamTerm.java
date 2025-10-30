@@ -7,11 +7,12 @@ import kala.collection.mutable.MutableList;
 import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
-public record LamTerm(Closure body) implements StableWHNF {
+public record LamTerm(Closure body) implements StableWHNF, BindingIntro {
   public static LamTerm ID = new LamTerm(new Closure.Jit(t -> t));
   public LamTerm(Term indexedBody) {
     this(new Closure.Locns(indexedBody));

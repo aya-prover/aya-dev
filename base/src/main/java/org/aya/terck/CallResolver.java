@@ -165,8 +165,11 @@ public record CallResolver(
     if (stopOnBinders(term)) return;
     if (term instanceof Callable.Tele call) resolveCall(call);
     term.descent((_, child) -> {
-      // FIXME: ?
-      visitTerm(child);
+      // child here is never Bound, cause we already handle
+      // all binding structures in [stopOnBinders],
+      // thus [child] must be a direct sub-[Term] of [term], which is [Closed]
+      @Closed var assertedChild = child;
+      visitTerm(assertedChild);
       return child;
     });
   }
@@ -189,6 +192,7 @@ public record CallResolver(
         visitTerm(type.apply(new LocalVar("_")));
         return true;
       }
+      // TODO: impl more?
       default -> { }
     }
     return false;

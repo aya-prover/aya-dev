@@ -13,6 +13,7 @@ import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.xtt.CoeTerm;
@@ -27,7 +28,7 @@ import java.util.function.UnaryOperator;
 public record DepTypeTerm(
   @NotNull DTKind kind, @NotNull Term param,
   @NotNull Closure body
-) implements StableWHNF, Formation {
+) implements StableWHNF, Formation, BindingIntro {
   public @NotNull DepTypeTerm update(@NotNull Term param, @NotNull Closure body) {
     return param == this.param && body == this.body ? this : new DepTypeTerm(kind, param, body);
   }

@@ -8,11 +8,12 @@ import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) implements Term {
+public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) implements Term, BindingIntro {
   public @NotNull CoeTerm update(@NotNull Closure type, @NotNull Term r, @NotNull Term s) {
     return type == type() && r == r() && s == s() ? this : new CoeTerm(type, r, s);
   }
