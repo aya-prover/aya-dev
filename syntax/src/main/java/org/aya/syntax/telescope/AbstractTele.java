@@ -74,7 +74,8 @@ public interface AbstractTele {
   /// Get the type of {@param i}-th (count from `0`) parameter.
   /// The default implementation is for empty telescope, because there are many such cases.
   ///
-  /// @param teleArgs the arguments to the former parameters
+  /// @param teleArgs the arguments to the former parameters, you may provide more than `i + 1` arguments,
+  ///                 but only first `i + 1` arguments is useful.
   /// @return the type of {@param i}-th parameter.
   default @NotNull Term telescope(int i, Seq<@Closed Term> teleArgs) {
     return Panic.unreachable();
@@ -147,8 +148,7 @@ public interface AbstractTele {
       return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      assert teleArgs.sizeEquals(telescopeSize());
-      return result.instTele(teleArgs.view());
+      return result.instTele(teleArgs.sliceView(0, telescopeSize()));
     }
     @Override public @NotNull SeqView<String> namesView() {
       return telescope.view().map(Param::name);
@@ -213,10 +213,10 @@ public interface AbstractTele {
     @Override public boolean telescopeLicit(int i) { return signature.telescopeLicit(i); }
     @Override public @NotNull String telescopeName(int i) { return signature.telescopeName(i); }
     @Override public @NotNull Term telescope(int i, Seq<Term> teleArgs) {
-      return signature.telescope(i, teleArgs).elevate(lift);
+      return signature.telescope(i, teleArgs.slice(0, i)).elevate(lift);
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      return signature.result(teleArgs).elevate(lift);
+      return signature.result(teleArgs.slice(0, telescopeSize())).elevate(lift);
     }
     @Override public @NotNull AbstractTele lift(int i) { return new Lift(signature, lift + i); }
     @Override public @NotNull SeqView<String> namesView() { return signature.namesView(); }
