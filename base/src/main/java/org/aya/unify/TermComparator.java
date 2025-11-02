@@ -208,8 +208,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (checkApproxResult(type, compareApprox(preLhs, preRhs)) == Decision.YES) return Decision.YES;
     failure = null;
 
-    @Closed var lhs = whnf(preLhs);
-    @Closed var rhs = whnf(preRhs);
+    var lhs = whnf(preLhs);
+    var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs) &&
       checkApproxResult(type, compareApprox(lhs, rhs)) == Decision.YES) return Decision.YES;
 
@@ -334,15 +334,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   /// @return the head-normalized type of {@param preLhs} and {@param preRhs} if they are _the same_
   private @Closed @NotNull RelDec<Term> compareUntyped(@Closed @NotNull Term preLhs, @Closed @NotNull Term preRhs) {
     {
-      @Closed var result = compareApprox(preLhs, preRhs);
+      var result = compareApprox(preLhs, preRhs);
       if (result.isYes()) return RelDec.of(whnf(result.get()));
       failure = null;
     }
 
-    @Closed var lhs = whnf(preLhs);
-    @Closed var rhs = whnf(preRhs);
+    var lhs = whnf(preLhs);
+    var rhs = whnf(preRhs);
     if (!(lhs == preLhs && rhs == preRhs)) {
-      @Closed var result = compareCalls(lhs, rhs);
+      var result = compareCalls(lhs, rhs);
       if (result.isYes()) return RelDec.of(whnf(result.get()));
     }
 
