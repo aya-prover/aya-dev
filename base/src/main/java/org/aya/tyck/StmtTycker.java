@@ -187,8 +187,10 @@ public record StmtTycker(
       case DataCon _, PrimDecl _, ClassMember _ -> predecl.ref().core;
       case ClassDecl clazz -> {
         for (var member : clazz.members) checkHeader(member);
+        // TODO: report error on multiple classifying members
+        int classifyingIndex = clazz.members.indexWhere(classMember -> classMember.isClassifying != null);
         // TODO: store signature here?
-        yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core));
+        yield new ClassDef(clazz.ref, clazz.members.map(member -> member.ref.core), classifyingIndex);
       }
       case DataDecl data -> {
         assert data.ref.signature != null;

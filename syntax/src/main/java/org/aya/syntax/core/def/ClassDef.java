@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ClassDef(
   @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
-  @NotNull ImmutableSeq<MemberDef> members
+  @NotNull ImmutableSeq<MemberDef> members,
+  int classifyingIndex
 ) implements TopLevelDef {
   public ClassDef { ref.initialize(this); }
   public static final class Delegate extends TyckAnyDef<ClassDef> implements ClassDefLike {

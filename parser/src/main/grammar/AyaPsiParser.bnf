@@ -84,9 +84,9 @@
     KW_DATA = 'inductive'
     KW_PRIM = 'prim'
     KW_EXTENDS = 'extends'
+    KW_CLASSIFIYING = 'classifying'
 
     // Unimplemented but reserved
-    KW_CLASSIFIYING = 'classifying'
     KW_SELF = 'self'
     KW_OVERRIDE = 'override'
     KW_CODATA = 'coinductive'
