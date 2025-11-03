@@ -300,7 +300,14 @@ public class CorePrettier extends BasePrettier<Term> {
               Doc.nest(2, visitClauses(body.matchingsView(), def.telescope().view().map(Param::explicit))));
           });
       }
-      case MemberDef field -> visitMember(defVar(field.ref()), TyckDef.defSignature(field));
+      case MemberDef field -> {
+        var isClassifying = false;
+        var classCore = field.classRef().core;
+        if (classCore != null && classCore.classifyingIndex() != -1) {
+          isClassifying = field.equals(classCore.classifyingField());
+        }
+        yield visitMember(defVar(field.ref()), isClassifying, TyckDef.defSignature(field));
+      }
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
       case ClassDef def -> visitClass(defVar(def.ref()), def.members().view().map(this::def));
       case DataDef def -> visitData(new DataDef.Delegate(def.ref()));
@@ -338,7 +345,13 @@ public class CorePrettier extends BasePrettier<Term> {
         yield Doc.sep(BAR, wholeClause);
       }
       case JitData jitData -> visitData(jitData);
-      case JitMember jitMember -> visitMember(nameDoc, jitMember);
+      case JitMember jitMember -> {
+        var isClassifying = false;
+        if (jitMember.classRef.classifyingIndex() != -1) {
+          isClassifying = jitMember.equals(jitMember.classRef.classifyingField());
+        }
+        yield visitMember(nameDoc, isClassifying, jitMember);
+      }
       case JitClass jitClass -> visitClass(nameDoc, jitClass.members().view().map(this::def));
       case JitPrim _ -> primDoc(dummyVar);
     };
@@ -410,16 +423,19 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
-  private @NotNull Doc visitMember(@NotNull Doc name, @NotNull AbstractTele telescope) {
+  private @NotNull Doc visitMember(@NotNull Doc name, boolean isClassifying, @NotNull AbstractTele telescope) {
     // TODO: should we pretty print the `self` parameter?
     //       The use of `self` parameter still appears in other parameters.
     var visitTele = visitTele(telescope);
+    var list = MutableList.of(BAR);
+    if (isClassifying) list.append(KW_CLASSIFYING);
+    list.appendAll(name, visitTele.tele, HAS_TYPE, visitTele.result.get());
 
-    return Doc.sepNonEmpty(BAR, name, visitTele.tele, HAS_TYPE, visitTele.result.get());
+    return Doc.sepNonEmpty(list);
   }
 
   private @NotNull Doc visitClass(@NotNull Doc name, @NotNull SeqView<Doc> members) {
-    return Doc.sepNonEmpty(KW_CLASS, name, Doc.nest(2, Doc.vcat(members)));
+    return Doc.vcat(Doc.sepNonEmpty(KW_CLASS, name), Doc.nest(2, Doc.vcat(members)));
   }
 
   public @NotNull Doc visitClauseLhs(@NotNull ImmutableSeq<Pat> patterns, @NotNull SeqView<Boolean> licits) {

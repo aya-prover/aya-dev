@@ -28,6 +28,10 @@ public record ClassDef(
   int classifyingIndex
 ) implements TopLevelDef {
   public ClassDef { ref.initialize(this); }
+  public @NotNull MemberDef classifyingField() {
+    assert classifyingIndex != -1;
+    return members.get(classifyingIndex);
+  }
   public static final class Delegate extends TyckAnyDef<ClassDef> implements ClassDefLike {
     private final @NotNull LazyValue<ImmutableSeq<MemberDef.Delegate>> members = LazyValue.of(() ->
       core().members.map(x -> new MemberDef.Delegate(x.ref())));

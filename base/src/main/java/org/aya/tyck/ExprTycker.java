@@ -339,9 +339,8 @@ public final class ExprTycker extends ScopedTycker {
         if (!(result.type() instanceof SortTerm)) {
           if (whnf(result.type()) instanceof ClassCall clazzCall &&
           clazzCall.ref().classifyingIndex() != -1) {
-            var classDef = clazzCall.ref();
             yield new MemberCall(result.wellTyped(),
-              classDef.classifyingField(), 0, ImmutableSeq.empty());
+              clazzCall.ref().classifyingField(), 0, ImmutableSeq.empty());
           }
 
           fail(BadTypeError.doNotLike(state, expr, result.type(),

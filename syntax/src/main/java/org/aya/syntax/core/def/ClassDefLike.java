@@ -14,7 +14,7 @@ public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.D
   int classifyingIndex();
 
   default @NotNull MemberDefLike classifyingField() {
-    assert classifyingIndex() > 0;
+    assert classifyingIndex() != -1;
     return members().get(classifyingIndex());
   }
 

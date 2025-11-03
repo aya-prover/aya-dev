@@ -40,6 +40,7 @@ public final class Tokens {
   public static final Doc KW_DEF = Doc.styled(KEYWORD, "def");
   public static final Doc KW_DATA = Doc.styled(KEYWORD, "inductive");
   public static final Doc KW_CLASS = Doc.styled(KEYWORD, "class");
+  public static final Doc KW_CLASSIFYING = Doc.styled(KEYWORD, "classifying");
   public static final Doc KW_NEW = Doc.styled(KEYWORD, "new");
   public static final Doc PAT_ABSURD = Doc.styled(KEYWORD, "()");
   public static final Doc KW_TIGHTER = Doc.styled(KEYWORD, "tighter");
