@@ -51,7 +51,7 @@ public record Synthesizer(
   }
 
   public @Closed @Nullable Term trySynth(@Closed @NotNull Term term) {
-    @Closed var result = synthesize(term);
+    var result = synthesize(term);
     return result == null ? null : whnf(result);
   }
 

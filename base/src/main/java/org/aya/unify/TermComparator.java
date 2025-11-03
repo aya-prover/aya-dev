@@ -371,7 +371,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (!(rhs instanceof AppTerm(var g, var b))) yield RelDec.no();
         var fTy = compareUntyped(f, g);
         if (!fTy.isYes()) yield fTy;
-        if (!(fTy.get() instanceof DepTypeTerm(var kk, @Closed var param, var body) && kk == DTKind.Pi))
+        if (!(fTy.get() instanceof DepTypeTerm(var kk, var param, var body) && kk == DTKind.Pi))
           yield RelDec.no();
         yield compare(a, b, param).toRelDec(() ->
           body.apply(a));
@@ -512,8 +512,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     var ret = Decision.YES;
 
     for (var i = 0; i < argsCum.length; ++i) {
-      @Closed var l = list.get(i);
-      @Closed var r = rist.get(i);
+      var l = list.get(i);
+      var r = rist.get(i);
       @Closed @Nullable var ty = types == null ? null : types.telescope(i, argsCum);
       ret = ret.lub(compare(l, r, ty));
       // If we have Yes, Yes, ..., Yes, Unsure, we shouldn't return unsure immediately
@@ -588,17 +588,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
       case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
-      case Pair(
-        DepTypeTerm(var lK, var lParam, var lBody),
-        DepTypeTerm(var rK, @Closed var rParam, @Closed var rBody)
-      ) -> lK == rK
+      case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) -> lK == rK
         ? compareTypeWith(lParam, rParam, () -> Decision.NO, var ->
         compare(lBody.apply(var), rBody.apply(var), null))
         : Decision.NO;
-      case Pair(SortTerm lhs, @Closed SortTerm rhs) -> compareSort(lhs, rhs);
-      case Pair(
-        EqTerm(var A, var a0, var a1), EqTerm(@Closed var B, @Closed var b0, @Closed var b1)
-      ) -> {
+      case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
+      case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = Decision.YES;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
           var var = scope.var();
@@ -609,10 +604,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
-      case Pair(
-        PartialTyTerm(var lhs1, var rhs1, var A1),
-        PartialTyTerm(@Closed var lhs2, @Closed var rhs2, @Closed var A2)
-      ) -> {
+      case Pair(PartialTyTerm(var lhs1, var rhs1, var A1), PartialTyTerm(var lhs2, var rhs2, var A2)) -> {
         var wl2 = whnf(lhs2);
         var wr2 = whnf(rhs2);
         if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield Decision.NO;
@@ -649,7 +641,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   /** Maybe you're looking for {@link #compare} or {@link TyckState#solveEqn} instead. */
-  @ApiStatus.Internal public @NotNull Decision checkEqn(@NotNull TyckState.Eqn eqn) {
+  @ApiStatus.Internal public @NotNull Decision checkEqn(@Closed @NotNull TyckState.Eqn eqn) {
     if (state.solutions.containsKey(eqn.lhs().ref()))
       return compare(eqn.lhs(), eqn.rhs(), eqn.type());
     else return solveMeta(eqn.lhs(), eqn.rhs(), eqn.type()).downgrade();

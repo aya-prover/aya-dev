@@ -148,8 +148,7 @@ public record CallResolver(
     this.currentClause.set(matching);
     var vars = Pat.collectVariables(matching.patterns().view()).component1();
     // all binding of body is insted.
-    var erase = matching.body().instTeleVar(vars.view());
-    @Closed var instedBody = erase;
+    @Closed var instedBody = matching.body().instTeleVar(vars.view());
 
     visitTerm(instedBody);
     this.currentClause.set(null);

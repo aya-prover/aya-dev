@@ -170,13 +170,11 @@ public record StmtTycker(
 
             if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
               switch (def.body()) {
-                case Either.Right<Term, FnClauseBody>(var v) -> {
-                  v.clauses = v.clauses.map(w -> {
-                    var match = w.data();
-                    var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
-                    return w.update(match.update(term));
-                  });
-                }
+                case Either.Right<Term, FnClauseBody>(var v) -> v.clauses = v.clauses.map(w -> {
+                  var match = w.data();
+                  var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
+                  return w.update(match.update(term));
+                });
                 case Either.Left<Term, FnClauseBody> _ -> Panic.unreachable();
               }
             }
@@ -345,10 +343,10 @@ public record StmtTycker(
       selfTelePos = selfTelePos.appendedAll(ImmutableSeq.fill(pusheenResult.params().size(), conTy.sourcePos()));
 
       selfBinds = selfBinds.appendedAll(pusheenResult.names());
-      @Closed var tyResult = tycker.whnf(pusheenResult.body());
+      var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
-        @Closed FreeTerm fresh = new FreeTerm("i");
+        FreeTerm fresh = new FreeTerm("i");
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
@@ -369,7 +367,7 @@ public record StmtTycker(
     // the path result may also refer to it, so we need to bind both
     var zonker = new Finalizer.Zonk<>(tycker);
     // lives in `Gamma = [tycker.localCtx()]` and `Delta = [selfBinds]`
-    @Bound DataCall boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
+    var boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
     if (boundaries != null) boundaries = (EqTerm) zonker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
 

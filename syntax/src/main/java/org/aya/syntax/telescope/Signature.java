@@ -41,7 +41,7 @@ public record Signature(@Closed @NotNull AbstractTele.Locns telescope, @NotNull 
   public @NotNull Signature pusheen(UnaryOperator<@Closed Term> pre) {
     var vars = params().mapTo(MutableList.create(), p -> new LocalVar(p.name()));
     // Always true, Signature is holds that property.
-    @Closed Term instResult = result(vars.view());
+    var instResult = result(vars.view());
     var resultPushed = DepTypeTerm.unpiAndBind(instResult, pre, vars);
     @Closed AbstractTele.Locns tele = new AbstractTele.Locns(
       params().appendedAll(resultPushed.params().view()),

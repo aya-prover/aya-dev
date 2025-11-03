@@ -129,12 +129,12 @@ public class PatternTycker implements Problematic, Stateful {
       }
       case Pattern.Tuple(var l, var r) -> {
         if (!(exprTycker.whnf(type) instanceof DepTypeTerm(
-          var kind, @Closed var lT, @Closed var rT
+          var kind, var lT, var rT
         ) && kind == DTKind.Sigma)) {
           var frozen = freezeHoles(type);
           yield withError(new PatternProblem.TupleNonSig(pattern, this, frozen), frozen);
         }
-        @Closed var lhs = doTyck(l, lT);
+        var lhs = doTyck(l, lT);
         yield new Pat.Tuple(lhs, doTyck(r, rT.apply(PatToTerm.accept(lhs))));
       }
       case Pattern.Con con -> {
@@ -204,7 +204,7 @@ public class PatternTycker implements Problematic, Stateful {
         yield withError(new PatternProblem.BadLitPattern(pattern, ty), ty);
       }
       case Pattern.As(var inner, var as, var typeRef) -> {
-        @Closed var innerPat = doTyck(inner, type);
+        var innerPat = doTyck(inner, type);
 
         typeRef.set(type);
         addAsSubst(as, innerPat, type);
@@ -450,7 +450,7 @@ public class PatternTycker implements Problematic, Stateful {
   ) { }
 
   private @Nullable ConCallLike.Head makeSureEmpty(@Closed @NotNull Term type, @NotNull WithPos<Pattern> pattern) {
-    if (!(exprTycker.whnf(type) instanceof @Closed DataCall dataCall)) {
+    if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }
@@ -475,7 +475,7 @@ public class PatternTycker implements Problematic, Stateful {
   }
 
   private @Nullable Selection makeSureAvail(@Closed Term type, @NotNull ConDefLike name, @NotNull WithPos<Pattern> pattern) {
-    if (!(exprTycker.whnf(type) instanceof @Closed DataCall dataCall)) {
+    if (!(exprTycker.whnf(type) instanceof DataCall dataCall)) {
       foundError(new PatternProblem.SplittingOnNonData(pattern, type));
       return null;
     }

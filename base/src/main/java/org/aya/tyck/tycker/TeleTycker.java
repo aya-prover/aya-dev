@@ -138,7 +138,7 @@ public sealed interface TeleTycker {
 
   record Con(@NotNull ExprTycker tycker, @NotNull SortTerm dataResult) implements Impl {
     @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
-      @Closed var result = tycker.ty(typeExpr);
+      var result = tycker.ty(typeExpr);
       if (!new Synthesizer(tycker).inheritPiDom(result, dataResult)) {
         tycker.fail(new UnifyError.PiDom(typeExpr.data(), typeExpr.sourcePos(), result, dataResult));
       }
