@@ -15,6 +15,8 @@ import org.aya.syntax.core.def.ClassDef;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.constant.ConstantDescs;
+
 public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   public ClassSerializer(ModuleSerializer.@NotNull MatchyRecorder recorder) {
     super(JitClass.class, recorder);
@@ -44,10 +46,18 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   }
 
   @Override public @NotNull ClassSerializer serialize(@NotNull AstClassBuilder builder, ClassDef unit) {
-    buildFramework(builder, unit, builder0 -> builder0.buildMethod(
-      JavaUtil.fromClass(JitMember.class).arrayType(), "membars", false,
-      ImmutableSeq.empty(),
-      (_, cb) -> buildMembers(cb, unit)));
+    buildFramework(builder, unit, builder0 -> {
+      builder0.buildMethod(
+        JavaUtil.fromClass(JitMember.class).arrayType(), "membars", false,
+        ImmutableSeq.empty(),
+        (_, cb) -> buildMembers(cb, unit));
+      if (unit.classifyingIndex() != -1) {
+        builder0.buildMethod(
+          ConstantDescs.CD_int, "classifyingIndex", false,
+          ImmutableSeq.empty(),
+          (_, cb) -> cb.returnWith(cb.bindExpr(new AstExpr.Iconst(unit.classifyingIndex()))));
+      }
+    });
 
     return this;
   }

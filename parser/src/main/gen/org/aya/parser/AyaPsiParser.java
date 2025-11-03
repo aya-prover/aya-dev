@@ -1477,14 +1477,12 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
-  public static boolean memberModifier(PsiBuilder b, int l) {
+  static boolean memberModifier(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "memberModifier")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, MEMBER_MODIFIER, "<member modifier>");
     r = consumeToken(b, KW_CLASSIFIYING);
     if (!r) r = consumeToken(b, KW_OVERRIDE);
     if (!r) r = consumeToken(b, KW_COERCE);
-    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

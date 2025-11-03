@@ -11,6 +11,12 @@ import org.jetbrains.annotations.NotNull;
 
 public sealed interface ClassDefLike extends AnyDef permits JitClass, ClassDef.Delegate {
   @NotNull ImmutableSeq<? extends MemberDefLike> members();
+  int classifyingIndex();
+
+  default @NotNull MemberDefLike classifyingField() {
+    assert classifyingIndex() != -1;
+    return members().get(classifyingIndex());
+  }
 
   default @NotNull Term telescope(int i, @NotNull Seq<Term> restriction) {
     var member = members().get(i);

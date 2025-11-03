@@ -24,14 +24,20 @@ import org.jetbrains.annotations.NotNull;
  */
 public record ClassDef(
   @Override @NotNull DefVar<ClassDef, ClassDecl> ref,
-  @NotNull ImmutableSeq<MemberDef> members
+  @NotNull ImmutableSeq<MemberDef> members,
+  int classifyingIndex
 ) implements TopLevelDef {
   public ClassDef { ref.initialize(this); }
+  public @NotNull MemberDef classifyingField() {
+    assert classifyingIndex != -1;
+    return members.get(classifyingIndex);
+  }
   public static final class Delegate extends TyckAnyDef<ClassDef> implements ClassDefLike {
     private final @NotNull LazyValue<ImmutableSeq<MemberDef.Delegate>> members = LazyValue.of(() ->
       core().members.map(x -> new MemberDef.Delegate(x.ref())));
 
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
     @Override public @NotNull ImmutableSeq<MemberDef.Delegate> members() { return members.get(); }
+    @Override public int classifyingIndex() { return ref.core.classifyingIndex; }
   }
 }

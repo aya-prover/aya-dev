@@ -435,10 +435,12 @@ public record AyaProducer(
     var info = declInfo(node, ModifierParser.SUBDECL_FILTER);
     var name = info.checkName(this);
     if (name == null) return unreachable(node);
+    var classifying = node.peekChild(KW_CLASSIFIYING);
     return new ClassMember(
       name, info.info,
       telescope(node.childrenOfType(TELE)),
-      typeOrHole(node.peekChild(TYPE), info.info.nameSourcePos()));
+      typeOrHole(node.peekChild(TYPE), info.info.nameSourcePos()),
+      classifying == null ? null : sourcePosOf(classifying));
   }
 
   private <T> @Nullable T error(@NotNull GenericNode<?> node, @NotNull String message) {

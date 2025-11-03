@@ -41,4 +41,25 @@ public class PrettierTest {
         | S _ => 0
       }""", fnSwap.easyToString());
   }
+
+  @Test public void basicClasses() {
+    var result = TyckTest.tyck("""
+      open class Mon
+      | classifying car : Type
+      | infix + : car -> car -> car
+
+      def times2 {A : Mon} (a : A) => a + a
+      """);
+
+    var classMon = result.find("Mon");
+    var fnTimes2 = result.find("times2");
+
+    assertEquals("""
+      class Mon
+        | classifying car {self : Mon} : Type 0
+        | + {self : Mon} (a0 a1 : self.car) : self.car""",
+      classMon.easyToString());
+
+    assertEquals("def times2 {A : Mon} (a : A.car) : A.car => A.+ a a", fnTimes2.easyToString());
+  }
 }

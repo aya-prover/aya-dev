@@ -1,7 +1,7 @@
 open import prelude
 
 class Kontainer
-| Taipe : Type
+| classifying Taipe : Type
 | walue : Taipe
 
 def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
@@ -21,3 +21,5 @@ def projTest (a : Kontainer) => Kontainer::walue
 
 def letTest (f : Nat -> Kontainer) =>
   let instance x := f 0 in Kontainer::Taipe
+
+def classifyingTest {A : Kontainer} (a : A) => a
