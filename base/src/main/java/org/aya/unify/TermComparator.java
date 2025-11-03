@@ -171,7 +171,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(IntegerTerm lInt, IntegerTerm rInt) ->
         lInt.repr() == rInt.repr() ? RelDec.of(lInt.type()) : RelDec.no();
       case Pair(ConCallLike lCon, ConCallLike rCon) -> compareCallApprox(lCon, rCon);
-      case Pair(@Closed MemberCall lMem, @Closed MemberCall rMem) -> {
+      case Pair(MemberCall lMem, MemberCall rMem) -> {
         if (!lMem.ref().equals(rMem.ref())) yield RelDec.no();
         var result = compare(lMem.of(), rMem.of(), null);
         yield result.lubRelDec(() ->
@@ -282,7 +282,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         });
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(@Closed var lbody), LamTerm(@Closed var rbody)) -> {
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
           try (var scope = subscope(DimTyTerm.INSTANCE)) {
             var var = scope.var();
             yield compare(
@@ -292,12 +292,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
             );
           }
         }
-        case Pair(@Closed LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
-        case Pair(_, @Closed LamTerm rambda) -> compareLambda(rambda, lhs, eq);
+        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
+        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
         default -> compare(lhs, rhs, null);
       };
       case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
-        case Pair(LamTerm(@Closed var lbody), LamTerm(@Closed var rbody)) -> {
+        case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
           try (var scope = subscope(pi.param())) {
             var var = scope.var();
             yield compare(
@@ -307,14 +307,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
             );
           }
         }
-        case Pair(@Closed LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
-        case Pair(_, @Closed LamTerm rambda) -> compareLambda(rambda, lhs, pi);
+        case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
+        case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
         default -> compare(lhs, rhs, null);
       };
       // Sigma types
       case DepTypeTerm(_, var lTy, var rTy) -> {
-        @Closed var lProj = ProjTerm.fst(lhs);
-        @Closed var rProj = ProjTerm.fst(rhs);
+        var lProj = ProjTerm.fst(lhs);
+        var rProj = ProjTerm.fst(rhs);
         yield compare(lProj, rProj, lTy).lub(() ->
           compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj)));
       }
@@ -431,7 +431,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           yield result.toRelDec(list.type());
         }
         case ConCall rCon -> {
-          @Closed var conForm = list.constructorForm();
+          var conForm = list.constructorForm();
           yield compareUntyped(conForm, rCon);
         }
         default -> RelDec.no();
@@ -439,7 +439,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       // fallback case
       case ConCallLike lCon -> switch (rhs) {
         case ListTerm rList -> {
-          @Closed var conForm = rList.constructorForm();
+          var conForm = rList.constructorForm();
           yield compareUntyped(lhs, conForm);
         }
         case ConCallLike rCon -> compareCallApprox(lCon, rCon);
@@ -589,15 +589,15 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
       case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
       case Pair(
-        DepTypeTerm(var lK, @Closed var lParam, @Closed var lBody),
+        DepTypeTerm(var lK, var lParam, var lBody),
         DepTypeTerm(var rK, @Closed var rParam, @Closed var rBody)
       ) -> lK == rK
         ? compareTypeWith(lParam, rParam, () -> Decision.NO, var ->
         compare(lBody.apply(var), rBody.apply(var), null))
         : Decision.NO;
-      case Pair(@Closed SortTerm lhs, @Closed SortTerm rhs) -> compareSort(lhs, rhs);
+      case Pair(SortTerm lhs, @Closed SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(
-        EqTerm(@Closed var A, @Closed var a0, @Closed var a1), EqTerm(@Closed var B, @Closed var b0, @Closed var b1)
+        EqTerm(var A, var a0, var a1), EqTerm(@Closed var B, @Closed var b0, @Closed var b1)
       ) -> {
         var tyResult = Decision.YES;
         try (var scope = subscope(DimTyTerm.INSTANCE)) {
@@ -610,11 +610,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
       case Pair(
-        PartialTyTerm(@Closed var lhs1, @Closed var rhs1, @Closed var A1),
+        PartialTyTerm(var lhs1, var rhs1, var A1),
         PartialTyTerm(@Closed var lhs2, @Closed var rhs2, @Closed var A2)
       ) -> {
-        @Closed var wl2 = whnf(lhs2);
-        @Closed var wr2 = whnf(rhs2);
+        var wl2 = whnf(lhs2);
+        var wr2 = whnf(rhs2);
         if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield Decision.NO;
         yield withConnection(wl2, wr2, () -> compare(A1, A2, null));
       }
