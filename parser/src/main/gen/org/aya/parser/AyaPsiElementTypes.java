@@ -72,7 +72,6 @@ public interface AyaPsiElementTypes {
   IElementType MATCH_DISCR = new AyaPsiElementType("MATCH_DISCR");
   IElementType MATCH_EXPR = new AyaPsiElementType("MATCH_EXPR");
   IElementType MATCH_TYPE = new AyaPsiElementType("MATCH_TYPE");
-  IElementType MEMBER_MODIFIER = new AyaPsiElementType("MEMBER_MODIFIER");
   IElementType MODULE = new AyaPsiElementType("MODULE");
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
   IElementType NEW_EXPR = new AyaPsiElementType("NEW_EXPR");

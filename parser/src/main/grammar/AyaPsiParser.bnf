@@ -233,7 +233,7 @@ classDecl
       bindBlock?
       (BAR classMember)*
 
-memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
+private memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
 classMember
   ::= memberModifier* declNameOrInfix tele* type? IMPLIES expr bindBlock?
     | memberModifier* declNameOrInfix tele* type               bindBlock? {

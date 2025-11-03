@@ -23,10 +23,7 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.core.term.*;
-import org.aya.syntax.core.term.call.ClassCall;
-import org.aya.syntax.core.term.call.DataCall;
-import org.aya.syntax.core.term.call.MatchCall;
-import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
@@ -340,6 +337,13 @@ public final class ExprTycker extends ScopedTycker {
       default -> {
         var result = synthesize(expr);
         if (!(result.type() instanceof SortTerm)) {
+          if (whnf(result.type()) instanceof ClassCall clazzCall &&
+          clazzCall.ref().classifyingIndex() != -1) {
+            var classDef = clazzCall.ref();
+            yield new MemberCall(result.wellTyped(),
+              classDef.classifyingField(), 0, ImmutableSeq.empty());
+          }
+
           fail(BadTypeError.doNotLike(state, expr, result.type(),
             _ -> Doc.plain("type")));
           yield new ErrorTerm(expr.data());

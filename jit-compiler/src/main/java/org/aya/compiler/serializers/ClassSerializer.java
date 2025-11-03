@@ -53,7 +53,10 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, ClassDef unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
-      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
+    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) -> {
+      cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty());
+      // TODO:
+      // cb.updateField();
+    });
   }
 }

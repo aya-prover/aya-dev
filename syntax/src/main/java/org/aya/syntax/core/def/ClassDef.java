@@ -34,5 +34,6 @@ public record ClassDef(
 
     public Delegate(@NotNull DefVar<ClassDef, ?> ref) { super(ref); }
     @Override public @NotNull ImmutableSeq<MemberDef.Delegate> members() { return members.get(); }
+    @Override public int classifyingIndex() { return ref.core.classifyingIndex; }
   }
 }

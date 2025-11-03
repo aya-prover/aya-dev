@@ -12,17 +12,18 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract non-sealed class JitClass extends JitDef implements ClassDefLike {
   protected JitMember @Nullable [] members = null;
+  protected int classifyingIndex = -1;
 
   protected JitClass() {
     super();
   }
 
+  @Override public int classifyingIndex() { return classifyingIndex; }
   public abstract @NotNull JitMember[] membars();
 
   @Override public final @NotNull ImmutableSeq<JitMember> members() {
     return ImmutableArray.Unsafe.wrap(membars());
   }
 
-  @Override
-  public @NotNull JitTele signature() { return Panic.unreachable(); }
+  @Override public @NotNull JitTele signature() { return Panic.unreachable(); }
 }
