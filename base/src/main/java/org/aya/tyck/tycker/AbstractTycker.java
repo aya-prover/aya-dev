@@ -6,6 +6,7 @@ import kala.value.LazyValue;
 import org.aya.generic.Renamer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
@@ -41,7 +42,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   @Override public @NotNull TyckState state() { return state; }
   @Override public @NotNull Reporter reporter() { return reporter; }
 
-  public @NotNull Jdg.Lazy lazyJdg(@NotNull Term wellTyped) {
+  public @NotNull Jdg.Lazy lazyJdg(@Closed @NotNull Term wellTyped) {
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }

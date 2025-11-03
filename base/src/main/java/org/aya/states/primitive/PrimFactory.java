@@ -12,6 +12,7 @@ import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.*;
@@ -52,7 +53,7 @@ public class PrimFactory {
   }
 
   @FunctionalInterface
-  public interface Unfolder extends BiFunction<@NotNull PrimCall, @NotNull TyckState, @NotNull Term> { }
+  public interface Unfolder extends BiFunction<@Closed @NotNull PrimCall, @NotNull TyckState, @Closed @NotNull Term> { }
 
   public record PrimSeed(
     @NotNull ID name,
@@ -66,7 +67,8 @@ public class PrimFactory {
   }
 
   final @NotNull PrimSeed coe = new PrimSeed(ID.COE, (prim, _) -> {
-    var args = prim.args();
+    // cause prim is Closed
+    @Closed var args = prim.args();
     return new CoeTerm(closureParam(args.get(2)), args.get(0), args.get(1));
   }, ref -> {
     // coe (r s : I) (A : I -> Type) : A r -> A s
@@ -86,17 +88,18 @@ public class PrimFactory {
   }, ImmutableSeq.of(ID.I));
 
   final @NotNull PrimSeed pathType = new PrimSeed(ID.PATH, (prim, _) -> {
-    var args = prim.args();
+    // cause prim is Closed
+    @Closed var args = prim.args();
     return new EqTerm(closureParam(args.get(0)), args.get(1), args.get(2));
   }, ref -> {
     // (A : I -> Type) (a : A 0) (b : A 1) : Type
     var paramA = new Param("A", intervalToType, true);
-    var paramLeft = new Param("a", AppTerm.make(new LocalTerm(0), DimTerm.I0), true);
-    var paramRight = new Param("b", AppTerm.make(new LocalTerm(1), DimTerm.I1), true);
+    var paramLeft = new Param("a", new AppTerm(new LocalTerm(0), DimTerm.I0), true);
+    var paramRight = new Param("b", new AppTerm(new LocalTerm(1), DimTerm.I1), true);
     return new PrimDef(ref, ImmutableSeq.of(paramA, paramLeft, paramRight), Type0, ID.PATH);
   }, ImmutableSeq.of(ID.I));
 
-  private static @NotNull Closure closureParam(@NotNull Term term) {
+  private static @Closed @NotNull Closure closureParam(@Closed @NotNull Term term) {
     var var = LocalVar.generate("disappearing");
     return AppTerm.make(term, new FreeTerm(var)).bind(var);
   }
@@ -116,7 +119,7 @@ public class PrimFactory {
       ID.STRCONCAT
     ), ImmutableSeq.of(ID.STRING));
 
-  private static @NotNull Term concat(@NotNull PrimCall prim, @NotNull TyckState state) {
+  private static @NotNull Term concat(@Closed @NotNull PrimCall prim, @NotNull TyckState state) {
     var norm = new Normalizer(state);
     var first = norm.apply(prim.args().get(0));
     var second = norm.apply(prim.args().get(1));
@@ -128,7 +131,7 @@ public class PrimFactory {
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
 
-  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, state) -> {
+  final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL, (prim, _) -> {
     var r = prim.args().get(0);
     var s = prim.args().get(1);
     var A = prim.args().get(2);
@@ -219,7 +222,7 @@ public class PrimFactory {
     return seeds.getOption(name).map(seed -> seed.dependency().filterNot(this::have));
   }
 
-  public @NotNull Term unfold(@NotNull PrimCall primCall, @NotNull TyckState state) {
+  public @NotNull Term unfold(@Closed @NotNull PrimCall primCall, @NotNull TyckState state) {
     var id = primCall.ref().id();
     return seeds.get(id).unfold.apply(primCall, state);
   }

@@ -116,10 +116,14 @@ public record AppTycker<Ex extends Exception>(
   }
   private @NotNull Jdg checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
-      state.primFactory.unfold(new PrimCall(primVar, 0, ImmutableArray.from(args)), state),
-      signature.result(args)
-    ));
+    return makeArgs.applyChecked(signature, (args, _) -> {
+      // Closed cause [args] are Closed
+      @Closed var primCall = new PrimCall(primVar, 0, ImmutableArray.from(args));
+      return new Jdg.Default(
+        state.primFactory.unfold(primCall, state),
+        signature.result(args)
+      );
+    });
   }
   private @NotNull Jdg checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);

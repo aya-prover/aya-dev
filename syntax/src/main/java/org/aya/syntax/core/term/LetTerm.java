@@ -11,11 +11,12 @@ import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.BetaRedex;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
-public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements Term, BetaRedex {
+public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements Term, BetaRedex, BindingIntro {
   public @NotNull LetTerm update(@NotNull Term definedAs, @NotNull Closure body) {
     return definedAs == definedAs() && body == body()
       ? this

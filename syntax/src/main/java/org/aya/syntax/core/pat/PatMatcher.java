@@ -46,7 +46,7 @@ public abstract class PatMatcher extends MatcherBase {
   }
 
   private static @Closed @NotNull Term realSolution(@Closed @NotNull MetaPatTerm term) {
-    @Closed Pat pat = term.meta();
+    Pat pat = term.meta();
     while (pat instanceof Pat.@Closed Meta meta && meta.solution().get() instanceof Pat notNullPat)
       pat = notNullPat;
     return PatToTerm.visit(pat);
@@ -61,7 +61,7 @@ public abstract class PatMatcher extends MatcherBase {
     // this is why no scope problem, we don't use those foreign [Pat.Bind] directly, instead, we replace them with [Pat.Meta],
     // and make fresh [LocalVar] for them when inlined.
     var eater = new BindEater(matched.toSeq(), MutableList.create());
-    @Closed var boroboroPat = eater.apply(pat);   // It looks boroboro, there are holes on it.
+    var boroboroPat = eater.apply(pat);   // It looks boroboro, there are holes on it.
     // meta is still Closed after `set`
     meta.solution().set(boroboroPat);
 
@@ -72,7 +72,7 @@ public abstract class PatMatcher extends MatcherBase {
     public InferMeta(@NotNull UnaryOperator<Term> pre) { super(pre); }
     @Override
     protected void onMetaPat(@Bound @NotNull Pat pat, @Closed @NotNull MetaPatTerm term) throws MatcherBase.Failure {
-      @Closed var maybeMeta = realSolution(term);
+      var maybeMeta = realSolution(term);
       if (maybeMeta instanceof MetaPatTerm(var meta)) {
         var bindsMetas = doSolveMeta(pat, meta);
         bindsMetas.forEach(this::onMatchBind);

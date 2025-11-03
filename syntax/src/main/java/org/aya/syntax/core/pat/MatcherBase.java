@@ -43,17 +43,17 @@ public abstract class MatcherBase {
             matchMany(con.args(), kon.conArgs());
             // ^ arguments for data should not be matched
           }
-          case @Closed MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
+          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
       case Pat.Tuple(@Closed var l, @Closed var r) -> {
         switch (pre.apply(term)) {
-          case TupTerm(@Closed var ll, @Closed var rr) -> {
+          case TupTerm(var ll, var rr) -> {
             match(l, ll);
             match(r, rr);
           }
-          case @Closed MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
+          case MetaPatTerm metaPatTerm -> onMetaPat(pat, metaPatTerm);
           default -> throw new Failure(State.Stuck);
         }
       }
@@ -64,10 +64,10 @@ public abstract class MatcherBase {
           case IntegerTerm rit -> {
             if (lit.repr() != rit.repr()) throw new Failure(State.Mismatch);
           }
-          case @Closed ConCall con -> match(lit.constructorForm(), con);
+          case ConCall con -> match(lit.constructorForm(), con);
           // we only need to handle matching both literals, otherwise we just rematch it
           // with constructor form to reuse the code as much as possible (like solving MetaPats).
-          case @Closed Term t -> match(lit.constructorForm(), t);
+          case Term t -> match(lit.constructorForm(), t);
         }
       }
     }

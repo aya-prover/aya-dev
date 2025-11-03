@@ -6,6 +6,7 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * <code>PathP (x. A) a b</code>
  */
-public record EqTerm(Closure A, Term a, Term b) implements Formation, StableWHNF {
+public record EqTerm(Closure A, Term a, Term b) implements Formation, StableWHNF, BindingIntro {
   public @NotNull EqTerm update(Closure A, Term a, Term b) {
     if (this.A == A && this.a == a && this.b == b) return this;
     return new EqTerm(A, a, b);

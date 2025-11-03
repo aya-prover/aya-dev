@@ -170,13 +170,11 @@ public record StmtTycker(
 
             if (fnDecl.modifiers.contains(Modifier.Tailrec)) {
               switch (def.body()) {
-                case Either.Right<Term, FnClauseBody>(var v) -> {
-                  v.clauses = v.clauses.map(w -> {
-                    var match = w.data();
-                    var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
-                    return w.update(match.update(term));
-                  });
-                }
+                case Either.Right<Term, FnClauseBody>(var v) -> v.clauses = v.clauses.map(w -> {
+                  var match = w.data();
+                  var term = TailRecChecker.assertTailRec(this, match.body(), fnDecl);
+                  return w.update(match.update(term));
+                });
                 case Either.Left<Term, FnClauseBody> _ -> Panic.unreachable();
               }
             }
@@ -348,7 +346,7 @@ public record StmtTycker(
       var tyResult = tycker.whnf(pusheenResult.body());
       if (tyResult instanceof EqTerm eq) {
         var state = tycker.state;
-        @Closed FreeTerm fresh = new FreeTerm("i");
+        FreeTerm fresh = new FreeTerm("i");
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
@@ -369,7 +367,7 @@ public record StmtTycker(
     // the path result may also refer to it, so we need to bind both
     var zonker = new Finalizer.Zonk<>(tycker);
     // lives in `Gamma = [tycker.localCtx()]` and `Delta = [selfBinds]`
-    @Bound DataCall boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
+    var boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
     if (boundaries != null) boundaries = (EqTerm) zonker.zonk(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
 
@@ -417,10 +415,11 @@ public record StmtTycker(
     }
     assert prim.result != null;
     var tele = teleTycker.checkSignature(prim.telescope, prim.result);
-    tycker.unifyTermReported(
-      DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result()),
-      // No checks, slightly faster than TeleDef.defType
-      DepTypeTerm.makePi(core.telescope().view().map(Param::type), core.result()),
+    // the following makePi are Closed cause [tele] and [core.telescope] are Closed
+    @Closed var lPi = DepTypeTerm.makePi(tele.params().view().map(Param::type), tele.result());
+    // No checks, slightly faster than TeleDef.defType
+    @Closed var rPi = DepTypeTerm.makePi(core.telescope().view().map(Param::type), core.result());
+    tycker.unifyTermReported(lPi, rPi,
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     var zonker = new Finalizer.Zonk<>(tycker);
