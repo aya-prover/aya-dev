@@ -12,10 +12,7 @@ public record UnsupportedMarkdown(
   @Override @NotNull SourcePos sourcePos,
   @NotNull String nodeName
 ) implements Problem {
-  @Override public @NotNull Severity level() {
-    return Severity.WARN;
-  }
-
+  @Override public @NotNull Severity level() { return Severity.WARN; }
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     return Doc.english("Unsupported markdown syntax: " + nodeName + ".");
   }

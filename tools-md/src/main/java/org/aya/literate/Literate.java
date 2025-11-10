@@ -22,18 +22,13 @@ public interface Literate extends Docile {
 
   interface HasChild extends Literate {
     @NotNull ImmutableSeq<Literate> children();
-
-    @Override
-    default @NotNull SeqView<Literate> childrenView() {
+    @Override default @NotNull SeqView<Literate> childrenView() {
       return children().view();
     }
   }
 
   record Raw(@NotNull Doc toDoc) implements Literate {
-    @Override
-    public @NotNull SeqView<Literate> childrenView() {
-      return SeqView.empty();
-    }
+    @Override public @NotNull SeqView<Literate> childrenView() { return SeqView.empty(); }
   }
 
   @NotNull Raw EOL = new Raw(Doc.line());
@@ -47,10 +42,10 @@ public interface Literate extends Docile {
 
   record HyperLink(
     @NotNull String href, @Nullable String hover,
-    @NotNull ImmutableSeq<Literate> children
+    @Override @NotNull ImmutableSeq<Literate> children
   ) implements HasChild {
     @Override public @NotNull Doc toDoc() {
-      var child = Doc.cat(this.children().map(Literate::toDoc));
+      var child = Doc.cat(children.map(Literate::toDoc));
       return Doc.hyperLink(child, Link.page(href), hover);
     }
   }
@@ -72,24 +67,23 @@ public interface Literate extends Docile {
     }
   }
 
-  record Image(@NotNull String src, @NotNull ImmutableSeq<Literate> children) implements HasChild {
+  record Image(@NotNull String src, @Override @NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
-      var child = Doc.cat(this.children().map(Literate::toDoc));
+      var child = Doc.cat(children.map(Literate::toDoc));
       return Doc.image(child, Link.page(src));
     }
   }
 
-  record Math(boolean inline, @NotNull ImmutableSeq<Literate> children) implements HasChild {
-
+  record Math(boolean inline, @Override @NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
-      var child = Doc.cat(this.children().map(Literate::toDoc));
+      var child = Doc.cat(children.map(Literate::toDoc));
       return inline ? Doc.math(child) : Doc.mathBlock(child);
     }
   }
 
-  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements HasChild {
+  record Many(@Nullable Style style, @Override @NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
-      var child = Doc.cat(this.children().map(Literate::toDoc));
+      var child = Doc.cat(children.map(Literate::toDoc));
       return style == null ? child : Doc.styled(style, child);
     }
     @Override public @Nullable FrontMatter findFrontMatter() {
@@ -98,10 +92,7 @@ public interface Literate extends Docile {
   }
 
   record FrontMatter(@NotNull MutableList<Literate> children) implements Literate {
-    @Override
-    public @NotNull SeqView<Literate> childrenView() {
-      return children.view();
-    }
+    @Override public @NotNull SeqView<Literate> childrenView() { return children.view(); }
 
     @Override public @NotNull Doc toDoc() {
       return Doc.cat(this.children().map(Literate::toDoc));

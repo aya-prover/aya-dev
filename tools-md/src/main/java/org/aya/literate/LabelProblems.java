@@ -10,11 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface LabelProblems extends Problem {
   @NotNull String label();
-
-  @Override
-  default @NotNull Severity level() {
-    return Severity.WARN;
-  }
+  @Override default @NotNull Severity level() { return Severity.WARN; }
 
   record Redefinition(
     @Override @NotNull SourcePos sourcePos,
@@ -22,10 +18,8 @@ public interface LabelProblems extends Problem {
   ) implements LabelProblems {
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(
-        Doc.english("Redefinition of label"),
-        Doc.plain(label)
-      );
+      return Doc.sep(Doc.english("Redefinition of label"),
+        Doc.plain(label));
     }
   }
 
@@ -33,10 +27,8 @@ public interface LabelProblems extends Problem {
     @Override @NotNull SourcePos sourcePos,
     @Override @NotNull String label
   ) implements LabelProblems {
-    @Override
-    public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.sep(
-        Doc.english("Label"),
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.plain("Label"),
         Doc.plain(label),
         Doc.english("is undefined."));
     }
