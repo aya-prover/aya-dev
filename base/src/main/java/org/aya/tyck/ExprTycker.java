@@ -148,7 +148,7 @@ public final class ExprTycker extends ScopedTycker {
         && state.shapeFactory.find(dataCall.ref()).getOrNull() instanceof ShapeRecognition recog
         && recog.shape() == AyaShape.LIST_SHAPE -> {
         var arrayBlock = arr.arrayBlock().getRightValue();
-        @Closed var elementTy = dataCall.args().get(0);
+        var elementTy = dataCall.args().get(0);
         var results = ImmutableTreeSeq.from(arrayBlock.exprList().map(
           element -> inherit(element, elementTy).wellTyped()));
         yield new Jdg.Default(new ListTerm(results, recog, dataCall), type);
@@ -520,15 +520,20 @@ public final class ExprTycker extends ScopedTycker {
   ) {
     try {
       var result = doCheckApplication(sourcePos, f.var(), lift, args);
-      addWithTerm(f, sourcePos, result.type());
-      return result;
+      addWithTerm(f, sourcePos, result.headType);
+      return result.result;
     } catch (NotPi notPi) {
       var expr = new Expr.App(new WithPos<>(sourcePos, f), args);
       return fail(expr, BadTypeError.appOnNonPi(state, new WithPos<>(sourcePos, expr), notPi.actual));
     }
   }
 
-  private @NotNull Jdg doCheckApplication(
+  record DoCheckApp(
+    @NotNull Jdg result,
+    @NotNull Term headType
+  ) {}
+
+  private @NotNull DoCheckApp doCheckApplication(
     @NotNull SourcePos sourcePos, @NotNull AnyVar f,
     int lift, @NotNull ImmutableSeq<Expr.NamedArg> args
   ) throws NotPi {
@@ -540,11 +545,14 @@ public final class ExprTycker extends ScopedTycker {
           ? jdg.wellTyped()
           : new LetFreeTerm(ref, jdg);
         @Closed var start = new Jdg.Default(term, jdg.type());
-        yield ArgsComputer.generateApplication(this, args, start).lift(lift);
+        var result = ArgsComputer.generateApplication(this, args, start).lift(lift);
+        yield new DoCheckApp(result, jdg.type());
       }
       case LocalVar lVar -> {
-        @Closed var jdg = new Jdg.Default(new FreeTerm(lVar), localCtx().get(lVar));
-        yield ArgsComputer.generateApplication(this, args, jdg).lift(lift);
+        var headType = localCtx().get(lVar);
+        @Closed var jdg = new Jdg.Default(new FreeTerm(lVar), headType);
+        var result = ArgsComputer.generateApplication(this, args, jdg).lift(lift);
+        yield new DoCheckApp(result, headType);
       }
       case CompiledVar(var content) -> new AppTycker<>(this, sourcePos, args.size(), lift, (params, k) ->
         computeArgs(sourcePos, args, params, k)).checkCompiledApplication(content);
@@ -554,11 +562,13 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @NotNull Jdg computeArgs(
+  private @NotNull DoCheckApp computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
     @NotNull AbstractTele params, @NotNull BiFunction<Term[], @Nullable Term, Jdg> k
   ) throws NotPi {
-    return new ArgsComputer(this, pos, args, params).boot(k);
+    var argsComputer = new ArgsComputer(this, pos, args, params);
+    var result = argsComputer.boot(k);
+    return new DoCheckApp(result, argsComputer.headType());
   }
 
   /**

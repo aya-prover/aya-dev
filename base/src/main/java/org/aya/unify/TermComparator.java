@@ -278,7 +278,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           // l/r proj are closed since l/r hs are closed
           @Closed var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
           @Closed var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
-          return compare(lproj, rproj, ty.makePi(ImmutableSeq.empty()));
+          return compare(lproj, rproj, ty.makePi());
         });
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
