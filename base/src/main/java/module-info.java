@@ -2,6 +2,7 @@ module aya.base {
   requires transitive aya.syntax;
 
   requires static org.jetbrains.annotations;
+  requires kala.collection;
 
   // requires manifold.delegation.rt;
 

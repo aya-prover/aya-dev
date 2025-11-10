@@ -2,8 +2,11 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.literate;
 
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
+import kala.value.MutableValue;
 import org.aya.pretty.doc.*;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +19,32 @@ import org.jetbrains.annotations.Nullable;
 public interface Literate extends Docile {
   default @Nullable FrontMatter findFrontMatter() { return null; }
 
-  record Raw(@NotNull Doc toDoc) implements Literate { }
+  @NotNull SeqView<Literate> childrenView();
+
+  interface HasChild extends Literate {
+    @NotNull ImmutableSeq<Literate> children();
+
+    @Override
+    default @NotNull SeqView<Literate> childrenView() {
+      return children().view();
+    }
+  }
+
+  record Raw(@NotNull Doc toDoc) implements Literate {
+    @Override
+    public @NotNull SeqView<Literate> childrenView() {
+      return SeqView.empty();
+    }
+  }
+
   @NotNull Raw EOL = new Raw(Doc.line());
 
-  record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements Literate {
+  record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements HasChild {
+    @Override
+    public @NotNull ImmutableSeq<Literate> children() {
+      return items;
+    }
+
     @Override public @NotNull Doc toDoc() {
       return Doc.list(ordered, items.map(Literate::toDoc));
     }
@@ -28,28 +53,43 @@ public interface Literate extends Docile {
   record HyperLink(
     @NotNull String href, @Nullable String hover,
     @NotNull ImmutableSeq<Literate> children
-  ) implements Literate {
+  ) implements HasChild {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return Doc.hyperLink(child, Link.page(href), hover);
     }
   }
 
-  record Image(@NotNull String src, @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record LazyLink(
+    @NotNull String label, @NotNull ImmutableSeq<Literate> children, @NotNull MutableValue<String> href
+  ) implements HasChild {
+    public LazyLink(@NotNull String label, @NotNull ImmutableSeq<Literate> children) {
+      this(label, children, MutableValue.create());
+    }
+
+    @Override
+    public @NotNull Doc toDoc() {
+      var child = Doc.cat(children.map(Literate::toDoc));
+      return Doc.hyperLink(child, Link.page(href.get()), null);
+    }
+  }
+
+  record Image(@NotNull String src, @NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return Doc.image(child, Link.page(src));
     }
   }
 
-  record Math(boolean inline, @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record Math(boolean inline, @NotNull ImmutableSeq<Literate> children) implements HasChild {
+
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return inline ? Doc.math(child) : Doc.mathBlock(child);
     }
   }
 
-  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements Literate {
+  record Many(@Nullable Style style, @NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
       var child = Doc.cat(this.children().map(Literate::toDoc));
       return style == null ? child : Doc.styled(style, child);
@@ -60,9 +100,15 @@ public interface Literate extends Docile {
   }
 
   record FrontMatter(@NotNull MutableList<Literate> children) implements Literate {
+    @Override
+    public @NotNull SeqView<Literate> childrenView() {
+      return children.view();
+    }
+
     @Override public @NotNull Doc toDoc() {
       return Doc.cat(this.children().map(Literate::toDoc));
     }
+
     @Override public @NotNull FrontMatter findFrontMatter() { return this; }
   }
 
@@ -79,6 +125,11 @@ public interface Literate extends Docile {
     public InlineCode(@NotNull String code, @NotNull SourcePos sourcePos) {
       this.code = code;
       this.sourcePos = sourcePos;
+    }
+
+    @Override
+    public @NotNull SeqView<Literate> childrenView() {
+      return SeqView.empty();
     }
 
     @Override public @NotNull Doc toDoc() { return Doc.code(code); }
@@ -106,19 +157,29 @@ public interface Literate extends Docile {
       this.sourcePos = sourcePos;
     }
 
+    @Override
+    public @NotNull SeqView<Literate> childrenView() {
+      return SeqView.empty();
+    }
+
     @Override public @NotNull Doc toDoc() {
       var content = highlighted != null ? highlighted : Doc.plain(code);
       return Doc.codeBlock(Language.of(language), content);
     }
   }
 
-  record Unsupported(@NotNull ImmutableSeq<Literate> children) implements Literate {
+  record Unsupported(@NotNull ImmutableSeq<Literate> children) implements HasChild {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(children.map(Literate::toDoc));
     }
   }
 
   record Comment(@NotNull String comment) implements Literate {
+    @Override
+    public @NotNull SeqView<Literate> childrenView() {
+      return SeqView.empty();
+    }
+
     @Override
     public @NotNull Doc toDoc() {
       return Doc.empty();

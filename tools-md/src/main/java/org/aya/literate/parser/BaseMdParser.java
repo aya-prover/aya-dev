@@ -9,6 +9,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.control.Option;
 import org.aya.literate.Literate;
 import org.aya.literate.UnsupportedMarkdown;
@@ -53,6 +54,8 @@ public class BaseMdParser {
     new ReferenceLinkParser(),
     new EmphasisLikeParser(new EmphStrongDelimiterParser(), new StrikeThroughDelimiterParser()));
 
+  protected final @NotNull MutableMap<String, String> linkTable = MutableMap.create();
+
   public BaseMdParser(@NotNull SourceFile file, @NotNull Reporter reporter, @NotNull ImmutableSeq<InterestingLanguage<?>> lang) {
     this.file = file;
     this.reporter = reporter;
@@ -84,7 +87,9 @@ public class BaseMdParser {
       }
     };
     var parser = new MarkdownParser(flavour);
-    return mapNode(parser.buildMarkdownTreeFromString(file.sourceCode()));
+    var root = mapNode(parser.buildMarkdownTreeFromString(file.sourceCode()));
+    instantiateLazyLink(root);
+    return root;
   }
   // endregion Entry
 
@@ -156,6 +161,20 @@ public class BaseMdParser {
     return new InlineLinkData(title.getOrNull(), destination, mapChildren(children));
   }
 
+  protected void instantiateLazyLink(@NotNull Literate node) {
+    if (node instanceof Literate.LazyLink lazy) {
+      var link = linkTable.getOrNull(lazy.label());
+      if (link == null) {
+        System.out.println("fuck");
+        // TODO: report
+      } else {
+        lazy.href().set(link);
+      }
+    } else {
+      node.childrenView().forEach(this::instantiateLazyLink);
+    }
+  }
+
   protected @NotNull Literate mapNode(@NotNull ASTNode node) {
     var type = node.getType();
 
@@ -198,6 +217,43 @@ public class BaseMdParser {
     if (type == MarkdownElementTypes.INLINE_LINK) {
       var data = mapInlineLink(node);
       return new Literate.HyperLink(data.destination, data.title, data.children);
+    }
+
+    if (type == MarkdownElementTypes.LINK_DEFINITION) {
+      // Unlike LINK_LABEL in FULL_REFERENCE_LINK, LINK_LABEL here (LINK_DESTINATION also) is leaf node
+      var labelNode = node.childOfType(MarkdownElementTypes.LINK_LABEL);
+      var hrefNode = node.childOfType(MarkdownElementTypes.LINK_DESTINATION);
+
+      // contains surrounding "[]"
+      var label = getTextInNode(labelNode);
+      label = label.substring(1, label.length() - 1);
+      var href = getTextInNode(hrefNode);
+
+      var exists = linkTable.putIfAbsent(label, href);
+      // TODO: report if exist
+
+      // TODO: is this okay?
+      return new Literate.Raw(Doc.empty());
+    }
+
+    if (type == MarkdownElementTypes.FULL_REFERENCE_LINK) {
+      var labelNode = node.childOfType(MarkdownElementTypes.LINK_LABEL)
+        .childOfType(MarkdownTokenTypes.TEXT);
+      var textNode = node.childOfType(MarkdownElementTypes.LINK_TEXT);
+
+      var childrenNodes = textNode.childrenWithoutSurrounding(1);
+      var children = mapChildren(childrenNodes);
+      var label = getTextInNode(labelNode);
+
+      return new Literate.LazyLink(label, children);
+    }
+
+    if (type == MarkdownElementTypes.SHORT_REFERENCE_LINK) {
+      var labelNode = node.childOfType(MarkdownElementTypes.LINK_LABEL)
+        .childOfType(MarkdownTokenTypes.TEXT);
+      var label = getTextInNode(labelNode);
+
+      return new Literate.LazyLink(label, ImmutableSeq.of(mapNode(labelNode)));
     }
 
     if (type == MarkdownElementTypes.IMAGE) {
