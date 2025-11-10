@@ -5,7 +5,6 @@ package org.aya.literate;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
 import kala.value.MutableValue;
 import org.aya.pretty.doc.*;
 import org.aya.util.position.SourcePos;
@@ -39,14 +38,10 @@ public interface Literate extends Docile {
 
   @NotNull Raw EOL = new Raw(Doc.line());
 
-  record List(@NotNull ImmutableSeq<Literate> items, boolean ordered) implements HasChild {
-    @Override
-    public @NotNull ImmutableSeq<Literate> children() {
-      return items;
-    }
+  record List(@NotNull ImmutableSeq<Literate> children, boolean ordered) implements HasChild {
 
     @Override public @NotNull Doc toDoc() {
-      return Doc.list(ordered, items.map(Literate::toDoc));
+      return Doc.list(ordered, children.map(Literate::toDoc));
     }
   }
 
@@ -61,10 +56,13 @@ public interface Literate extends Docile {
   }
 
   record LazyLink(
-    @NotNull String label, @NotNull ImmutableSeq<Literate> children, @NotNull MutableValue<String> href
+    @NotNull SourcePos pos,
+    @NotNull String label,
+    @Override @NotNull ImmutableSeq<Literate> children,
+    @NotNull MutableValue<String> href
   ) implements HasChild {
-    public LazyLink(@NotNull String label, @NotNull ImmutableSeq<Literate> children) {
-      this(label, children, MutableValue.create());
+    public LazyLink(@NotNull SourcePos pos, @NotNull String label, @NotNull ImmutableSeq<Literate> children) {
+      this(pos, label, children, MutableValue.create());
     }
 
     @Override

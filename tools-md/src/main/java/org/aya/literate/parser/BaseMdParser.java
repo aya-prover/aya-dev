@@ -11,6 +11,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
+import org.aya.literate.LabelProblems;
 import org.aya.literate.Literate;
 import org.aya.literate.UnsupportedMarkdown;
 import org.aya.pretty.backend.md.MdStyle;
@@ -165,8 +166,7 @@ public class BaseMdParser {
     if (node instanceof Literate.LazyLink lazy) {
       var link = linkTable.getOrNull(lazy.label());
       if (link == null) {
-        System.out.println("fuck");
-        // TODO: report
+        reporter.report(new LabelProblems.UnknownLabel(lazy.pos(), lazy.label()));
       } else {
         lazy.href().set(link);
       }
@@ -220,7 +220,7 @@ public class BaseMdParser {
     }
 
     if (type == MarkdownElementTypes.LINK_DEFINITION) {
-      // Unlike LINK_LABEL in FULL_REFERENCE_LINK, LINK_LABEL here (LINK_DESTINATION also) is leaf node
+      // Unlike LINK_LABEL in FULL_REFERENCE_LINK, LINK_LABEL here (LINK_DESTINATION also) is a leaf node
       var labelNode = node.childOfType(MarkdownElementTypes.LINK_LABEL);
       var hrefNode = node.childOfType(MarkdownElementTypes.LINK_DESTINATION);
 
@@ -229,10 +229,11 @@ public class BaseMdParser {
       label = label.substring(1, label.length() - 1);
       var href = getTextInNode(hrefNode);
 
-      var exists = linkTable.putIfAbsent(label, href);
-      // TODO: report if exist
+      var exists = linkTable.put(label, href);
+      if (exists.isNotEmpty()) {
+        reporter.report(new LabelProblems.Redefinition(fromNode(node), label));
+      }
 
-      // TODO: is this okay?
       return new Literate.Raw(Doc.empty());
     }
 
@@ -245,7 +246,7 @@ public class BaseMdParser {
       var children = mapChildren(childrenNodes);
       var label = getTextInNode(labelNode);
 
-      return new Literate.LazyLink(label, children);
+      return new Literate.LazyLink(fromNode(node), label, children);
     }
 
     if (type == MarkdownElementTypes.SHORT_REFERENCE_LINK) {
@@ -253,7 +254,7 @@ public class BaseMdParser {
         .childOfType(MarkdownTokenTypes.TEXT);
       var label = getTextInNode(labelNode);
 
-      return new Literate.LazyLink(label, ImmutableSeq.of(mapNode(labelNode)));
+      return new Literate.LazyLink(fromNode(node), label, ImmutableSeq.of(mapNode(labelNode)));
     }
 
     if (type == MarkdownElementTypes.IMAGE) {
