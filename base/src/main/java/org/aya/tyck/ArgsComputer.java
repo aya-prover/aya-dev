@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
@@ -18,12 +19,14 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.ClassError;
 import org.aya.tyck.error.LicitError;
+import org.aya.util.ForLSP;
 import org.aya.util.Ordering;
 import org.aya.util.Pair;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.function.BiFunction;
 
 public class ArgsComputer {
@@ -39,6 +42,10 @@ public class ArgsComputer {
   private @Nullable Term firstTy = null;
   private final @NotNull Term @NotNull [] result;
   private @Closed Param param;
+
+  /// How many implicit arguments have been inserted in the beginning of the application
+  @ForLSP
+  private int implicitPrefixLength = -1;
 
   public ArgsComputer(
     @NotNull ExprTycker tycker,
@@ -130,6 +137,9 @@ public class ArgsComputer {
         onParamTyck(insertImplicit(param, arg.sourcePos()));
         continue;
       }
+      // If it's the first encounter of an argument, set implicitPrefixLength
+      if (implicitPrefixLength == -1)
+        implicitPrefixLength = paramIx;
       var what = tycker.inherit(arg.arg(), param.type());
       onParamTyck(what.wellTyped());
       // consume argument
@@ -159,5 +169,11 @@ public class ArgsComputer {
       );
     }
     return generated;
+  }
+
+  public @NotNull Term headType() {
+    if (implicitPrefixLength == -1) implicitPrefixLength = 0;
+    var prefix = Arrays.copyOfRange(result, 0, implicitPrefixLength);
+    return params.makePi(ImmutableArray.Unsafe.wrap(prefix));
   }
 }

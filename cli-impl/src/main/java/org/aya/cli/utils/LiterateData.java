@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.utils;
 
-import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
@@ -84,7 +83,7 @@ public record LiterateData(
       var anyDef = AnyDef.fromVar(defVar);
       return new Jdg.Default(
         new ErrorTerm(_ -> BasePrettier.refVar(anyDef), false),
-        anyDef.signature().makePi(Seq.empty()));
+        anyDef.signature().makePi());
     }
     return null;
   }

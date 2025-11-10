@@ -33,14 +33,18 @@ public sealed interface TyckDef extends AyaDocile permits MemberDef, SubLevelDef
   @ForLSP static @Nullable Term defType(@NotNull AnyDef var) {
     if (var instanceof TyckAnyDef<?> def && def.ref.signature == null) return null;
     var sig = var.signature();
-    var names = sig.namesView().<Term>map(FreeTerm::new).toSeq();
-    var result = sig.result(names);
-    if (var instanceof ConDefLike con && con.hasEq()) result = new EqTerm(
-      Closure.mkConst(result),
-      con.equality(names, true),
-      con.equality(names, false)
-    );
-    return result;
+    // TODO: also generate the parameters. Likely need a special version of `makePi`
+    if (var instanceof ConDefLike con && con.hasEq()) {
+      var names = sig.namesView().<Term>map(FreeTerm::new).toSeq();
+      var result = sig.result(names);
+      return new EqTerm(
+        Closure.mkConst(result),
+        con.equality(names, true),
+        con.equality(names, false)
+      );
+    } else {
+      return sig.makePi();
+    }
   }
 
   /**
