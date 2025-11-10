@@ -29,12 +29,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
-public record AppTycker<Ex extends Exception>(
+public record AppTycker<Ex extends Exception, R>(
   @Override @NotNull TyckState state,
   @NotNull ScopedTycker tycker,
   @NotNull SourcePos pos,
   int argsCount, int lift,
-  @NotNull Factory<Ex> makeArgs
+  @NotNull Factory<Ex, R> makeArgs
 ) implements Stateful {
   /// ```
   /// Signature (0th param) --------> Argument Parser (this interface)
@@ -45,18 +45,18 @@ public record AppTycker<Ex extends Exception>(
   /// Well-typed Call (result) <---- Factory (1st param)
   /// ```
   @FunctionalInterface
-  public interface Factory<Ex extends Exception> extends
-    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg>, Jdg, Ex> {
+  public interface Factory<Ex extends Exception, R> extends
+    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg>, R, Ex> {
   }
 
   public AppTycker(
     @NotNull ScopedTycker tycker, @NotNull SourcePos pos,
-    int argsCount, int lift, @NotNull Factory<Ex> makeArgs
+    int argsCount, int lift, @NotNull Factory<Ex, R> makeArgs
   ) {
     this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
   }
 
-  public @NotNull Jdg checkCompiledApplication(@NotNull JitDef def) throws Ex {
+  public R checkCompiledApplication(@NotNull JitDef def) throws Ex {
     return switch (def) {
       case JitFn fn -> {
         int shape = fn.metadata().shape();
@@ -72,7 +72,7 @@ public record AppTycker<Ex extends Exception>(
   }
 
   @SuppressWarnings("unchecked")
-  public @NotNull Jdg checkDefApplication(@NotNull DefVar<?, ?> defVar) throws Ex {
+  public R checkDefApplication(@NotNull DefVar<?, ?> defVar) throws Ex {
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
@@ -94,7 +94,7 @@ public record AppTycker<Ex extends Exception>(
     };
   }
 
-  private @NotNull Jdg checkConCall(@NotNull ConDefLike conVar) throws Ex {
+  private R checkConCall(@NotNull ConDefLike conVar) throws Ex {
     var dataVar = conVar.dataRef();
 
     // ownerTele + selfTele
@@ -114,7 +114,7 @@ public record AppTycker<Ex extends Exception>(
       return new Jdg.Default(wellTyped, type);
     });
   }
-  private @NotNull Jdg checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
+  private R checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
     return makeArgs.applyChecked(signature, (args, _) -> {
       // Closed cause [args] are Closed
@@ -125,14 +125,14 @@ public record AppTycker<Ex extends Exception>(
       );
     });
   }
-  private @NotNull Jdg checkDataCall(@NotNull DataDefLike data) throws Ex {
+  private R checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
     return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
       new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
   }
-  private @NotNull Jdg checkFnCall(
+  private R checkFnCall(
     @NotNull FnDefLike fnDef, @Nullable Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
     var signature = fnDef.signature().lift(lift);
@@ -158,7 +158,7 @@ public record AppTycker<Ex extends Exception>(
     });
   }
 
-  private @NotNull Jdg checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
+  private R checkClassCall(@NotNull ClassDefLike clazz) throws Ex {
     var self = LocalVar.generate("self");
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     tycker.pushThis(self, new ClassCall(clazz, 0, ImmutableArray.empty()));
@@ -171,7 +171,7 @@ public record AppTycker<Ex extends Exception>(
     return result;
   }
 
-  private @NotNull Jdg checkProjCall(@NotNull MemberDefLike member) throws Ex {
+  private R checkProjCall(@NotNull MemberDefLike member) throws Ex {
     var signature = member.signature().lift(lift);
     return makeArgs.applyChecked(signature, (args, fstTy) -> {
       assert args.length >= 1;
