@@ -42,7 +42,8 @@ supportedPlatforms = if (!buildAllPlatforms()) listOf(currentPlatform) else list
   "linux-x64",
   "linux-riscv64",
   "macos-aarch64",
-  "macos-x64",
+  // disabled for a while because jdk download on GitHub Actions keeps failing
+  // "macos-x64",
 )
 
 allprojects {
@@ -57,7 +58,7 @@ fun propOrEnv(name: String): String =
   if (hasProperty(name)) property(name).toString()
   else System.getenv(name) ?: ""
 
-val isSnapshot = projectVersion.toString().endsWith("SNAPSHOT")
+val isSnapshot = projectVersion.endsWith("SNAPSHOT")
 val isRelease = !isSnapshot
 subprojects {
   val proj = this@subprojects
