@@ -119,7 +119,7 @@ public interface AbstractTele {
   }
 
   default @NotNull Term makePi(@NotNull Seq<@Closed Term> initialArgs) {
-    return new PiBuilder(this).make(0, initialArgs);
+    return new PiBuilder(this).make(initialArgs.size(), initialArgs);
   }
 
   record PiBuilder(AbstractTele telescope) {
@@ -147,7 +147,8 @@ public interface AbstractTele {
       return telescope.get(i).type().instTele(teleArgs.sliceView(0, i));
     }
     @Override public @NotNull Term result(Seq<Term> teleArgs) {
-      assert teleArgs.sizeEquals(telescopeSize());
+      assert teleArgs.sizeEquals(telescopeSize()) :
+        "Expected " + telescopeSize() + " arguments, got " + teleArgs.size();
       return result.instTele(teleArgs.view());
     }
     @Override public @NotNull SeqView<String> namesView() {
