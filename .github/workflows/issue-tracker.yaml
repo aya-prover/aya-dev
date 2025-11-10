@@ -20,3 +20,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue: ${{ github.event.issue.number }}
+          run_timeout: 60

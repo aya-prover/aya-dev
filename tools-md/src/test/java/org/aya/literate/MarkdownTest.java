@@ -12,8 +12,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MarkdownTest {
   @Test public void boring() {
@@ -138,6 +137,32 @@ public class MarkdownTest {
       ~~~
       ~~~
       """);
+  }
+
+  @Test
+  public void outLinks() {
+    var someLink = "some/link";
+
+    var lit = parse("""
+      [a]: some/link
+      
+      Some content [ref][a] or [a].
+      """, ImmutableSeq.empty());
+
+    assertInstanceOf(Literate.Many.class, lit);
+
+    var firstParagraph = lit.childrenView().findFirst(it -> it instanceof Literate.Many);
+    assertTrue(firstParagraph.isDefined());
+
+    var lazyLinks = firstParagraph.get().childrenView().filterIsInstance(Literate.LazyLink.class);
+
+    var fullRef = lazyLinks.get(0);
+    var shortRef = lazyLinks.get(1);
+
+    assertEquals("a", fullRef.label());
+    assertEquals("a", shortRef.label());
+    assertEquals(someLink, fullRef.href().get());
+    assertEquals(someLink, shortRef.href().get());
   }
 
   public void parse(boolean mdIsInteresting, @NotNull @Language("Markdown") String input) {

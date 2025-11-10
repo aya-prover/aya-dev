@@ -53,3 +53,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue: ${{ github.event.pull_request.number }}
           pull_request: true
+          run_timeout: 60

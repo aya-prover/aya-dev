@@ -4,7 +4,6 @@ module aya.md {
   requires transitive aya.pretty;
 
   requires static org.jetbrains.annotations;
-  requires kala.collection.primitive;
 
   requires aya.jb.md;
   requires aya.jb.md.ij;
