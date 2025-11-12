@@ -141,6 +141,7 @@ public class PatternTycker implements Problematic, Stateful {
         var realCon = makeSureAvail(type, con.resolved().data(), pattern);
         if (realCon == null) yield randomPat(type);
         var conCore = realCon.conHead.ref();
+        con.coreHead().set(realCon.conHead);
 
         // It is possible that `con.params()` is empty.
         var patterns = tyckInner(

@@ -7,6 +7,7 @@ import com.intellij.psi.tree.TokenSet;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import kala.value.Value;
 import org.aya.cli.literate.HighlightInfo.DefKind;
 import org.aya.cli.literate.HighlightInfo.Lit;
 import org.aya.cli.literate.HighlightInfo.LitKind;
@@ -22,10 +23,15 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.StmtVisitor;
 import org.aya.syntax.concrete.stmt.decl.*;
+import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.*;
 import org.aya.util.Panic;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,9 +83,18 @@ public record SyntaxHighlight(
       }).toSeq();
   }
 
-  @Override public void
-  visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
+  @Override public void visitVarRef(@NotNull SourcePos pos, @NotNull AnyVar var, @NotNull Type type) {
     info.append(linkRef(pos, var, type.toDocile()));
+  }
+
+  @Override public void visitConHead(WithPos<@NotNull ConDefLike> resolved, ConCallLike.@Nullable Head head) {
+    var defLike = resolved.data();
+    Type type;
+    if (head != null) {
+      type = new Type(Value.lazy(() -> defLike.signature().makePi(head.ownerArgs())));
+    } else type = new Type(Value.lazy(() -> TyckDef.defType(defLike)));
+
+    visitVarRef(resolved.sourcePos(), AnyDef.toVar(defLike), type);
   }
 
   @Override public void visitExpr(@NotNull SourcePos pos, @NotNull Expr expr) {
@@ -142,8 +157,7 @@ public record SyntaxHighlight(
     }
   }
 
-  @Override
-  public void accept(@NotNull Stmt stmt) {
+  @Override public void accept(@NotNull Stmt stmt) {
     if (stmt instanceof Decl decl) visitPragma(decl.pragmaInfo);
     StmtVisitor.super.accept(stmt);
   }
