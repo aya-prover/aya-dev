@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class Main extends MainArgs implements Callable<Integer> {
-  public static void main(String... args) {
+  static void main(String... args) {
     System.exit(new CommandLine(new Main()).execute(args));
   }
 
