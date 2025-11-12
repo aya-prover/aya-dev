@@ -12,8 +12,10 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.ref.*;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
@@ -42,8 +44,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
       return docile == null ? userType : docile;
     }
 
-    @Override
-    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var doc = toDocile();
       if (doc == null) return noTypeDoc;
       return doc.toDoc(options);
@@ -208,6 +209,12 @@ public interface StmtVisitor extends Consumer<Stmt> {
     binds.forEach(this::visitDoBind);
   }
 
+  default void visitConHead(WithPos<@NotNull ConDefLike> resolved, @Nullable ConCallLike.Head head) {
+    var resolvedVar = resolved.data();
+    visitVarRef(resolved.sourcePos(), AnyDef.toVar(resolvedVar),
+      new Type(LazyValue.of(() -> TyckDef.defType(resolvedVar))));
+  }
+
   // scope introducer
   default void visitClause(@NotNull Pattern.Clause clause) {
     clause.forEach(this::visitExpr, this::visitPattern);
@@ -218,10 +225,7 @@ public interface StmtVisitor extends Consumer<Stmt> {
   default void visitPattern(@NotNull SourcePos pos, @NotNull Pattern pat) {
     switch (pat) {
       case Pattern.Con con -> {
-        var resolvedVar = con.resolved().data();
-        visitVarRef(con.resolved().sourcePos(), AnyDef.toVar(resolvedVar),
-          new Type(LazyValue.of(() -> TyckDef.defType(resolvedVar))));
-
+        visitConHead(con.resolved(), con.coreHead().get());
         con.forEach(this::visitPattern);
       }
       case Pattern.Bind bind -> visitLocalVarDecl(bind.bind(), new Type(LazyValue.of(bind.theCoreType())));

@@ -13,6 +13,7 @@ import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
@@ -97,14 +98,22 @@ public sealed interface Pattern extends AyaDocile {
 
   record Con(
     @NotNull WithPos<@NotNull ConDefLike> resolved,
-    @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> params
+    @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> params,
+    @ForLSP @NotNull MutableValue<ConCallLike.Head> coreHead
   ) implements Pattern {
+    public Con(
+      @NotNull WithPos<@NotNull ConDefLike> resolved,
+      @NotNull ImmutableSeq<Arg<WithPos<Pattern>>> params
+    ) {
+      this(resolved, params, MutableValue.create());
+    }
+
     public Con(@NotNull SourcePos pos, @NotNull ConDefLike maybe) {
       this(new WithPos<>(pos, maybe), ImmutableSeq.empty());
     }
 
     public @NotNull Con update(@NotNull ImmutableSeq<Arg<WithPos<Pattern>>> params) {
-      return params.sameElements(params(), true) ? this : new Con(resolved, params);
+      return params.sameElements(params(), true) ? this : new Con(resolved, params, coreHead);
     }
 
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Pattern> f) {
