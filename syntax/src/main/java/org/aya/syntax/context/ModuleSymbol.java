@@ -57,6 +57,6 @@ public record ModuleSymbol<T>(@NotNull MutableMap<String, Candidate<T>> table) {
   public @NotNull MapView<String, Candidate<T>> view() { return table.view(); }
 
   public void forEach(@NotNull BiConsumer<String, Candidate<T>> action) {
-    table.forEach(action::accept);
+    table.forEach(action);
   }
 }

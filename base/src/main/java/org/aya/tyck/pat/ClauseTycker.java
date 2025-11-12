@@ -110,9 +110,8 @@ public final class ClauseTycker implements Problematic, Stateful {
       assert exprTycker.localLet().let().isEmpty();
       // Sanity check
       assert asSubst.parent() == null;
-      teleBinds.forEachWith(paramSubst, (ref, subst) -> {
-        exprTycker.addLetBind(ref, subst, inline, false);
-      });
+      teleBinds.forEachWith(paramSubst, (ref, subst) ->
+        exprTycker.addLetBind(ref, subst, inline, false));
       asSubst.let().forEach((ref, subst) ->
         exprTycker.localLet().put(ref, subst.definedAs(), inline));
     }

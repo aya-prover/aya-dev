@@ -5,7 +5,6 @@ package org.aya.tyck.pat;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.normalize.LetReplacer;
 import org.aya.syntax.core.Jdg;
-import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.pat.MatcherBase;
 import org.aya.syntax.core.pat.Pat;

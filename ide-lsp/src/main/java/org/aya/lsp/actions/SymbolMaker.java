@@ -3,7 +3,6 @@
 package org.aya.lsp.actions;
 
 import kala.collection.CollectionView;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;

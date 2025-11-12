@@ -209,8 +209,8 @@ if (ossrhUsername.isNotEmpty()) nmcpAggregation {
   centralPortal {
     username = ossrhUsername
     password = ossrhPassword
-    if (isRelease) publishingType = "USER_MANAGED"
-    else publishingType = "AUTOMATIC"
+    publishingType = if (isRelease) "USER_MANAGED"
+    else "AUTOMATIC"
   }
 
   // Publish all projects that apply the 'maven-publish' plugin

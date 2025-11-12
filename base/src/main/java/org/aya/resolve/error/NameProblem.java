@@ -184,7 +184,7 @@ public interface NameProblem extends Problem {
     /// will pretty print the [#context], whose [Context#reporter()] might be a
     /// [org.aya.util.reporter.CollectingReporter], which might pretty print this
     /// very error, which includes that context again.
-    @Override public String toString() { return ""; }
+    @Override public @NotNull String toString() { return ""; }
 
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var head = Doc.sep(

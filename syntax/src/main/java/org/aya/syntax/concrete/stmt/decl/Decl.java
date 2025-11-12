@@ -23,9 +23,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public sealed abstract class Decl implements SourceNode, Named, Stmt, TyckUnit, OpDecl
   permits ClassDecl, TeleDecl {
-  public @NotNull DeclInfo info;
+  public final @NotNull DeclInfo info;
   public boolean isExample;
-  public @NotNull PragmaInfo pragmaInfo = new PragmaInfo();
+  public final @NotNull PragmaInfo pragmaInfo = new PragmaInfo();
 
   public final @NotNull BindBlock bindBlock() { return info.bindBlock(); }
   public final @NotNull SourcePos entireSourcePos() { return info.entireSourcePos(); }

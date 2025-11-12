@@ -60,7 +60,7 @@ public class LibraryTest {
   }
 
   // Use this test for incremental compilation
-  public static void main(String... args) throws IOException {
+  static void main() throws IOException {
     assertEquals(0, compile(DIR));
   }
 

@@ -13,7 +13,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
 
 public record LamTerm(Closure body) implements StableWHNF, BindingIntro {
-  public static LamTerm ID = new LamTerm(new Closure.Jit(t -> t));
+  public static final LamTerm ID = new LamTerm(new Closure.Jit(t -> t));
   public LamTerm(Term indexedBody) {
     this(new Closure.Locns(indexedBody));
   }

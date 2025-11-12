@@ -14,7 +14,6 @@ import kala.tuple.Tuple2;
 import org.aya.resolve.context.*;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
-import org.aya.resolve.context.Context;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.context.ModuleSymbol;
 import org.aya.syntax.ref.AnyDefVar;

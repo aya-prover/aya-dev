@@ -54,7 +54,7 @@ public class CompileTest {
     | vnil, ys => ys
     | vcons x xs, ys => vcons x (xs ++ ys)
     """;
-  public static Path GEN_DIR = Paths.get("build/tmp/testGenerated");
+  public static final Path GEN_DIR = Paths.get("build/tmp/testGenerated");
 
   public void justTest(@NotNull InstanceLoader tester) {
     var baka = DumbModuleLoader.DUMB_MODULE_NAME;

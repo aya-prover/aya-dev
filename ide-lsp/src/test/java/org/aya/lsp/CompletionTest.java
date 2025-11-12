@@ -131,9 +131,8 @@ public class CompletionTest {
       new XY(6, 0), new XY(5, 48)        // c (foo a)\n_
     );
 
-    cases.forEach((pos, expected) -> {
-      checker.accept(pos, expected, runner.apply(pos));
-    });
+    cases.forEach((pos, expected) ->
+      checker.accept(pos, expected, runner.apply(pos)));
   }
 
   @Test public void testCompletion2() throws IOException {

@@ -6,7 +6,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.stmt.Shaped;
-import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.repr.ShapeRecognition;

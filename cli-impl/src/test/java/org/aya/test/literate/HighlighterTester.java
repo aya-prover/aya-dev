@@ -203,7 +203,7 @@ public class HighlighterTester {
     new HighlighterTester(code, result, expected).runTest();
   }
 
-  static Seq<HighlightInfo.LitKind> ignored = Seq.of(HighlightInfo.LitKind.Eol, HighlightInfo.LitKind.Whitespace);
+  static final Seq<HighlightInfo.LitKind> ignored = Seq.of(HighlightInfo.LitKind.Eol, HighlightInfo.LitKind.Whitespace);
 
   // region Helper
 
