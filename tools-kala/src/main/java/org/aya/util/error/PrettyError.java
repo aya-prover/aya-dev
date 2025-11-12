@@ -112,9 +112,9 @@ public record PrettyError(
   }
 
   private static final class HintGroup {
-    @NotNull MutableList<Doc> underlines = MutableList.create();
-    @NotNull MutableList<Doc> notes = MutableList.create();
-    @NotNull MutableList<HintLine> overlapped = MutableList.create();
+    final @NotNull MutableList<Doc> underlines = MutableList.create();
+    final @NotNull MutableList<Doc> notes = MutableList.create();
+    final @NotNull MutableList<HintLine> overlapped = MutableList.create();
     @Nullable HintLine startOrEnd = null;
 
     public void add(int indent, @NotNull HintLine line, @NotNull PrettyError.FormatConfig cfg) {

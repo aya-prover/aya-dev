@@ -59,7 +59,7 @@ public final class DesugarLambdaHole implements PosedUnaryOperator<Expr> {
   }
 
   private static class HoleCollector {
-    @NotNull MutableList<LocalVar> holes = MutableList.create();
+    final @NotNull MutableList<LocalVar> holes = MutableList.create();
     public void add(LocalVar var) { holes.append(var); }
   }
 }
