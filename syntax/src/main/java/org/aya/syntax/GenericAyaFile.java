@@ -2,9 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax;
 
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.literate.Literate;
-import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.literate.AyaLiterate;
 import org.aya.util.position.SourceFile;
 import org.aya.util.position.SourceFileLocator;

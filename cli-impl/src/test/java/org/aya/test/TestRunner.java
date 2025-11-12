@@ -68,7 +68,7 @@ public class TestRunner {
     // System.out.println(runFixtureClass(Rabbit.class));
   }
 
-  public static void main(String... args) throws Exception {
+  static void main() throws Exception {
     TestRunner.startDash();
     new TestRunner().negative();
   }

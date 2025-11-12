@@ -107,7 +107,7 @@ public abstract class BinOpSet {
       return new BinOpSet.BinOP(sourcePos, opDecl, op.name(), op.assoc());
     }
 
-    @Override public String toString() { return name; }
+    @Override public @NotNull String toString() { return name; }
   }
 
   public enum PredCmp {

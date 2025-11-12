@@ -12,8 +12,6 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.UnaryOperator;
-
 /**
  * This term is used for subtyping of class, a term {@code x : SomeClass (foo := 114514)} is treated an
  * instance of {@code SomeClass} in user side. In core side, we use {@code cast x [] [(foo := 114514)] : SomeClass}

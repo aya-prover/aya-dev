@@ -184,7 +184,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         new AstExpr.Iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
-      /// Assumption: `term.tailCall() == true` implies `unit == term.ref()`
+      // Assumption: `term.tailCall() == true` implies `unit == term.ref()`
       case FnCall call when argTerms != null && call.tailCall() -> {
         var args = call.args().map(this::doSerialize);
         // call.tailCall() == true means:

@@ -4,6 +4,7 @@ package org.aya.lsp;
 
 import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.render.RenderOptions;
 import org.aya.generic.Constants;
 import org.aya.lsp.models.ProjectPath;
@@ -62,7 +63,7 @@ public class LspTest {
     launch(TEST_LIB).execute(compile((a, _) -> {
       var testOpt = a.lastCompiled()
         .filter(x -> x.moduleName().module().getLast().equals("VecCore"))
-        .flatMap(x -> x.program())
+        .flatMap(LibrarySource::program)
         .filterIsInstance(FnDecl.class)
         .filter(x -> x.ref.name().equals("test"))
         .getFirstOption();

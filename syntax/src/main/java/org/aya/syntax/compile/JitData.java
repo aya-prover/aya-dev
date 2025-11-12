@@ -4,7 +4,6 @@ package org.aya.syntax.compile;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.telescope.JitTele;
 import org.jetbrains.annotations.NotNull;

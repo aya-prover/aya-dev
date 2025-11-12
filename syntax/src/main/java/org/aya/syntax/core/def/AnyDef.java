@@ -54,7 +54,6 @@ public sealed interface AnyDef extends OpDecl
     return switch (defVar) {
       case JitDef jitDef -> new CompiledVar(jitDef);
       case TyckAnyDef<?> tyckAnyDef -> tyckAnyDef.ref;
-      default -> throw new UnsupportedOperationException("TODO");
     };
   }
 
