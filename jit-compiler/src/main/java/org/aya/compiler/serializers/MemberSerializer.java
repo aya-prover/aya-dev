@@ -4,10 +4,10 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstValue;
+import org.aya.compiler.morphism.ir.IrClassBuilder;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrExpr;
+import org.aya.compiler.morphism.ir.IrValue;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitMember;
 import org.aya.syntax.core.def.AnyDef;
@@ -33,15 +33,15 @@ public final class MemberSerializer extends JitTeleSerializer<MemberDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, MemberDef unit) {
+  protected @NotNull ImmutableSeq<IrValue> superConArgs(@NotNull IrCodeBuilder builder, MemberDef unit) {
     return super.superConArgs(builder, unit).appendedAll(ImmutableSeq.of(
       AbstractExprSerializer.getInstance(builder, AnyDef.fromVar(unit.classRef())),
-      new AstExpr.Iconst(unit.index()),
+      new IrExpr.Iconst(unit.index()),
       serializeTermWithoutNormalizer(builder, unit.type())
     ));
   }
 
-  @Override public @NotNull MemberSerializer serialize(@NotNull AstClassBuilder builder, MemberDef unit) {
+  @Override public @NotNull MemberSerializer serialize(@NotNull IrClassBuilder builder, MemberDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }

@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.morphism.ast;
+package org.aya.compiler.morphism.ir;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.FieldRef;
@@ -14,15 +14,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 
-public sealed interface AstDecl {
+public sealed interface IrDecl {
   @Debug.Renderer(text = "className().toString()")
   record Clazz(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc owner,
     @Nullable String nested,
     @NotNull Class<?> superclass,
-    @NotNull ImmutableSeq<AstDecl> members
-  ) implements AstDecl {
+    @NotNull ImmutableSeq<IrDecl> members
+  ) implements IrDecl {
     public @NotNull ClassDesc className() {
       return nested != null ? owner.nested(nested) : owner;
     }
@@ -33,16 +33,16 @@ public sealed interface AstDecl {
   record Method(
     @NotNull MethodRef signature,
     boolean isStatic,
-    @NotNull ImmutableSeq<AstStmt> body
-  ) implements AstDecl, Docile {
+    @NotNull ImmutableSeq<IrStmt> body
+  ) implements IrDecl, Docile {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(signature.toDoc(),
-        Doc.nest(2, Doc.vcat(body.view().map(AstStmt::toDoc))));
+        Doc.nest(2, Doc.vcat(body.view().map(IrStmt::toDoc))));
     }
   }
 
   /// Used for initializing constant, static fields
-  record StaticInitBlock(@NotNull ImmutableSeq<AstStmt> body) implements AstDecl { }
+  record StaticInitBlock(@NotNull ImmutableSeq<IrStmt> body) implements IrDecl { }
 
-  record ConstantField(@NotNull FieldRef signature) implements AstDecl { }
+  record ConstantField(@NotNull FieldRef signature) implements IrDecl { }
 }

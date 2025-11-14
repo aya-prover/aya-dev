@@ -10,7 +10,7 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.ast.*;
+import org.aya.compiler.morphism.ir.*;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.core.Closure;
@@ -41,28 +41,28 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
   public static final @NotNull FieldRef ISET_FIELD = FreeJavaResolver.resolve(SortTerm.class, "ISet");
 
   /// Parameters of the function being serialized, if not null
-  private final @Nullable ImmutableSeq<AstVariable> argTerms;
+  private final @Nullable ImmutableSeq<IrVariable> argTerms;
   /// Terms that should be instantiated
-  private final @NotNull ImmutableSeq<AstVariable> instantiates;
-  private final @NotNull MutableLinkedHashMap<LocalVar, AstVariable> binds;
+  private final @NotNull ImmutableSeq<IrVariable> instantiates;
+  private final @NotNull MutableLinkedHashMap<LocalVar, IrVariable> binds;
 
   /// Whether allow {@link LocalTerm}, false in default (in order to report unexpected LocalTerm)
   private final boolean allowLocalTerm;
 
   public TermSerializer(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull SerializerContext context,
-    @Nullable ImmutableSeq<AstVariable> argTerms,
-    @NotNull ImmutableSeq<AstVariable> instantiates
+    @Nullable ImmutableSeq<IrVariable> argTerms,
+    @NotNull ImmutableSeq<IrVariable> instantiates
   ) {
     this(builder, context, argTerms, instantiates, false);
   }
 
   public TermSerializer(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull SerializerContext context,
-    @Nullable ImmutableSeq<AstVariable> argTerms,
-    @NotNull ImmutableSeq<AstVariable> instantiates,
+    @Nullable ImmutableSeq<IrVariable> argTerms,
+    @NotNull ImmutableSeq<IrVariable> instantiates,
     boolean allowLocalTerm
   ) {
     super(builder, context);
@@ -73,9 +73,9 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
   }
 
   private TermSerializer(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull SerializerContext context,
-    @NotNull MutableLinkedHashMap<LocalVar, AstVariable> newBinds,
+    @NotNull MutableLinkedHashMap<LocalVar, IrVariable> newBinds,
     boolean allowLocalTerm
   ) {
     super(builder, context);
@@ -85,7 +85,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull AstVariable serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
+  private @NotNull IrVariable serializeApplicable(@NotNull Shaped.Applicable<?> applicable) {
     return switch (applicable) {
       case IntegerOps.ConRule conRule -> builder.mkNew(IntegerOps.ConRule.class, ImmutableSeq.of(
         getInstance(conRule.ref()),
@@ -103,18 +103,18 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     };
   }
 
-  public static @NotNull AstVariable buildFnCall(
-    @NotNull AstCodeBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
-    int ulift, @NotNull ImmutableSeq<AstVariable> args
+  public static @NotNull IrVariable buildFnCall(
+    @NotNull IrCodeBuilder builder, @NotNull Class<?> callName, @NotNull FnDef def,
+    int ulift, @NotNull ImmutableSeq<IrVariable> args
   ) {
     return builder.mkNew(callName, ImmutableSeq.of(
       getInstance(builder, def),
-      new AstExpr.Iconst(ulift),
+      new IrExpr.Iconst(ulift),
       AbstractExprSerializer.makeImmutableSeq(builder, Term.class, args)
     ));
   }
 
-  private @NotNull AstVariable getNormalizer() {
+  private @NotNull IrVariable getNormalizer() {
     var normalizer = context.normalizer();
     if (normalizer == null) {
       normalizer = Constants.unaryOperatorIdentity(builder);
@@ -123,23 +123,23 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     return normalizer;
   }
 
-  private @NotNull AstVariable
-  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<AstVariable> args) {
+  private @NotNull IrVariable
+  buildFnInvoke(@NotNull ClassDesc defClass, int ulift, @NotNull ImmutableSeq<IrVariable> args) {
     var normalizer = getNormalizer();
     var invokeExpr = FnSerializer.makeInvoke(builder, defClass, normalizer, args);
     // builder.markUsage(defClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitFn));
 
     if (ulift != 0) {
-      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(new AstExpr.Iconst(ulift)));
+      return builder.invoke(Constants.ELEVATE, invokeExpr, ImmutableSeq.of(new IrExpr.Iconst(ulift)));
     } else return invokeExpr;
   }
 
   // There is a chance I need to add lifting to match, so keep a function for us to
   // add the if-else in it
-  private @NotNull AstVariable buildMatchyInvoke(
+  private @NotNull IrVariable buildMatchyInvoke(
     @NotNull ClassDesc matchyClass,
-    @NotNull ImmutableSeq<AstValue> args,
-    @NotNull ImmutableSeq<AstVariable> captures
+    @NotNull ImmutableSeq<IrValue> args,
+    @NotNull ImmutableSeq<IrVariable> captures
   ) {
     var normalizer = getNormalizer();
     // builder.markUsage(matchyClass, ClassHierarchyResolver.ClassHierarchyInfo.ofClass(CD_JitMatchy));
@@ -147,7 +147,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
   }
 
   /// UNPURE
-  @Override protected @NotNull AstVariable doSerialize(@NotNull Term term) {
+  @Override protected @NotNull IrVariable doSerialize(@NotNull Term term) {
     return switch (term) {
       case FreeTerm(var bind) -> {
         // It is possible that we meet bind here,
@@ -165,23 +165,23 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         getCallInstance(CallKind.from(call), call.ref());
       case ClassCall(var ref, var ulift, var args) -> builder.mkNew(ClassCall.class, ImmutableSeq.of(
         getInstance(ref),
-        new AstExpr.Iconst(ulift),
+        new IrExpr.Iconst(ulift),
         serializeClosureToImmutableSeq(args)
       ));
       case MemberCall call -> makeMemberNew(call);
       case AppTerm(var fun, var arg) -> makeAppNew(AppTerm.class, fun, arg);
       case LocalTerm _ when !allowLocalTerm -> throw new Panic("LocalTerm");
-      case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(new AstExpr.Iconst(index)));
+      case LocalTerm(var index) -> builder.mkNew(LocalTerm.class, ImmutableSeq.of(new IrExpr.Iconst(index)));
       case LamTerm lamTerm -> builder.mkNew(LAMBDA_NEW, ImmutableSeq.of(serializeClosure(lamTerm.body())));
       case DataCall(var ref, var ulift, var args) -> builder.mkNew(DataCall.class, ImmutableSeq.of(
         getInstance(ref),
-        new AstExpr.Iconst(ulift),
+        new IrExpr.Iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
       case ConCall(var head, var args) -> builder.mkNew(ConCall.class, ImmutableSeq.of(
         getInstance(head.ref()),
         serializeToImmutableSeq(Term.class, head.ownerArgs()),
-        new AstExpr.Iconst(head.ulift()),
+        new IrExpr.Iconst(head.ulift()),
         serializeToImmutableSeq(Term.class, args)
       ));
       // Assumption: `term.tailCall() == true` implies `unit == term.ref()`
@@ -195,16 +195,16 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         // Will cause conflict in theory, but won't in practice due to current local variable
         // declaration heuristics.
         argTerms.forEachWith(args, (a, b) ->
-          builder.updateVar(a, new AstExpr.Ref(b)));
+          builder.updateVar(a, new IrExpr.Ref(b)));
         builder.continueLoop();
-        yield new AstVariable.Local(-1);
+        yield new IrVariable.Local(-1);
       }
       case FnCall(var ref, var ulift, var args, _) ->
         buildFnInvoke(NameSerializer.getClassDesc(ref), ulift, args.map(this::doSerialize));
       case RuleReducer.Con(var rule, int ulift, var ownerArgs, var conArgs) -> {
         var onStuck = builder.mkNew(RuleReducer.Con.class, ImmutableSeq.of(
           serializeApplicable(rule),
-          new AstExpr.Iconst(ulift),
+          new IrExpr.Iconst(ulift),
           serializeToImmutableSeq(Term.class, ownerArgs),
           serializeToImmutableSeq(Term.class, conArgs)
         ));
@@ -213,7 +213,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       case RuleReducer.Fn(var rule, int ulift, var args) -> {
         var onStuck = builder.mkNew(RuleReducer.Fn.class, ImmutableSeq.of(
           serializeApplicable(rule),
-          new AstExpr.Iconst(ulift),
+          new IrExpr.Iconst(ulift),
           serializeToImmutableSeq(Term.class, args)
         ));
         yield builder.invoke(Constants.RULEREDUCER_MAKE, onStuck, ImmutableSeq.empty());
@@ -221,7 +221,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       case SortTerm sort when sort.equals(SortTerm.Type0) -> builder.refField(TYPE0_FIELD);
       case SortTerm sort when sort.equals(SortTerm.ISet) -> builder.refField(ISET_FIELD);
       case SortTerm(var kind, var ulift) ->
-        builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), new AstExpr.Iconst(ulift)));
+        builder.mkNew(SortTerm.class, ImmutableSeq.of(builder.refEnum(kind), new IrExpr.Iconst(ulift)));
       case DepTypeTerm(var kind, var param, var body) -> builder.mkNew(DepTypeTerm.class, ImmutableSeq.of(
         builder.refEnum(kind),
         doSerialize(param),
@@ -234,7 +234,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       ));
       case ProjTerm(var of, var fst) -> builder.mkNew(ProjTerm.class, ImmutableSeq.of(
         doSerialize(of),
-        new AstExpr.Bconst(fst)
+        new IrExpr.Bconst(fst)
       ));
       case PAppTerm(var fun, var arg, var a, var b) -> makeAppNew(PAppTerm.class,
         fun, arg, a, b
@@ -250,7 +250,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       ));
       case PrimCall(var ref, var ulift, var args) -> builder.mkNew(PrimCall.class, ImmutableSeq.of(
         getInstance(ref),
-        new AstExpr.Iconst(ulift),
+        new IrExpr.Iconst(ulift),
         serializeToImmutableSeq(Term.class, args)
       ));
       case IntegerTerm(var repr, _, _, var type) -> builder.invoke(
@@ -259,7 +259,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
           AyaSerializer.METHOD_MAKE_INTEGER,
           Constants.CD_IntegerTerm,
           ImmutableSeq.of(ConstantDescs.CD_int),false),
-        ImmutableSeq.of(new AstExpr.Iconst(repr))
+        ImmutableSeq.of(new IrExpr.Iconst(repr))
       );
       case ListTerm(var repr, var nil, var cons, var type) -> builder.mkNew(ListTerm.class, ImmutableSeq.of(
         makeImmutableSeq(builder, Constants.IMMTREESEQ, Term.class, repr.map(this::doSerialize)),
@@ -268,7 +268,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         doSerialize(type)
       ));
       case StringTerm stringTerm -> builder.mkNew(StringTerm.class, ImmutableSeq.of(
-        new AstExpr.Sconst(stringTerm.string())
+        new IrExpr.Sconst(stringTerm.string())
       ));
       case ClassCastTerm(var classRef, var subterm, var rember, var forgor) ->
         builder.mkNew(ClassCastTerm.class, ImmutableSeq.of(
@@ -297,9 +297,9 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     };
   }
 
-  private @NotNull AstVariable makeLambda(
+  private @NotNull IrVariable makeLambda(
     @NotNull MethodRef lambdaType,
-    @NotNull BiFunction<AstArgsProvider.Lambda, TermSerializer, AstVariable> cont
+    @NotNull BiFunction<IrArgsProvider.Lambda, TermSerializer, IrVariable> cont
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
@@ -322,21 +322,21 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     });
   }
 
-  private @NotNull AstVariable makeClosure(@NotNull BiFunction<TermSerializer, AstVariable, AstVariable> cont) {
+  private @NotNull IrVariable makeClosure(@NotNull BiFunction<TermSerializer, IrVariable, IrVariable> cont) {
     return makeLambda(Constants.CLOSURE, (ap, te) -> {
       var casted = te.builder.checkcast(ap.arg(0), Constants.CD_Term);
       return cont.apply(te, casted);
     });
   }
 
-  private @NotNull AstVariable serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
+  private @NotNull IrVariable serializeClosureToImmutableSeq(@NotNull ImmutableSeq<Closure> cls) {
     return makeImmutableSeq(Closure.class, cls.map(this::serializeClosure));
   }
 
-  private @NotNull AstVariable with(
+  private @NotNull IrVariable with(
     @NotNull LocalVar var,
-    @NotNull AstVariable subst,
-    @NotNull Supplier<AstVariable> continuation
+    @NotNull IrVariable subst,
+    @NotNull Supplier<IrVariable> continuation
   ) {
     this.binds.put(var, subst);
     var result = continuation.get();
@@ -344,7 +344,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     return result;
   }
 
-  private @NotNull AstVariable serializeClosure(@NotNull Closure body) {
+  private @NotNull IrVariable serializeClosure(@NotNull Closure body) {
     if (body instanceof Closure.Const(var inside)) return serializeConst(inside);
 
     var var = new LocalVar("<jit>");
@@ -357,27 +357,27 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     return builder.mkNew(Closure.Jit.class, ImmutableSeq.of(closure));
   }
 
-  private @NotNull AstVariable serializeConst(@NotNull Term appliedBody) {
+  private @NotNull IrVariable serializeConst(@NotNull Term appliedBody) {
     return builder.invoke(Constants.CLOSURE_MKCONST, ImmutableSeq.of(doSerialize(appliedBody)));
   }
 
-  private @NotNull AstVariable makeAppNew(@NotNull Class<?> className, Term... terms) {
+  private @NotNull IrVariable makeAppNew(@NotNull Class<?> className, Term... terms) {
     var obj = builder.mkNew(className, ImmutableSeq.from(terms).map(this::doSerialize));
     return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
-  private @NotNull AstVariable makeMemberNew(@NotNull MemberCall call) {
+  private @NotNull IrVariable makeMemberNew(@NotNull MemberCall call) {
     var obj = builder.mkNew(MemberCall.class, ImmutableSeq.of(
       doSerialize(call.of()),
       getInstance(call.ref()),
-      new AstExpr.Iconst(call.ulift()),
+      new IrExpr.Iconst(call.ulift()),
       serializeToImmutableSeq(Term.class, call.projArgs())
     ));
 
     return builder.invoke(Constants.BETAMAKE, obj, ImmutableSeq.empty());
   }
 
-  @Override public @NotNull AstVariable serialize(Term unit) {
+  @Override public @NotNull IrVariable serialize(Term unit) {
     binds.clear();
     var vars = ImmutableSeq.fill(instantiates.size(), i -> new LocalVar("arg" + i));
     unit = unit.instTeleVar(vars.view());

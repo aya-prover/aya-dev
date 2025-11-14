@@ -1,12 +1,12 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.morphism.ast;
+package org.aya.compiler.morphism.ir;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.ast.AstDecl.Clazz;
-import org.aya.compiler.morphism.ast.AstDecl.ConstantField;
-import org.aya.compiler.morphism.ast.AstDecl.Method;
+import org.aya.compiler.morphism.ir.IrDecl.Clazz;
+import org.aya.compiler.morphism.ir.IrDecl.ConstantField;
+import org.aya.compiler.morphism.ir.IrDecl.Method;
 import org.jetbrains.annotations.NotNull;
 
 /// This class removes unnecessary `break` statements (at the end of breakable blocks)
@@ -18,7 +18,7 @@ public interface BlockSimplifier {
     return (Clazz) optimize(clazz);
   }
 
-  static @NotNull AstDecl optimize(AstDecl decl) {
+  static @NotNull IrDecl optimize(IrDecl decl) {
     return switch (decl) {
       case Clazz(var metadata, var owner, var nested, var superclass, var members) -> {
         var newMembers = members.map(BlockSimplifier::optimize);
@@ -27,11 +27,11 @@ public interface BlockSimplifier {
       case ConstantField field -> field;
       case Method(var signature, var isStatic, var body) -> new Method(signature, isStatic,
         optimizeBlock(body, false));
-      case AstDecl.StaticInitBlock(var block) -> new AstDecl.StaticInitBlock(optimizeBlock(block, false));
+      case IrDecl.StaticInitBlock(var block) -> new IrDecl.StaticInitBlock(optimizeBlock(block, false));
     };
   }
 
-  static @NotNull ImmutableSeq<AstStmt> optimizeBlock(ImmutableSeq<AstStmt> block, boolean endOfBreakable) {
+  static @NotNull ImmutableSeq<IrStmt> optimizeBlock(ImmutableSeq<IrStmt> block, boolean endOfBreakable) {
     if (!endOfBreakable) return block.flatMap(it -> optimize(it, false));
     if (block.isEmpty()) return block;
     var exceptLast = block.view().dropLast(1).flatMap(it -> optimize(it, false));
@@ -39,38 +39,38 @@ public interface BlockSimplifier {
     return exceptLast.concat(last).toSeq();
   }
 
-  static @NotNull SeqView<AstStmt> optimize(AstStmt stmt, boolean endOfBreakable) {
+  static @NotNull SeqView<IrStmt> optimize(IrStmt stmt, boolean endOfBreakable) {
     return switch (stmt) {
-      case AstStmt.Switch(var elim, var cases, var branch, var defaultCase) -> {
+      case IrStmt.Switch(var elim, var cases, var branch, var defaultCase) -> {
         branch = branch.map(it -> optimizeBlock(it, endOfBreakable));
         defaultCase = optimizeBlock(defaultCase, endOfBreakable);
         if (branch.isEmpty()) yield defaultCase.view();
-        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == AstStmt.SingletonStmt.Unreachable) {
+        if (defaultCase.sizeEquals(1) && defaultCase.getFirst() == IrStmt.SingletonStmt.Unreachable) {
           if (branch.sizeEquals(1)) {
             yield branch.getFirst().view();
           } else if (branch.sizeEquals(2)) {
-            yield SeqView.of(new AstStmt.IfThenElse(
-              new AstStmt.Condition.IsIntEqual(elim, cases.getFirst()),
+            yield SeqView.of(new IrStmt.IfThenElse(
+              new IrStmt.Condition.IsIntEqual(elim, cases.getFirst()),
               branch.getFirst(),
               branch.getLast()
             ));
           } else if (branch.sizeGreaterThan(1)) {
-            yield SeqView.of(new AstStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
+            yield SeqView.of(new IrStmt.Switch(elim, cases.dropLast(1), branch.dropLast(1), branch.getLast()));
           }
         }
-        yield SeqView.of(new AstStmt.Switch(elim, cases, branch, defaultCase));
+        yield SeqView.of(new IrStmt.Switch(elim, cases, branch, defaultCase));
       }
-      case AstStmt.Breakable(var stmts) -> SeqView.of(new AstStmt.Breakable(optimizeBlock(stmts, true)));
-      case AstStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
+      case IrStmt.Breakable(var stmts) -> SeqView.of(new IrStmt.Breakable(optimizeBlock(stmts, true)));
+      case IrStmt.IfThenElse(var cond, var thenBlock, var elseBlock) -> {
         thenBlock = optimizeBlock(thenBlock, endOfBreakable);
         if (elseBlock != null) {
           elseBlock = optimizeBlock(elseBlock, endOfBreakable);
           if (elseBlock.isEmpty()) elseBlock = null;
         }
-        yield SeqView.of(new AstStmt.IfThenElse(cond, thenBlock, elseBlock));
+        yield SeqView.of(new IrStmt.IfThenElse(cond, thenBlock, elseBlock));
       }
-      case AstStmt.SingletonStmt st when st == AstStmt.SingletonStmt.Break && endOfBreakable -> SeqView.empty();
-      case AstStmt.WhileTrue(var stmts) -> SeqView.of(new AstStmt.WhileTrue(optimizeBlock(stmts, true)));
+      case IrStmt.SingletonStmt st when st == IrStmt.SingletonStmt.Break && endOfBreakable -> SeqView.empty();
+      case IrStmt.WhileTrue(var stmts) -> SeqView.of(new IrStmt.WhileTrue(optimizeBlock(stmts, true)));
       default -> SeqView.of(stmt);
     };
   }

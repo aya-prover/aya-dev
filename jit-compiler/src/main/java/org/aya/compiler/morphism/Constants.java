@@ -9,8 +9,8 @@ import kala.collection.mutable.MutableSeq;
 import kala.control.Result;
 import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.syntax.compile.JitClass;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -238,7 +238,7 @@ public final class Constants {
     true
   );
 
-  public static @NotNull AstVariable unaryOperatorIdentity(@NotNull AstCodeBuilder builder) {
+  public static @NotNull IrVariable unaryOperatorIdentity(@NotNull IrCodeBuilder builder) {
     return builder.invoke(CLOSURE_ID, ImmutableSeq.empty());
   }
 

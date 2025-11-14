@@ -4,9 +4,9 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ir.IrClassBuilder;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.compiler.serializers.ModuleSerializer.MatchyRecorder;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.core.def.TyckDef;
@@ -46,7 +46,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   /// Used in type decls
   protected @NotNull Class<?> callBaseClass() { return callClass(); }
 
-  protected final AstVariable buildEmptyCall(@NotNull AstCodeBuilder builder, @NotNull TyckDef def) {
+  protected final IrVariable buildEmptyCall(@NotNull IrCodeBuilder builder, @NotNull TyckDef def) {
     return builder.mkNew(callClass(), ImmutableSeq.of(AbstractExprSerializer.getInstance(builder, def)));
   }
 
@@ -54,7 +54,7 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
     return NameSerializer.javifyClassName(unit.ref());
   }
 
-  protected void buildFramework(@NotNull AstClassBuilder builder, @NotNull T unit, @NotNull Consumer<AstClassBuilder> continuation) {
+  protected void buildFramework(@NotNull IrClassBuilder builder, @NotNull T unit, @NotNull Consumer<IrClassBuilder> continuation) {
     super.buildFramework(builder, unit, nestBuilder -> {
       if (shouldBuildEmptyCall(unit)) {
         nestBuilder.buildConstantField(JavaUtil.fromClass(callBaseClass()),
@@ -67,5 +67,5 @@ public abstract class JitDefSerializer<T extends TyckDef> extends ClassTargetSer
   }
 
   @Override
-  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull AstClassBuilder builder, T unit);
+  public abstract @NotNull JitDefSerializer<T> serialize(@NotNull IrClassBuilder builder, T unit);
 }

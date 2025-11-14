@@ -3,9 +3,9 @@
 package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrExpr;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ConCallLike;
@@ -17,34 +17,34 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
   private final boolean allowLocalTerm;
 
   PatternSerializer(
-    @NotNull AstCodeBuilder builder, @NotNull SerializerContext context, boolean allowLocalTerm
+    @NotNull IrCodeBuilder builder, @NotNull SerializerContext context, boolean allowLocalTerm
   ) {
     super(builder, context);
     this.allowLocalTerm = allowLocalTerm;
   }
 
-  private @NotNull AstVariable serializeTerm(@NotNull Term term) {
+  private @NotNull IrVariable serializeTerm(@NotNull Term term) {
     return new TermSerializer(builder, context, null, ImmutableSeq.empty(), allowLocalTerm)
       .serialize(term);
   }
 
-  private @NotNull AstVariable serializeConHead(@NotNull ConCallLike.Head head) {
+  private @NotNull IrVariable serializeConHead(@NotNull ConCallLike.Head head) {
     var termSer = new TermSerializer(builder, context, null, ImmutableSeq.empty(), allowLocalTerm);
 
     return builder.mkNew(ConCallLike.Head.class, ImmutableSeq.of(
       getInstance(head.ref()),
-      new AstExpr.Iconst(head.ulift()),
+      new IrExpr.Iconst(head.ulift()),
       makeImmutableSeq(Term.class, head.ownerArgs().map(termSer::serialize))
     ));
   }
 
-  @Override protected @NotNull AstVariable doSerialize(@NotNull Pat term) {
+  @Override protected @NotNull IrVariable doSerialize(@NotNull Pat term) {
     return switch (term) {
       case Pat.Misc misc -> builder.refEnum(misc);
       // it is safe to new a LocalVar, this method will be called when meta solving only,
       // but the meta solver will eat all LocalVar so that it will be happy.
       case Pat.Bind bind -> builder.mkNew(Pat.Bind.class, ImmutableSeq.of(
-        builder.mkNew(LocalVar.class, ImmutableSeq.of(new AstExpr.Sconst(bind.bind().name()))),
+        builder.mkNew(LocalVar.class, ImmutableSeq.of(new IrExpr.Sconst(bind.bind().name()))),
         serializeTerm(bind.type())
       ));
       case Pat.Con con -> builder.mkNew(Pat.Con.class, ImmutableSeq.of(
@@ -52,7 +52,7 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
         serializeConHead(con.head())
       ));
       case Pat.ShapedInt shapedInt -> builder.mkNew(Pat.ShapedInt.class, ImmutableSeq.of(
-        new AstExpr.Iconst(shapedInt.repr()),
+        new IrExpr.Iconst(shapedInt.repr()),
         getInstance(shapedInt.zero()),
         getInstance(shapedInt.suc()),
         serializeTerm(shapedInt.type())
@@ -64,5 +64,5 @@ public final class PatternSerializer extends AbstractExprSerializer<Pat> {
     };
   }
 
-  @Override public @NotNull AstVariable serialize(Pat unit) { return doSerialize(unit); }
+  @Override public @NotNull IrVariable serialize(Pat unit) { return doSerialize(unit); }
 }

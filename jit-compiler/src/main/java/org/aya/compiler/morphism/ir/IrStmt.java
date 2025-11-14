@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.morphism.ast;
+package org.aya.compiler.morphism.ir;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.primitive.ImmutableIntSeq;
@@ -17,16 +17,16 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.util.Locale;
 
-public sealed interface AstStmt extends Docile {
+public sealed interface IrStmt extends Docile {
   @Override default @NotNull Doc toDoc() {
     return Doc.plain("<unimplemented pretty print>");
   }
 
   record DeclareVariable(
     @NotNull ClassDesc type,
-    @NotNull AstVariable.Local theVar,
-    @Nullable AstExpr initializer
-  ) implements AstStmt {
+    @NotNull IrVariable.Local theVar,
+    @Nullable IrExpr initializer
+  ) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       var list = MutableList.of(
         Doc.styled(BasePrettier.KEYWORD, "let"),
@@ -42,17 +42,17 @@ public sealed interface AstStmt extends Docile {
   }
 
   record Super(@NotNull ImmutableSeq<ClassDesc> superConParams,
-               @NotNull ImmutableSeq<AstValue> superConArgs) implements AstStmt { }
+               @NotNull ImmutableSeq<IrValue> superConArgs) implements IrStmt { }
 
-  record SetVariable(@NotNull AstVariable var, @NotNull AstExpr update) implements AstStmt {
+  record SetVariable(@NotNull IrVariable var, @NotNull IrExpr update) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(var.toDoc(), Doc.symbol(":="), update.toDoc());
     }
   }
 
-  record SetStaticField(@NotNull FieldRef var, @NotNull AstVariable update) implements AstStmt { }
+  record SetStaticField(@NotNull FieldRef var, @NotNull IrVariable update) implements IrStmt { }
 
-  record SetArray(@NotNull AstVariable array, int index, @NotNull AstVariable update) implements AstStmt {
+  record SetArray(@NotNull IrVariable array, int index, @NotNull IrVariable update) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(
         Doc.cat(array.toDoc(), Doc.wrap("[", "]", Doc.plain(String.valueOf(index)))),
@@ -63,18 +63,18 @@ public sealed interface AstStmt extends Docile {
   }
 
   sealed interface Condition extends Docile {
-    record IsFalse(@NotNull AstVariable var) implements Condition {
+    record IsFalse(@NotNull IrVariable var) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "unless"), var.toDoc());
       }
     }
-    record IsTrue(@NotNull AstVariable var) implements Condition {
+    record IsTrue(@NotNull IrVariable var) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if"), var.toDoc());
       }
     }
-    record IsInstanceOf(@NotNull AstVariable lhs, @NotNull ClassDesc rhs,
-                        @NotNull MutableValue<AstVariable.Local> asTerm) implements Condition {
+    record IsInstanceOf(@NotNull IrVariable lhs, @NotNull ClassDesc rhs,
+                        @NotNull MutableValue<IrVariable.Local> asTerm) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(
           Doc.styled(BasePrettier.KEYWORD, "if let"),
@@ -85,56 +85,56 @@ public sealed interface AstStmt extends Docile {
         );
       }
     }
-    record IsIntEqual(@NotNull AstVariable lhs, int rhs) implements Condition {
+    record IsIntEqual(@NotNull IrVariable lhs, int rhs) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if int eq"), lhs.toDoc(), Doc.plain(String.valueOf(rhs)));
       }
     }
-    record IsRefEqual(@NotNull AstVariable lhs, @NotNull AstVariable rhs) implements Condition {
+    record IsRefEqual(@NotNull IrVariable lhs, @NotNull IrVariable rhs) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if ref eq"), lhs.toDoc(), rhs.toDoc());
       }
     }
-    record IsNull(@NotNull AstVariable ref) implements Condition {
+    record IsNull(@NotNull IrVariable ref) implements Condition {
       @Override public @NotNull Doc toDoc() {
         return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "if null"), ref.toDoc());
       }
     }
   }
 
-  record IfThenElse(@NotNull Condition cond, @NotNull ImmutableSeq<AstStmt> thenBlock,
-                    @Nullable ImmutableSeq<AstStmt> elseBlock) implements AstStmt {
+  record IfThenElse(@NotNull Condition cond, @NotNull ImmutableSeq<IrStmt> thenBlock,
+                    @Nullable ImmutableSeq<IrStmt> elseBlock) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       var list = MutableList.of(
         cond.toDoc(),
-        Doc.nest(2, Doc.vcat(thenBlock.view().map(AstStmt::toDoc))));
+        Doc.nest(2, Doc.vcat(thenBlock.view().map(IrStmt::toDoc))));
       if (elseBlock != null && elseBlock.isNotEmpty()) {
         list.append(Doc.styled(BasePrettier.KEYWORD, "else"));
-        list.append(Doc.nest(2, Doc.vcat(elseBlock.view().map(AstStmt::toDoc))));
+        list.append(Doc.nest(2, Doc.vcat(elseBlock.view().map(IrStmt::toDoc))));
       }
       return Doc.vcat(list);
     }
   }
 
-  record Breakable(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
+  record Breakable(@NotNull ImmutableSeq<IrStmt> block) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(
         Doc.styled(BasePrettier.KEYWORD, "breakable"),
-        Doc.nest(2, Doc.vcat(block.view().map(AstStmt::toDoc)))
+        Doc.nest(2, Doc.vcat(block.view().map(IrStmt::toDoc)))
       );
     }
   }
 
-  record WhileTrue(@NotNull ImmutableSeq<AstStmt> block) implements AstStmt {
+  record WhileTrue(@NotNull ImmutableSeq<IrStmt> block) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.vcat(
         Doc.styled(BasePrettier.KEYWORD, "loop"),
-        Doc.nest(2, Doc.vcat(block.view().map(AstStmt::toDoc)))
+        Doc.nest(2, Doc.vcat(block.view().map(IrStmt::toDoc)))
       );
     }
   }
 
-  enum SingletonStmt implements AstStmt {
+  enum SingletonStmt implements IrStmt {
     Break,
     Continue,
     Unreachable;
@@ -144,15 +144,15 @@ public sealed interface AstStmt extends Docile {
     }
   }
 
-  record Exec(@NotNull AstExpr expr) implements AstStmt {
+  record Exec(@NotNull IrExpr expr) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return expr.toDoc();
     }
   }
 
-  record Switch(@NotNull AstVariable elim, @NotNull ImmutableIntSeq cases,
-                @NotNull ImmutableSeq<ImmutableSeq<AstStmt>> branch,
-                @NotNull ImmutableSeq<AstStmt> defaultCase) implements AstStmt {
+  record Switch(@NotNull IrVariable elim, @NotNull ImmutableIntSeq cases,
+                @NotNull ImmutableSeq<ImmutableSeq<IrStmt>> branch,
+                @NotNull ImmutableSeq<IrStmt> defaultCase) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       var size = cases.size();
       if (defaultCase.isNotEmpty()) size++;
@@ -177,13 +177,13 @@ public sealed interface AstStmt extends Docile {
               Doc.plain(String.valueOf(cases.get(i))),
               Doc.symbol("->")
             ),
-            Doc.nest(2, Doc.vcat(stmts.view().map(AstStmt::toDoc)))));
+            Doc.nest(2, Doc.vcat(stmts.view().map(IrStmt::toDoc)))));
         }
       }
       if (defaultCase.isNotEmpty()) {
         var defaultDoc = Doc.vcat(
           Doc.styled(BasePrettier.KEYWORD, "default"),
-          Doc.nest(2, Doc.vcat(defaultCase.view().map(AstStmt::toDoc)))
+          Doc.nest(2, Doc.vcat(defaultCase.view().map(IrStmt::toDoc)))
         );
         branchesDoc.set(cases.size(), defaultDoc);
       }
@@ -191,7 +191,7 @@ public sealed interface AstStmt extends Docile {
     }
   }
 
-  record Return(@NotNull AstVariable expr) implements AstStmt {
+  record Return(@NotNull IrVariable expr) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "return"), expr.toDoc());
     }

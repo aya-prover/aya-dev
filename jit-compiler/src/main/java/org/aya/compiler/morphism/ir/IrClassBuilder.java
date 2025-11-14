@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.compiler.morphism.ast;
+package org.aya.compiler.morphism.ir;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
@@ -19,16 +19,16 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public record AstClassBuilder(
+public record IrClassBuilder(
   @Nullable AyaMetadata metadata,
   @NotNull ClassDesc parentOrThis,
   @Nullable String nested,
   @NotNull Class<?> superclass,
-  @NotNull FreezableMutableList<AstDecl> members,
+  @NotNull FreezableMutableList<IrDecl> members,
   @NotNull MutableMap<ClassDesc, ClassHierarchyResolver.ClassHierarchyInfo> usedClasses,
-  @NotNull MutableMap<FieldRef, Function<AstCodeBuilder, AstVariable>> fieldInitializers
+  @NotNull MutableMap<FieldRef, Function<IrCodeBuilder, IrVariable>> fieldInitializers
 ) {
-  public AstClassBuilder(
+  public IrClassBuilder(
     @Nullable AyaMetadata metadata,
     @NotNull ClassDesc parentOrThis, @Nullable String nested,
     @NotNull MutableMap<ClassDesc, ClassHierarchyResolver.ClassHierarchyInfo> classMarkers,
@@ -40,14 +40,14 @@ public record AstClassBuilder(
       MutableLinkedHashMap.of());
   }
 
-  public @NotNull AstDecl.Clazz build() {
+  public @NotNull IrDecl.Clazz build() {
     if (fieldInitializers.isNotEmpty()) {
-      var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), false, false);
+      var codeBuilder = new IrCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), false, false);
       fieldInitializers.forEach((fieldRef, init) ->
         codeBuilder.updateField(fieldRef, init.apply(codeBuilder)));
-      members.append(new AstDecl.StaticInitBlock(codeBuilder.build()));
+      members.append(new IrDecl.StaticInitBlock(codeBuilder.build()));
     }
-    return new AstDecl.Clazz(metadata, parentOrThis, nested, superclass, members.freeze());
+    return new IrDecl.Clazz(metadata, parentOrThis, nested, superclass, members.freeze());
   }
 
   public @NotNull ClassDesc className() {
@@ -58,27 +58,27 @@ public record AstClassBuilder(
     @NotNull AyaMetadata ayaMetadata,
     @NotNull String name,
     @NotNull Class<?> superclass,
-    @NotNull Consumer<AstClassBuilder> builder
+    @NotNull Consumer<IrClassBuilder> builder
   ) {
-    var classBuilder = new AstClassBuilder(ayaMetadata, className(), name, usedClasses, superclass);
+    var classBuilder = new IrClassBuilder(ayaMetadata, className(), name, usedClasses, superclass);
     builder.accept(classBuilder);
     members.append(classBuilder.build());
   }
 
   private void buildMethod(
     @NotNull MethodRef ref, boolean isStatic,
-    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
+    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
   ) {
-    var codeBuilder = new AstCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
-    builder.accept(new AstArgsProvider.FnParam(ref.paramTypes().size()), codeBuilder);
-    members.append(new AstDecl.Method(ref, isStatic, codeBuilder.build()));
+    var codeBuilder = new IrCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
+    builder.accept(new IrArgsProvider.FnParam(ref.paramTypes().size()), codeBuilder);
+    members.append(new IrDecl.Method(ref, isStatic, codeBuilder.build()));
   }
 
   public @NotNull MethodRef buildMethod(
     @NotNull ClassDesc returnType,
     @NotNull String name, boolean isStatic,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
+    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
   ) {
     var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, isStatic, builder);
@@ -87,7 +87,7 @@ public record AstClassBuilder(
 
   public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AstArgsProvider.FnParam, AstCodeBuilder> builder
+    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
   ) {
     var ref = JavaUtil.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, false, builder);
@@ -97,11 +97,11 @@ public record AstClassBuilder(
   public @NotNull FieldRef buildConstantField(
     @NotNull ClassDesc returnType,
     @NotNull String name,
-    @NotNull Function<AstCodeBuilder, AstVariable> initializer
+    @NotNull Function<IrCodeBuilder, IrVariable> initializer
   ) {
     var ref = new FieldRef(className(), returnType, name);
     fieldInitializers.put(ref, initializer);
-    members.append(new AstDecl.ConstantField(ref));
+    members.append(new IrDecl.ConstantField(ref));
     return ref;
   }
 }

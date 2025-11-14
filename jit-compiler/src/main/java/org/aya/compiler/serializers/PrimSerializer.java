@@ -4,9 +4,9 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstClassBuilder;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstValue;
+import org.aya.compiler.morphism.ir.IrClassBuilder;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrValue;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.call.PrimCall;
@@ -25,11 +25,11 @@ public final class PrimSerializer extends JitTeleSerializer<PrimDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, PrimDef unit) {
+  protected @NotNull ImmutableSeq<IrValue> superConArgs(@NotNull IrCodeBuilder builder, PrimDef unit) {
     return super.superConArgs(builder, unit).appended(builder.refEnum(unit.id()));
   }
 
-  @Override public @NotNull PrimSerializer serialize(@NotNull AstClassBuilder builder, PrimDef unit) {
+  @Override public @NotNull PrimSerializer serialize(@NotNull IrClassBuilder builder, PrimDef unit) {
     buildFramework(builder, unit, _ -> { });
     return this;
   }

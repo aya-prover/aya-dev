@@ -8,7 +8,7 @@ import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.*;
+import org.aya.compiler.morphism.ir.*;
 import org.aya.generic.Modifier;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitFn;
@@ -46,16 +46,16 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   @Override
-  protected @NotNull ImmutableSeq<AstValue> superConArgs(@NotNull AstCodeBuilder builder, FnDef unit) {
+  protected @NotNull ImmutableSeq<IrValue> superConArgs(@NotNull IrCodeBuilder builder, FnDef unit) {
     return super.superConArgs(builder, unit)
-      .appended(new AstExpr.Iconst(modifierFlags(unit.modifiers())));
+      .appended(new IrExpr.Iconst(modifierFlags(unit.modifiers())));
   }
 
-  public static @NotNull AstVariable makeInvoke(
-    @NotNull AstCodeBuilder builder,
+  public static @NotNull IrVariable makeInvoke(
+    @NotNull IrCodeBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull AstVariable normalizer,
-    @NotNull ImmutableSeq<AstVariable> args
+    @NotNull IrVariable normalizer,
+    @NotNull ImmutableSeq<IrVariable> args
   ) {
     var ref = new MethodRef(
       owner, "invoke", CD_Term,
@@ -68,13 +68,13 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
 
   /// Build fixed argument `invoke`
   private void buildInvokeBody(
-    @NotNull AstCodeBuilder topBuilder,
+    @NotNull IrCodeBuilder topBuilder,
     @NotNull FnDef unit,
-    @NotNull AstVariable normalizer,
-    @NotNull ImmutableSeq<AstVariable> argTerms
+    @NotNull IrVariable normalizer,
+    @NotNull ImmutableSeq<IrVariable> argTerms
   ) {
-    Consumer<AstCodeBuilder> buildFn = builder -> {
-      Consumer<AstCodeBuilder> onStuckCon = cb -> {
+    Consumer<IrCodeBuilder> buildFn = builder -> {
+      Consumer<IrCodeBuilder> onStuckCon = cb -> {
         var stuckTerm = TermSerializer.buildFnCall(cb, FnCall.class, unit, 0, argTerms);
         cb.returnWith(stuckTerm);
       };
@@ -98,7 +98,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
               if (LetTerm.unletBody(matching.body()) instanceof FnCall call && call.tailCall()) {
                 var te = new TermSerializer(builder0, serializerContext, argTerms, patSer.result.view().take(count).toSeq());
                 var dummy = te.serialize(matching.body());
-                assert dummy instanceof AstVariable.Local(int index) && index == -1;
+                assert dummy instanceof IrVariable.Local(int index) && index == -1;
               } else {
                 var result = serializerContext.serializeTermUnderTele(builder0, matching.body(), patSer.result.view()
                   .take(count)
@@ -119,14 +119,14 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   /// @param unit must be elaborated
-  public @NotNull AstDecl.Method buildInvokeForPrettyPrint(@NotNull FnDef unit) {
+  public @NotNull IrDecl.Method buildInvokeForPrettyPrint(@NotNull FnDef unit) {
     var module = unit.ref().module;
     assert module != null;
     var desc = ClassDesc.of(getReference(module, null, NameSerializer.NameType.ClassName));
-    var classBuilder = new AstClassBuilder(null, desc, null, MutableMap.create(), JitUnit.class);
+    var classBuilder = new IrClassBuilder(null, desc, null, MutableMap.create(), JitUnit.class);
     buildFixedInvoke(unit, classBuilder);
     return classBuilder.members().view()
-      .filterIsInstance(AstDecl.Method.class)
+      .filterIsInstance(IrDecl.Method.class)
       .find(it -> "invoke".equals(it.signature().name()))
       .get();
   }
@@ -135,11 +135,11 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
    * Build vararg `invoke`
    */
   private void buildInvoke(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull FnDef unit,
     @NotNull MethodRef invokeMethod,
-    @NotNull AstVariable normalizerTerm,
-    @NotNull AstVariable argsTerm
+    @NotNull IrVariable normalizerTerm,
+    @NotNull IrVariable argsTerm
   ) {
     var teleSize = unit.telescope().size();
     var args = AbstractExprSerializer.fromSeq(builder, CD_Term, argsTerm, teleSize);
@@ -156,7 +156,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return shapeMaybe.get().shape().ordinal();
   }
 
-  @Override public @NotNull FnSerializer serialize(@NotNull AstClassBuilder builder, FnDef unit) {
+  @Override public @NotNull FnSerializer serialize(@NotNull IrClassBuilder builder, FnDef unit) {
     buildFramework(builder, unit, builder0 -> {
       var fixedInvoke = buildFixedInvoke(unit, builder0);
 
@@ -171,7 +171,7 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
     return this;
   }
 
-  private @NotNull MethodRef buildFixedInvoke(FnDef unit, AstClassBuilder builder) {
+  private @NotNull MethodRef buildFixedInvoke(FnDef unit, IrClassBuilder builder) {
     return builder.buildMethod(
       CD_Term,
       "invoke", true,

@@ -7,7 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.*;
+import org.aya.compiler.morphism.ir.*;
 import org.aya.syntax.compile.AyaMetadata;
 import org.aya.syntax.compile.JitMatchy;
 import org.aya.syntax.core.def.Matchy;
@@ -28,7 +28,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     super(JitMatchy.class, recorder);
   }
 
-  @Override protected @NotNull MethodRef buildConstructor(@NotNull AstClassBuilder builder, MatchyData unit) {
+  @Override protected @NotNull MethodRef buildConstructor(@NotNull IrClassBuilder builder, MatchyData unit) {
     return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
     );
@@ -42,12 +42,12 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
     return InvokeSignatureHelper.parameters(ImmutableSeq.fill(capturec + argc, Constants.CD_Term).view());
   }
 
-  public static @NotNull AstVariable makeInvoke(
-    @NotNull AstCodeBuilder builder,
+  public static @NotNull IrVariable makeInvoke(
+    @NotNull IrCodeBuilder builder,
     @NotNull ClassDesc owner,
-    @NotNull AstVariable normalizer,
-    @NotNull ImmutableSeq<AstVariable> captures,
-    @NotNull ImmutableSeq<AstValue> args
+    @NotNull IrVariable normalizer,
+    @NotNull ImmutableSeq<IrVariable> captures,
+    @NotNull ImmutableSeq<IrValue> args
   ) {
     var ref = new MethodRef(
       owner, "invoke",
@@ -60,13 +60,13 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   private void buildInvoke(
-    @NotNull AstCodeBuilder builder, @NotNull MatchyData data,
-    @NotNull AstVariable normalizer,
-    @NotNull ImmutableSeq<AstVariable> captures, @NotNull ImmutableSeq<AstVariable> args
+    @NotNull IrCodeBuilder builder, @NotNull MatchyData data,
+    @NotNull IrVariable normalizer,
+    @NotNull ImmutableSeq<IrVariable> captures, @NotNull ImmutableSeq<IrVariable> args
   ) {
     var unit = data.matchy;
 
-    Consumer<AstCodeBuilder> onFailed = b -> {
+    Consumer<IrCodeBuilder> onFailed = b -> {
       var result = b.mkNew(MatchCall.class, ImmutableSeq.of(
         AbstractExprSerializer.getInstance(b, NameSerializer.getClassDesc(data.matchy)),
         AbstractExprSerializer.makeImmutableSeq(b, Term.class, captures),
@@ -102,11 +102,11 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
    * @see JitMatchy#invoke(java.util.function.UnaryOperator, Seq, Seq)
    */
   private void buildInvoke(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull MatchyData data,
     @NotNull MethodRef invokeRef,
-    @NotNull AstVariable normalizer,
-    @NotNull AstVariable captures, @NotNull AstVariable args
+    @NotNull IrVariable normalizer,
+    @NotNull IrVariable captures, @NotNull IrVariable args
   ) {
     var capturec = data.capturesSize;
     int argc = data.argsSize;
@@ -114,13 +114,13 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       .view()
       .appendedAll(AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, argc));
     var fullArgs = InvokeSignatureHelper.args(normalizer, SeqView.narrow(preArgs));
-    var invokeExpr = new AstExpr.Invoke(invokeRef, AstExpr.This.INSTANCE, fullArgs);
+    var invokeExpr = new IrExpr.Invoke(invokeRef, IrExpr.This.INSTANCE, fullArgs);
 
     builder.returnWith(invokeExpr);
   }
 
   /** @see JitMatchy#type */
-  private void buildType(@NotNull AstCodeBuilder builder, @NotNull MatchyData data, @NotNull AstVariable captures, @NotNull AstVariable args) {
+  private void buildType(@NotNull IrCodeBuilder builder, @NotNull MatchyData data, @NotNull IrVariable captures, @NotNull IrVariable args) {
     var captureSeq = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, captures, data.capturesSize);
     var argSeq = AbstractExprSerializer.fromSeq(builder, Constants.CD_Term, args, data.argsSize);
     var result = serializeTermUnderTeleWithoutNormalizer(builder, data.matchy.returnTypeBound(), captureSeq.appendedAll(argSeq));
@@ -133,7 +133,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override public @NotNull ClassTargetSerializer<MatchyData>
-  serialize(@NotNull AstClassBuilder builder0, MatchyData unit) {
+  serialize(@NotNull IrClassBuilder builder0, MatchyData unit) {
     buildFramework(builder0, unit, builder -> {
       var capturec = unit.capturesSize;
       var argc = unit.argsSize;
