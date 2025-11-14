@@ -163,8 +163,8 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       builder0.buildMethod(
         CD_Term, "invoke", false,
         InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_Seq).view()),
-        (ap, cb) ->
-          buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0))
+        cb ->
+          buildInvoke(cb, unit, fixedInvoke, InvokeSignatureHelper.normalizerInLam(), InvokeSignatureHelper.arg(0))
       );
     });
 
@@ -176,10 +176,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
       CD_Term,
       "invoke", true,
       InvokeSignatureHelper.parameters(ImmutableSeq.fill(unit.telescope().size(), CD_Term).view()),
-      (ap, cb) -> {
-        var pre = InvokeSignatureHelper.normalizer(ap);
+      cb -> {
+        var pre = InvokeSignatureHelper.normalizerInLam();
         var args = ImmutableSeq.fill(unit.telescope().size(),
-          i -> InvokeSignatureHelper.arg(ap, i));
+          InvokeSignatureHelper::arg);
         buildInvokeBody(cb, unit, pre, args);
       }
     );

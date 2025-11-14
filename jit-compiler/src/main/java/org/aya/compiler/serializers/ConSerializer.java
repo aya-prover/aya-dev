@@ -96,16 +96,15 @@ public final class ConSerializer extends JitTeleSerializer<ConDef> {
         builder.buildMethod(
           JavaUtil.fromClass(Result.class), "isAvailable", false,
           InvokeSignatureHelper.parameters(ImmutableSeq.of(Constants.CD_ImmutableSeq).view()),
-          (ap, builder1) ->
-            buildIsAvailable(builder1, unit, InvokeSignatureHelper.normalizer(ap), InvokeSignatureHelper.arg(ap, 0)));
+          cb ->
+            buildIsAvailable(cb, unit, InvokeSignatureHelper.normalizerInLam(), InvokeSignatureHelper.arg(0)));
       }
 
       if (unit.equality != null) {
         builder.buildMethod(Constants.CD_Term, "equality", false,
-          ImmutableSeq.of(Constants.CD_Seq, ConstantDescs.CD_boolean),
-          (ap, cb) -> {
-            var argsTerm = ap.arg(0);
-            var is0Term = ap.arg(1);
+          ImmutableSeq.of(Constants.CD_Seq, ConstantDescs.CD_boolean), cb -> {
+            var argsTerm = (IrVariable) new IrVariable.Arg(0);
+            var is0Term = (IrVariable) new IrVariable.Arg(1);
             buildEquality(cb, unit, argsTerm, is0Term);
           });
       }

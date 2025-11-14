@@ -10,7 +10,10 @@ import org.aya.compiler.FieldRef;
 import org.aya.compiler.MethodRef;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
-import org.aya.compiler.morphism.ir.*;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrExpr;
+import org.aya.compiler.morphism.ir.IrValue;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.generic.stmt.Shaped;
 import org.aya.prettier.FindUsage;
 import org.aya.syntax.core.Closure;
@@ -29,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.ConstantDescs;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.aya.compiler.morphism.Constants.LAMBDA_NEW;
@@ -299,7 +303,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
 
   private @NotNull IrVariable makeLambda(
     @NotNull MethodRef lambdaType,
-    @NotNull BiFunction<IrArgsProvider.Lambda, TermSerializer, IrVariable> cont
+    @NotNull Function<TermSerializer, IrVariable> cont
   ) {
     var binds = MutableLinkedHashMap.from(this.binds);
     var entries = binds.toImmutableSeq();
@@ -309,22 +313,22 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       fullCaptures = fullCaptures.prepended(context.normalizer());
     }
 
-    return builder.mkLambda(fullCaptures.toSeq(), lambdaType, (ap, builder1) -> {
-      var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizer(ap) : null;
+    return builder.mkLambda(fullCaptures.toSeq(), lambdaType, builder1 -> {
+      var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizerInFn() : null;
       var newContext = new SerializerContext(normalizer, context.recorder());
       var captured = entries.mapIndexed((i, tup) -> {
-        var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(ap, i) : ap.capture(i);
+        var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(i) : new IrVariable.Capture(i);
         return Tuple.of(tup.component1(), capturedExpr);
       });
-      var result = cont.apply(ap, new TermSerializer(builder1, newContext,
+      var result = cont.apply(new TermSerializer(builder1, newContext,
         MutableLinkedHashMap.from(captured), this.allowLocalTerm));
       builder1.returnWith(result);
     });
   }
 
   private @NotNull IrVariable makeClosure(@NotNull BiFunction<TermSerializer, IrVariable, IrVariable> cont) {
-    return makeLambda(Constants.CLOSURE, (ap, te) -> {
-      var casted = te.builder.checkcast(ap.arg(0), Constants.CD_Term);
+    return makeLambda(Constants.CLOSURE, te -> {
+      var casted = te.builder.checkcast(new IrVariable.Arg(0), Constants.CD_Term);
       return cont.apply(te, casted);
     });
   }

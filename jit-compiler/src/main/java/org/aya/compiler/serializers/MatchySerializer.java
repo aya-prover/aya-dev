@@ -29,7 +29,7 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull IrClassBuilder builder, MatchyData unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+    return builder.buildConstructor(ImmutableSeq.empty(), cb ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty())
     );
   }
@@ -139,22 +139,21 @@ public class MatchySerializer extends ClassTargetSerializer<MatchySerializer.Mat
       var argc = unit.argsSize;
 
       var fixedInvokeRef = builder.buildMethod(Constants.CD_Term, "invoke", true,
-        makeInvokeParameters(capturec, argc), (ap, cb) -> {
-          var pre = InvokeSignatureHelper.normalizer(ap);
-          var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(ap, i));
-          var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(ap, i + capturec));
+        makeInvokeParameters(capturec, argc), cb -> {
+          var pre = InvokeSignatureHelper.normalizerInLam();
+          var captures = ImmutableSeq.fill(capturec, i -> InvokeSignatureHelper.arg(i));
+          var args = ImmutableSeq.fill(argc, i -> InvokeSignatureHelper.arg(i + capturec));
           buildInvoke(cb, unit, pre, captures, args);
         });
 
       builder.buildMethod(Constants.CD_Term, "invoke", false, ImmutableSeq.of(
         Constants.CD_UnaryOperator, Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) ->
-        buildInvoke(cb, unit, fixedInvokeRef, ap.arg(0), ap.arg(1), ap.arg(2)));
+      ), cb ->
+        buildInvoke(cb, unit, fixedInvokeRef, new IrVariable.Arg(0), new IrVariable.Arg(1), new IrVariable.Arg(2)));
 
       builder.buildMethod(Constants.CD_Term, "type", false, ImmutableSeq.of(
         Constants.CD_Seq, Constants.CD_Seq
-      ), (ap, cb) ->
-        buildType(cb, unit, ap.arg(0), ap.arg(1)));
+      ), cb -> buildType(cb, unit, new IrVariable.Arg(0), new IrVariable.Arg(1)));
     });
 
     return this;

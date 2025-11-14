@@ -46,7 +46,7 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull IrClassBuilder builder, T unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+    return builder.buildConstructor(ImmutableSeq.empty(), cb ->
       cb.invokeSuperCon(superConParams(), superConArgs(cb, unit)));
   }
 
@@ -58,18 +58,15 @@ public abstract class JitTeleSerializer<T extends TyckDef> extends JitDefSeriali
     super.buildFramework(builder, unit, nestBuilder -> {
       if (unit.telescope().isNotEmpty()) nestBuilder.buildMethod(
         Constants.CD_Term, "telescope", false,
-        ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq),
-        (ap, cb) -> {
-          var i = ap.arg(0);
-          var teleArgs = ap.arg(1);
+        ImmutableSeq.of(ConstantDescs.CD_int, Constants.CD_Seq), cb -> {
+          var i = (IrVariable) new IrVariable.Arg(0);
+          var teleArgs = (IrVariable) new IrVariable.Arg(1);
           buildTelescope(cb, unit, i, teleArgs);
         });
 
       nestBuilder.buildMethod(
-        Constants.CD_Term, "result", false,
-        ImmutableSeq.of(Constants.CD_Seq),
-        (ap, cb) -> {
-          var teleArgs = ap.arg(0);
+        Constants.CD_Term, "result", false, ImmutableSeq.of(Constants.CD_Seq), cb -> {
+          var teleArgs = (IrVariable) new IrVariable.Arg(0);
           buildResult(cb, unit, teleArgs);
         });
 

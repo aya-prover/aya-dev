@@ -50,12 +50,12 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
       builder0.buildMethod(
         JavaUtil.fromClass(JitMember.class).arrayType(), "membars", false,
         ImmutableSeq.empty(),
-        (_, cb) -> buildMembers(cb, unit));
+        cb -> buildMembers(cb, unit));
       if (unit.classifyingIndex() != -1) {
         builder0.buildMethod(
           ConstantDescs.CD_int, "classifyingIndex", false,
           ImmutableSeq.empty(),
-          (_, cb) -> cb.returnWith(cb.bindExpr(new IrExpr.Iconst(unit.classifyingIndex()))));
+          cb -> cb.returnWith(cb.bindExpr(new IrExpr.Iconst(unit.classifyingIndex()))));
       }
     });
 
@@ -63,7 +63,7 @@ public final class ClassSerializer extends JitDefSerializer<ClassDef> {
   }
 
   @Override protected @NotNull MethodRef buildConstructor(@NotNull IrClassBuilder builder, ClassDef unit) {
-    return builder.buildConstructor(ImmutableSeq.empty(), (_, cb) ->
+    return builder.buildConstructor(ImmutableSeq.empty(), cb ->
       cb.invokeSuperCon(ImmutableSeq.empty(), ImmutableSeq.empty()));
   }
 }

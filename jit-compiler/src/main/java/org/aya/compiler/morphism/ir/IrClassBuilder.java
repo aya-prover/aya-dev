@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -67,10 +66,10 @@ public record IrClassBuilder(
 
   private void buildMethod(
     @NotNull MethodRef ref, boolean isStatic,
-    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
+    @NotNull Consumer<IrCodeBuilder> builder
   ) {
     var codeBuilder = new IrCodeBuilder(this, FreezableMutableList.create(), new VariablePool(), ref.isConstructor(), false);
-    builder.accept(new IrArgsProvider.FnParam(ref.paramTypes().size()), codeBuilder);
+    builder.accept(codeBuilder);
     members.append(new IrDecl.Method(ref, isStatic, codeBuilder.build()));
   }
 
@@ -78,7 +77,7 @@ public record IrClassBuilder(
     @NotNull ClassDesc returnType,
     @NotNull String name, boolean isStatic,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
+    @NotNull Consumer<IrCodeBuilder> builder
   ) {
     var ref = new MethodRef(className(), name, returnType, paramTypes, false);
     buildMethod(ref, isStatic, builder);
@@ -87,7 +86,7 @@ public record IrClassBuilder(
 
   public @NotNull MethodRef buildConstructor(
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<IrArgsProvider.FnParam, IrCodeBuilder> builder
+    @NotNull Consumer<IrCodeBuilder> builder
   ) {
     var ref = JavaUtil.makeConstructorRef(className(), paramTypes);
     buildMethod(ref, false, builder);

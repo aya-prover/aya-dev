@@ -8,10 +8,7 @@ import kala.tuple.Tuple;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.FreeJavaResolver;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ir.IrClassBuilder;
-import org.aya.compiler.morphism.ir.IrCodeBuilder;
-import org.aya.compiler.morphism.ir.IrExpr;
-import org.aya.compiler.morphism.ir.IrValue;
+import org.aya.compiler.morphism.ir.*;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitCon;
 import org.aya.syntax.compile.JitData;
@@ -41,8 +38,7 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
     buildFramework(topBuilder, unit, builder -> {
       builder.buildMethod(
         JavaUtil.fromClass(JitCon.class).arrayType(), "constructors", false,
-        ImmutableSeq.empty(), (_, cb) ->
-          buildConstructors(cb, unit));
+        ImmutableSeq.empty(), cb -> buildConstructors(cb, unit));
 
       var anyDef = AnyDef.fromVar(unit.ref());
       var maybe = shapeFactory.find(anyDef);
@@ -50,14 +46,14 @@ public final class DataSerializer extends JitTeleSerializer<DataDef> {
         var recognition = maybe.get();
         if (recognition.shape() == AyaShape.NAT_SHAPE) builder.buildMethod(
           Constants.CD_IntegerTerm, AyaSerializer.METHOD_MAKE_INTEGER, true, ImmutableSeq.of(ConstantDescs.CD_int),
-          (ap, codeBuilder) -> {
+          codeBuilder -> {
             var ourCall = codeBuilder.bindExpr(new IrExpr.RefField(FreeJavaResolver.resolve(
               NameSerializer.getClassDesc(anyDef),
               AyaSerializer.FIELD_EMPTYCALL,
               JavaUtil.fromClass(DataCall.class)), null));
 
             codeBuilder.returnWith(codeBuilder.mkNew(IntegerTerm.class, ImmutableSeq.of(
-              ap.arg(0),
+              new IrVariable.Arg(0),
               AbstractExprSerializer.getInstance(codeBuilder, recognition.getCon(CodeShape.GlobalId.ZERO)),
               AbstractExprSerializer.getInstance(codeBuilder, recognition.getCon(CodeShape.GlobalId.SUC)),
               ourCall

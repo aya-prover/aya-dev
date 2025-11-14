@@ -216,16 +216,15 @@ public record IrCodeBuilder(
   public @NotNull IrVariable mkLambda(
     @NotNull ImmutableSeq<IrVariable> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<IrArgsProvider.Lambda, IrCodeBuilder> builder
+    @NotNull Consumer<IrCodeBuilder> builder
   ) {
-    var argc = method.paramTypes().size();
     // [0..captures.size()]th parameters are captures
     // [captures.size()..]th parameters are lambda arguments
     // Note that the [VariablePool] counts from 0,
     // as the arguments does NOT count as [local](AstVariable.Local) variables, but instead a [reference to the argument](AstVariable.Arg).
     var lambdaBodyBuilder = new IrCodeBuilder(owner, FreezableMutableList.create(),
       new VariablePool(), false, false);
-    builder.accept(new IrArgsProvider.Lambda(captures.size(), argc), lambdaBodyBuilder);
+    builder.accept(lambdaBodyBuilder);
     var lambdaBody = lambdaBodyBuilder.build();
 
     return bindExpr(method.owner(), new IrExpr.Lambda(captures, method, lambdaBody));
