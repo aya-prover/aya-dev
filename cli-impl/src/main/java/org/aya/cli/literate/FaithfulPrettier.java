@@ -74,8 +74,10 @@ public interface FaithfulPrettier {
   private @NotNull Doc highlightOne(@NotNull String raw, int base, @NotNull HighlightInfo highlight) {
     if (raw.isEmpty()) return Doc.empty();
     return switch (highlight) {
-      case HighlightInfo.Def def -> Doc.linkDef(highlightVar(raw, def.kind()), def.target(), hover(def.type()));
-      case HighlightInfo.Ref ref -> Doc.linkRef(highlightVar(raw, ref.kind()), ref.target(), hover(ref.type()));
+      case HighlightInfo.Def def -> hover(Doc.linkDef(highlightVar(raw, def.kind()), def.target()),
+        def.type());
+      case HighlightInfo.Ref ref -> hover(Doc.linkRef(highlightVar(raw, ref.kind()), ref.target()),
+        ref.type());
       case HighlightInfo.Lit lit -> highlightLit(raw, lit.kind());
       case HighlightInfo.Err(var problem, var children) -> {
         var doc = doHighlight(StringSlice.of(raw), base, children);
@@ -95,9 +97,9 @@ public interface FaithfulPrettier {
     };
   }
 
-  private @Nullable String hover(@Nullable AyaDocile term) {
-    if (term == null) return null;
-    return term.toDoc(options()).commonRender();
+  private @NotNull Doc hover(@NotNull Doc term, @Nullable AyaDocile type) {
+    if (type == null) return term;
+    return new Doc.Tooltip(term, () -> Doc.codeBlock(Language.Builtin.Aya, type.toDoc(options())));
   }
 
   private static @NotNull Doc highlightVar(@NotNull String raw, @NotNull HighlightInfo.DefKind defKind) {

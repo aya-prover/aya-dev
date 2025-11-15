@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
@@ -106,7 +106,7 @@ class HoverStack {
     let newHover = document.createElement("div");
     newHover.userCreatedFrom = link;
     // set the content from base64 encoded attribute data-tooltip-text
-    newHover.innerHTML = "<span id='AyaTooltipPopupClose'>&times;</span>" + memoizedBase64Decode(text);
+    newHover.innerHTML = "<span class='AyaTooltipPopupClose'></span>" + memoizedBase64Decode(text);
     newHover.classList.add("AyaTooltipPopup");
     // Hover to highlight occurrences is done by adding mouse event listeners to the elements in the tooltip.
     // The inserted tooltip is not a child of `document` when the page was loaded, so a manual setup is needed.
@@ -123,7 +123,7 @@ class HoverStack {
         let close = this.children[0];
         if (!close) return; // already closed
         let closeThis = this;
-        close.style.visibility = "visible";
+        newHover.classList.add("TooltipPinned");
         close.addEventListener("click", _ => self.dismiss(closeThis));
       }
       if (event.type === 'mouseover') {
@@ -141,24 +141,34 @@ class HoverStack {
     // add to the container, so `getBoundingClientRect()` returns something.
     container.appendChild(newHover);
 
-    // calculate the position of the tooltip
-    newHover.style.left = `${link.offsetLeft}px`;
+    // calculate the position of the tooltip relative to the page
+    const linkRect = link.getBoundingClientRect();
+    const hoverRect = newHover.getBoundingClientRect();
+
+    // horizontal: align left edges (page coordinates)
+    const pageLeft = linkRect.left + window.scrollX;
+    newHover.style.left = `${pageLeft}px`;
+
     if (nested.length === 0) {
-      const selfRect = link.getBoundingClientRect();
-      const hoverRect = newHover.getBoundingClientRect();
-      // If we're close to the bottom of the page, push the tooltip above instead.
-      // The constant here is arbitrary, because trying to convert em to px in JS is a fool's errand.
-      if (selfRect.bottom + hoverRect.height + 30 > window.innerHeight) {
-        // 3em for showing above the type hover
-        newHover.style.top = `calc(${link.offsetTop - hoverRect.height + 8}px - 3em)`;
+      // decide whether to show above or below, using viewport height
+      const willOverflowBottom =
+        linkRect.bottom + hoverRect.height + 30 > window.innerHeight;
+
+      if (willOverflowBottom) {
+        // show above the link
+        const pageTopAbove = linkRect.top + window.scrollY - hoverRect.height - 8;
+        newHover.style.top = `${pageTopAbove}px`;
       } else {
-        newHover.style.top = `${link.offsetTop + link.offsetHeight + 8}px`;
+        // show below the link
+        const pageTopBelow = linkRect.bottom + window.scrollY + 8;
+        newHover.style.top = `${pageTopBelow}px`;
       }
     } else {
       // If there are other tooltips, put this one below the last one.
-      const belowest = Math.max(...nested.map(hover => hover.offsetTop + hover.offsetHeight));
+      const belowest = Math.max(
+        ...nested.map(hover => hover.offsetTop + hover.offsetHeight)
+      );
       newHover.style.top = `${belowest + 8}px`;
-      // TODO: if we're close to the bottom?
     }
 
     // THE BIG GAME!
