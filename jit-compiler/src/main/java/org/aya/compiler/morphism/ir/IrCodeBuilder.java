@@ -185,22 +185,19 @@ public record IrCodeBuilder(
     return bindExpr(method.returnType(), new IrExpr.Invoke(method, owner, args));
   }
 
-  // public @NotNull AstExpr
-  // invoke(@NotNull MethodRef method, @NotNull AstVariable owner, @NotNull ImmutableSeq<AstExpr> args) {
-  //   return new AstExpr.Invoke(method, owner, bindExprs(args));
-  // }
-
   public @NotNull IrVariable invoke(@NotNull MethodRef method, @NotNull ImmutableSeq<IrValue> args) {
     return bindExpr(method.returnType(), new IrExpr.Invoke(method, null, args));
   }
 
   public @NotNull IrVariable refField(@NotNull FieldRef field) {
+    if (field.owner().equals(owner.className()))
+      return bindExpr(field.returnType(), IrExpr.This.INSTANCE);
     return bindExpr(field.returnType(), new IrExpr.RefField(field, null));
   }
 
-  // public @NotNull AstExpr refField(@NotNull FieldRef field, @NotNull AstExpr owner) {
+  // public @NotNull IrExpr refField(@NotNull FieldRef field, @NotNull IrExpr owner) {
   //   // FIXME: type
-  //   return new AstExpr.RefField(field, bindExpr(owner));
+  //   return new IrExpr.RefField(field, bindExpr(owner));
   // }
 
   public @NotNull IrVariable refEnum(@NotNull Enum<?> value) {

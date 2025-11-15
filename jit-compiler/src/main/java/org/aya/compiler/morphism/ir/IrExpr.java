@@ -32,8 +32,8 @@ public sealed interface IrExpr extends Docile {
         : Doc.plain(methodRef.owner().displayName());
       return Doc.sep(
         Doc.styled(BasePrettier.KEYWORD, "invoke"),
-        Doc.cat(ownerDoc, Doc.plain("."), Doc.plain(methodRef.name())),
-        Doc.wrap("(", ")", Doc.commaList(args.view().map(IrValue::toDoc)))
+        Doc.cat(ownerDoc, Doc.plain("."), Doc.plain(methodRef.name()),
+          Doc.wrap("(", ")", Doc.commaList(args.view().map(IrValue::toDoc))))
       );
     }
   }

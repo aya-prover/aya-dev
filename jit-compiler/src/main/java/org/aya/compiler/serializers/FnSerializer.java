@@ -17,6 +17,7 @@ import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.term.LetTerm;
 import org.aya.syntax.core.term.call.FnCall;
+import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.constant.ClassDesc;
@@ -25,7 +26,6 @@ import java.util.EnumSet;
 import java.util.function.Consumer;
 
 import static org.aya.compiler.morphism.Constants.CD_Term;
-import static org.aya.compiler.serializers.NameSerializer.getReference;
 
 public final class FnSerializer extends JitTeleSerializer<FnDef> {
   private final @NotNull ShapeFactory shapeFactory;
@@ -119,10 +119,10 @@ public final class FnSerializer extends JitTeleSerializer<FnDef> {
   }
 
   /// @param unit must be elaborated
-  public @NotNull IrDecl.Method buildInvokeForPrettyPrint(@NotNull FnDef unit) {
+  @ForLSP public @NotNull IrDecl.Method buildInvokeForPrettyPrint(@NotNull FnDef unit) {
     var module = unit.ref().module;
     assert module != null;
-    var desc = ClassDesc.of(getReference(module, null, NameSerializer.NameType.ClassName));
+    var desc = NameSerializer.getClassDesc(TyckAnyDef.make(unit));
     var classBuilder = new IrClassBuilder(null, desc, null, MutableMap.create(), JitUnit.class);
     buildFixedInvoke(unit, classBuilder);
     return classBuilder.members().view()
