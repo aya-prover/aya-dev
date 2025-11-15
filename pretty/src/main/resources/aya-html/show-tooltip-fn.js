@@ -142,11 +142,27 @@ class HoverStack {
     container.appendChild(newHover);
 
     // calculate the position of the tooltip relative to the page
-    const linkRect = link.getBoundingClientRect();
-    const hoverRect = newHover.getBoundingClientRect();
+    const linkRect  = link.getBoundingClientRect();
+    let   hoverRect = newHover.getBoundingClientRect();
 
-    // horizontal: align left edges (page coordinates)
-    const pageLeft = linkRect.left + window.scrollX;
+    // viewport bounds in page coordinates
+    const viewportLeft  = window.scrollX;
+    const viewportRight = window.scrollX + document.documentElement.clientWidth;
+    const margin = 8; // padding from viewport edges
+
+    // base horizontal position: align left edges
+    let pageLeft = linkRect.left + window.scrollX;
+
+    // adjust if tooltip would overflow the right edge
+    if (pageLeft + hoverRect.width + margin > viewportRight) {
+      pageLeft = viewportRight - hoverRect.width - margin;
+    }
+
+    // also make sure we don't go beyond the left edge
+    if (pageLeft < viewportLeft + margin) {
+      pageLeft = viewportLeft + margin;
+    }
+
     newHover.style.left = `${pageLeft}px`;
 
     if (nested.length === 0) {
