@@ -4,21 +4,21 @@ package org.aya.compiler.serializers;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.compiler.morphism.Constants;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /// @param normalizer must set before using
 public record SerializerContext(
-  @Nullable AstVariable normalizer,
+  @Nullable IrVariable normalizer,
   @NotNull ModuleSerializer.MatchyRecorder recorder
 ) {
-  public @NotNull AstVariable serializeTermUnderTele(
-    @NotNull AstCodeBuilder builder,
+  public @NotNull IrVariable serializeTermUnderTele(
+    @NotNull IrCodeBuilder builder,
     @NotNull Term term,
-    @NotNull ImmutableSeq<AstVariable> argTerms
+    @NotNull ImmutableSeq<IrVariable> argTerms
   ) {
     return new TermSerializer(builder, this, null, argTerms)
       .serialize(term);
@@ -29,7 +29,7 @@ public record SerializerContext(
    *
    * @return the java expr of wh-normalized term
    */
-  public @NotNull AstVariable whnf(@NotNull AstCodeBuilder builder, @NotNull AstVariable term) {
+  public @NotNull IrVariable whnf(@NotNull IrCodeBuilder builder, @NotNull IrVariable term) {
     if (normalizer == null) return term;
     var invoke = builder.invoke(Constants.CLOSURE, normalizer, ImmutableSeq.of(term));
     return builder.checkcast(invoke, Constants.CD_Term);

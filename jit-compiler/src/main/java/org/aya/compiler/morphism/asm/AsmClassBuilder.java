@@ -81,11 +81,11 @@ public final class AsmClassBuilder implements AutoCloseable {
     @NotNull AccessFlags flags,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
     @NotNull ClassDesc returnType,
-    @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder
+    @NotNull BiConsumer<ArgsProvider.FnParam, AsmCodeBuilder> builder
   ) {
     var desc = MethodTypeDesc.of(returnType, paramTypes.asJava());
     writer.withMethod(name, desc, flags.flagsMask(), mBuilder -> {
-      var ap = new AsmArgsProvider.FnParam(paramTypes, flags.has(AccessFlag.STATIC));
+      var ap = new ArgsProvider.FnParam(paramTypes, flags.has(AccessFlag.STATIC));
       mBuilder.withCode(cb -> {
         try (var acb = new AsmCodeBuilder(cb, this, paramTypes, !flags.has(AccessFlag.STATIC))) {
           builder.accept(ap, acb);
@@ -97,7 +97,7 @@ public final class AsmClassBuilder implements AutoCloseable {
   public void buildMethod(
     @NotNull ClassDesc returnType, @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder
+    @NotNull BiConsumer<ArgsProvider.FnParam, AsmCodeBuilder> builder
   ) {
     buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.FINAL), paramTypes, returnType, builder);
   }
@@ -105,12 +105,12 @@ public final class AsmClassBuilder implements AutoCloseable {
   public void buildStaticMethod(
     @NotNull ClassDesc returnType, @NotNull String name,
     @NotNull ImmutableSeq<ClassDesc> paramTypes,
-    @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder
+    @NotNull BiConsumer<ArgsProvider.FnParam, AsmCodeBuilder> builder
   ) {
     buildMethod(name, AccessFlags.ofMethod(AccessFlag.PUBLIC, AccessFlag.STATIC, AccessFlag.FINAL), paramTypes, returnType, builder);
   }
 
-  public void buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<AsmArgsProvider.FnParam, AsmCodeBuilder> builder) {
+  public void buildConstructor(@NotNull ImmutableSeq<ClassDesc> paramTypes, @NotNull BiConsumer<ArgsProvider.FnParam, AsmCodeBuilder> builder) {
     buildMethod(ConstantDescs.INIT_NAME, AccessFlags.ofMethod(AccessFlag.PUBLIC), paramTypes, ConstantDescs.CD_void, (ap, cb) -> {
       builder.accept(ap, cb);
       cb.writer().return_();
@@ -124,7 +124,7 @@ public final class AsmClassBuilder implements AutoCloseable {
   public @NotNull InvokeDynamicEntry makeLambda(
     @NotNull ImmutableSeq<ClassDesc> captureTypes,
     @NotNull MethodRef ref,
-    @NotNull BiConsumer<AsmArgsProvider.FnParam.Lambda, AsmCodeBuilder> builder
+    @NotNull BiConsumer<ArgsProvider.FnParam.Lambda, AsmCodeBuilder> builder
   ) {
     var pool = writer.constantPool();
     var lambdaMethodName = "lambda$" + lambdaCounter++;
@@ -136,7 +136,7 @@ public final class AsmClassBuilder implements AutoCloseable {
 
     // create static method for lambda implementation
     writer.withMethodBody(lambdaMethodName, lambdaMethodDesc, AccessFlags.ofMethod(AccessFlag.PRIVATE, AccessFlag.SYNTHETIC, AccessFlag.STATIC).flagsMask(), cb -> {
-      var apl = new AsmArgsProvider.FnParam.Lambda(captureTypes, ref.paramTypes());
+      var apl = new ArgsProvider.FnParam.Lambda(captureTypes, ref.paramTypes());
       try (var acb = new AsmCodeBuilder(cb, this, fullParams, false)) {
         builder.accept(apl, acb);
       }

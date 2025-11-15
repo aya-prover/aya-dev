@@ -9,9 +9,9 @@ import kala.function.TriConsumer;
 import kala.range.primitive.IntRange;
 import org.aya.compiler.morphism.Constants;
 import org.aya.compiler.morphism.JavaUtil;
-import org.aya.compiler.morphism.ast.AstCodeBuilder;
-import org.aya.compiler.morphism.ast.AstExpr;
-import org.aya.compiler.morphism.ast.AstVariable;
+import org.aya.compiler.morphism.ir.IrCodeBuilder;
+import org.aya.compiler.morphism.ir.IrExpr;
+import org.aya.compiler.morphism.ir.IrVariable;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.TupTerm;
 import org.aya.util.Panic;
@@ -30,18 +30,18 @@ import static org.aya.compiler.morphism.Constants.CD_IntegerTerm;
  */
 public final class PatternCompiler {
   @FunctionalInterface
-  public interface SuccessContinuation extends TriConsumer<PatternCompiler, AstCodeBuilder, Integer> {
+  public interface SuccessContinuation extends TriConsumer<PatternCompiler, IrCodeBuilder, Integer> {
   }
 
   // Just for checking
-  public final static class Once implements Consumer<AstCodeBuilder> {
-    public static @NotNull Once of(@NotNull Consumer<AstCodeBuilder> run) { return new Once(run); }
-    private final @NotNull Consumer<AstCodeBuilder> run;
+  public final static class Once implements Consumer<IrCodeBuilder> {
+    public static @NotNull Once of(@NotNull Consumer<IrCodeBuilder> run) { return new Once(run); }
+    private final @NotNull Consumer<IrCodeBuilder> run;
     private boolean dirty = false;
 
-    public Once(@NotNull Consumer<AstCodeBuilder> run) { this.run = run; }
+    public Once(@NotNull Consumer<IrCodeBuilder> run) { this.run = run; }
 
-    @Override public void accept(AstCodeBuilder freeClassBuilder) {
+    @Override public void accept(IrCodeBuilder freeClassBuilder) {
       if (dirty) throw new Panic("Once");
       dirty = true;
       this.run.accept(freeClassBuilder);
@@ -53,19 +53,19 @@ public final class PatternCompiler {
     @NotNull SuccessContinuation onSucc
   ) { }
 
-  @UnknownNullability ImmutableSeq<AstVariable> result;
-  @UnknownNullability AstVariable matchState;
-  @UnknownNullability AstVariable subMatchState;
+  @UnknownNullability ImmutableSeq<IrVariable> result;
+  @UnknownNullability IrVariable matchState;
+  @UnknownNullability IrVariable subMatchState;
 
-  private final @NotNull ImmutableSeq<AstVariable> argNames;
-  private final @NotNull Consumer<AstCodeBuilder> onFailed;
+  private final @NotNull ImmutableSeq<IrVariable> argNames;
+  private final @NotNull Consumer<IrCodeBuilder> onFailed;
   private final @NotNull SerializerContext context;
   private final boolean isOverlap;
   private int bindCount = 0;
 
   public PatternCompiler(
-    @NotNull ImmutableSeq<AstVariable> argNames,
-    @NotNull Consumer<AstCodeBuilder> onFailed,
+    @NotNull ImmutableSeq<IrVariable> argNames,
+    @NotNull Consumer<IrCodeBuilder> onFailed,
     @NotNull SerializerContext context,
     boolean isOverlap
   ) {
@@ -78,9 +78,9 @@ public final class PatternCompiler {
   // region Serializing
 
   private void doSerialize(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull Pat pat,
-    @NotNull AstVariable term,
+    @NotNull IrVariable term,
     @NotNull Once onMatchSucc
   ) {
     switch (pat) {
@@ -94,7 +94,7 @@ public final class PatternCompiler {
         }
       }
       case Pat.Bind _ -> {
-        builder.updateVar(result.get(bindCount++), new AstExpr.Ref(term));
+        builder.updateVar(result.get(bindCount++), new IrExpr.Ref(term));
         onMatchSucc.accept(builder);
       }
 
@@ -108,14 +108,17 @@ public final class PatternCompiler {
               AbstractExprSerializer.getRef(builder1, CallKind.Con, conTerm),
               AbstractExprSerializer.getInstance(builder1, conDesc),
               builder2 -> {
-                var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
-                var conArgs = AbstractExprSerializer.fromSeq(
-                  builder2,
-                  Constants.CD_Term,
-                  conArgsTerm,
-                  con.args().size()
-                );
-
+                ImmutableSeq<IrVariable> conArgs;
+                // Do not generate a local variable if there is no args
+                if (con.args().isNotEmpty()) {
+                  var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
+                  conArgs = AbstractExprSerializer.fromSeq(
+                    builder2,
+                    Constants.CD_Term,
+                    conArgsTerm,
+                    con.args().size()
+                  );
+                } else conArgs = ImmutableSeq.empty();
                 doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
               }, null /* mismatch, do nothing */
             );
@@ -159,9 +162,9 @@ public final class PatternCompiler {
    * @param continuation    on match success
    */
   private void multiStage(
-    @NotNull AstCodeBuilder builder,
-    @NotNull AstVariable term,
-    @NotNull ImmutableSeq<BiConsumer<AstCodeBuilder, AstVariable>> preContinuation,
+    @NotNull IrCodeBuilder builder,
+    @NotNull IrVariable term,
+    @NotNull ImmutableSeq<BiConsumer<IrCodeBuilder, IrVariable>> preContinuation,
     @NotNull Once continuation
   ) {
     updateSubstate(builder, false);
@@ -177,7 +180,7 @@ public final class PatternCompiler {
     builder.ifTrue(subMatchState, continuation, null);
   }
 
-  private void matchInt(@NotNull AstCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull AstVariable term) {
+  private void matchInt(@NotNull IrCodeBuilder builder, @NotNull Pat.ShapedInt pat, @NotNull IrVariable term) {
     builder.ifInstanceOf(term, CD_IntegerTerm, (builder0, intTerm) -> {
       var intTermRepr = builder0.invoke(
         Constants.INT_REPR,
@@ -196,9 +199,9 @@ public final class PatternCompiler {
    * @apiNote {@code pats.sizeEquals(terms)}
    */
   private void doSerialize(
-    @NotNull AstCodeBuilder builder,
+    @NotNull IrCodeBuilder builder,
     @NotNull SeqView<Pat> pats,
-    @NotNull SeqView<AstVariable> terms,
+    @NotNull SeqView<IrVariable> terms,
     @NotNull Once continuation
   ) {
     if (pats.isEmpty()) {
@@ -214,20 +217,20 @@ public final class PatternCompiler {
   // endregion Serializing
 
   // region Java Source Code Generate API
-  private void onStuck(@NotNull AstCodeBuilder builder) {
+  private void onStuck(@NotNull IrCodeBuilder builder) {
     if (!isOverlap) builder.breakOut();
   }
 
-  private void updateSubstate(@NotNull AstCodeBuilder builder, boolean state) {
-    builder.updateVar(subMatchState, new AstExpr.Bconst(state));
+  private void updateSubstate(@NotNull IrCodeBuilder builder, boolean state) {
+    builder.updateVar(subMatchState, new IrExpr.Bconst(state));
   }
 
-  private void updateState(@NotNull AstCodeBuilder builder, int state) {
-    builder.updateVar(matchState, new AstExpr.Iconst(state));
+  private void updateState(@NotNull IrCodeBuilder builder, int state) {
+    builder.updateVar(matchState, new IrExpr.Iconst(state));
   }
   // endregion Java Source Code Generate API
 
-  public PatternCompiler serialize(@NotNull AstCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
+  public PatternCompiler serialize(@NotNull IrCodeBuilder builder, @NotNull ImmutableSeq<Matching> unit) {
     if (unit.isEmpty()) {
       onFailed.accept(builder);
       return this;
@@ -237,11 +240,11 @@ public final class PatternCompiler {
     int binds = bindSize.max();
 
     // generates local term variables
-    result = ImmutableSeq.fill(binds, _ -> builder.bindExpr(new AstExpr.Null(Constants.CD_Term)));
+    result = ImmutableSeq.fill(binds, _ -> builder.bindExpr(new IrExpr.Null(Constants.CD_Term)));
 
     // whether the match success or mismatch, 0 implies mismatch
-    matchState = builder.bindExpr(new AstExpr.Iconst(0));
-    subMatchState = builder.bindExpr(new AstExpr.Bconst(false));
+    matchState = builder.bindExpr(new IrExpr.Iconst(0));
+    subMatchState = builder.bindExpr(new IrExpr.Bconst(false));
 
     builder.breakable(mBuilder -> unit.forEachIndexed((idx, clause) -> {
       var jumpCode = idx + 1;
@@ -268,7 +271,7 @@ public final class PatternCompiler {
       assert i > 0;
       var realIdx = i - 1;
       unit.get(realIdx).onSucc.accept(this, mBuilder, bindSize.get(realIdx));
-    }, AstCodeBuilder::unreachable);
+    }, IrCodeBuilder::unreachable);
 
     return this;
   }
