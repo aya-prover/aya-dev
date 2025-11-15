@@ -19,8 +19,8 @@
   text-decoration-color: inherit;
   text-underline-position: inherit;
 }
-.Aya code {
-  overflow: scroll;
+pre.Aya {
+  overflow-x: auto;
 }
 
 /*
