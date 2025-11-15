@@ -314,7 +314,7 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
     }
 
     return builder.mkLambda(fullCaptures.toSeq(), lambdaType, builder1 -> {
-      var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizerInFn() : null;
+      var normalizer = hasNormalizer ? InvokeSignatureHelper.normalizerInLam() : null;
       var newContext = new SerializerContext(normalizer, context.recorder());
       var captured = entries.mapIndexed((i, tup) -> {
         var capturedExpr = hasNormalizer ? InvokeSignatureHelper.capture(i) : new IrVariable.Capture(i);

@@ -90,7 +90,8 @@ public final class IrCompiler<Carrier extends AsmOutputCollector> {
         };
       }
       case IrVariable.Capture(var nth) -> {
-        if (!(ap instanceof AsmArgsProvider.FnParam.Lambda lap)) yield Panic.unreachable();
+        if (!(ap instanceof AsmArgsProvider.FnParam.Lambda lap))
+          yield Panic.unreachable();
         yield lap.capture(nth);
       }
     };
