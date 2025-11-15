@@ -52,7 +52,7 @@ public sealed interface IrStmt extends Docile {
 
   record SetStaticField(@NotNull FieldRef var, @NotNull IrVariable update) implements IrStmt { }
 
-  record SetArray(@NotNull IrVariable array, int index, @NotNull IrVariable update) implements IrStmt {
+  record SetArray(@NotNull IrVariable array, int index, @NotNull IrValue update) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(
         Doc.cat(array.toDoc(), Doc.wrap("[", "]", Doc.plain(String.valueOf(index)))),

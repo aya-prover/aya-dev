@@ -108,14 +108,17 @@ public final class PatternCompiler {
               AbstractExprSerializer.getRef(builder1, CallKind.Con, conTerm),
               AbstractExprSerializer.getInstance(builder1, conDesc),
               builder2 -> {
-                var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
-                var conArgs = AbstractExprSerializer.fromSeq(
-                  builder2,
-                  Constants.CD_Term,
-                  conArgsTerm,
-                  con.args().size()
-                );
-
+                ImmutableSeq<IrVariable> conArgs;
+                // Do not generate a local variable if there is no args
+                if (con.args().isNotEmpty()) {
+                  var conArgsTerm = builder2.invoke(Constants.CONARGS, conTerm, ImmutableSeq.empty());
+                  conArgs = AbstractExprSerializer.fromSeq(
+                    builder2,
+                    Constants.CD_Term,
+                    conArgsTerm,
+                    con.args().size()
+                  );
+                } else conArgs = ImmutableSeq.empty();
                 doSerialize(builder2, con.args().view(), conArgs.view(), onMatchSucc);
               }, null /* mismatch, do nothing */
             );

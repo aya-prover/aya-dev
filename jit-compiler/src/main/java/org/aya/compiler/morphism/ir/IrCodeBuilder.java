@@ -54,7 +54,7 @@ public record IrCodeBuilder(
     stmts.append(new IrStmt.SetVariable(var, update));
   }
 
-  public void updateArray(@NotNull IrVariable array, int idx, @NotNull IrVariable update) {
+  public void updateArray(@NotNull IrVariable array, int idx, @NotNull IrValue update) {
     stmts.append(new IrStmt.SetArray(array, idx, update));
   }
 
@@ -190,8 +190,6 @@ public record IrCodeBuilder(
   }
 
   public @NotNull IrVariable refField(@NotNull FieldRef field) {
-    if (field.owner().equals(owner.className()))
-      return bindExpr(field.returnType(), IrExpr.This.INSTANCE);
     return bindExpr(field.returnType(), new IrExpr.RefField(field, null));
   }
 
