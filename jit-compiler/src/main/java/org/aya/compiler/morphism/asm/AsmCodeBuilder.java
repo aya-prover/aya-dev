@@ -24,8 +24,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 
-import static java.lang.constant.ConstantDescs.CD_Object;
-
 /// @param breaking the label that used for jumping out
 /// @param hasThis  is this an instance method or a static method
 public record AsmCodeBuilder(
@@ -161,8 +159,7 @@ public record AsmCodeBuilder(
   }
 
   public void unreachable() {
-    returnWith(makeVar(CD_Object,
-      invoke(Constants.PANIC, ImmutableSeq.empty())));
+    returnWith(new AsmValue.AsmExprValue(invoke(Constants.PANIC, ImmutableSeq.empty())));
   }
 
   public void whileTrue(@NotNull Consumer<AsmCodeBuilder> innerBlock) {
@@ -208,9 +205,9 @@ public record AsmCodeBuilder(
     subscoped(defaultCase);
   }
 
-  public void returnWith(@NotNull AsmVariable expr) {
+  public void returnWith(@NotNull AsmValue expr) {
     var kind = TypeKind.fromDescriptor(expr.type().descriptorString());
-    loadVar(expr);
+    expr.accept(this);
     writer.returnInstruction(kind);
   }
 

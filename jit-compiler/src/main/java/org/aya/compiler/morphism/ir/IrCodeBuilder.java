@@ -149,7 +149,7 @@ public record IrCodeBuilder(
     returnWith(bindExpr(expr));
   }
 
-  public void returnWith(@NotNull IrVariable expr) {
+  public void returnWith(@NotNull IrValue expr) {
     stmts.append(new IrStmt.Return(expr));
   }
 

@@ -191,7 +191,7 @@ public sealed interface IrStmt extends Docile {
     }
   }
 
-  record Return(@NotNull IrVariable expr) implements IrStmt {
+  record Return(@NotNull IrValue expr) implements IrStmt {
     @Override public @NotNull Doc toDoc() {
       return Doc.sep(Doc.styled(BasePrettier.KEYWORD, "return"), expr.toDoc());
     }

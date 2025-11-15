@@ -206,7 +206,7 @@ public final class IrCompiler<Carrier extends AsmOutputCollector> {
             builder.ifRefEqual(interpVar(ap, lhs), interpVar(ap, rhs), thenBlock, elseBlock);
         }
       }
-      case IrStmt.Return(var expr) -> builder.returnWith(interpVar(ap, expr));
+      case IrStmt.Return(var expr) -> builder.returnWith(interpVar(ap, builder, expr));
       case IrStmt.SetArray(var arr, var idx, var update) ->
         builder.updateArray(interpVar(ap, arr), idx, interpVar(ap, builder, update));
       case IrStmt.SetVariable(var var, var update) ->
