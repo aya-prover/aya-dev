@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020-2023 Tesla (Yinsen) Zhang.
+ * Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
@@ -72,18 +72,27 @@
   background-color: var(--Doc-Tooltip-BackgroundColor);
   color: var(--Doc-Tooltip-TextColor);
   box-shadow: 1px 1px 20px 1px var(--Doc-Tooltip-BoxShadowColor);
-  border: 2px solid var(--Doc-Tooltip-BorderColor);
+  border: 1px solid var(--Doc-Tooltip-BorderColor);
 }
 
-.AyaTooltipPopup #AyaTooltipPopupClose {
+.AyaTooltipPopup > pre {
+  margin: 0 0 0 0;
+}
+.AyaTooltipPopup.TooltipPinned > pre {
+  margin-right: 12px;
+}
+.AyaTooltipPopup.TooltipPinned > .AyaTooltipPopupClose::before {
+  content: "\00d7";
+  font-weight: bold;
+}
+.AyaTooltipPopup.TooltipPinned > .AyaTooltipPopupClose {
   float: right;
   display: inline-block;
   padding: 0 5px;
   margin: -4px -8px; /* ignore the parent padding */
-  visibility: hidden;
-  background-color: var(--Doc-Tooltip-BackgroundColor);
+  cursor: pointer;
 }
-
-.AyaTooltipPopup #AyaTooltipPopupClose:hover {
-  color: red;
+.AyaTooltipPopup.TooltipPinned > .AyaTooltipPopupClose:hover {
+  background-color: var(--Doc-Tooltip-TextColor);
+  color: var(--Doc-Tooltip-BackgroundColor);
 }
