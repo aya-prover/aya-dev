@@ -58,13 +58,13 @@ public final class IrCompiler<Carrier extends AsmOutputCollector> {
           }
         }
         case IrDecl.StaticInitBlock(var block) -> builder.buildStaticInitBlock(cb ->
-          interpStmts(AsmArgsProvider.EMPTY, cb, block));
+          interpStmts(ArgsProvider.EMPTY, cb, block));
       }
     }
   }
 
   private ImmutableSeq<AsmValue> interpVars(
-    @Nullable AsmArgsProvider ap,
+    @Nullable ArgsProvider ap,
     @NotNull AsmCodeBuilder builder,
     @NotNull ImmutableSeq<? extends IrValue> vars
   ) {
@@ -72,39 +72,39 @@ public final class IrCompiler<Carrier extends AsmOutputCollector> {
   }
 
   private ImmutableSeq<AsmVariable> interpVars(
-    @Nullable AsmArgsProvider ap,
+    @Nullable ArgsProvider ap,
     @NotNull ImmutableSeq<IrVariable> vars
   ) {
     return vars.map(it -> interpVar(ap, it));
   }
 
-  private AsmVariable interpVar(@Nullable AsmArgsProvider ap, @NotNull IrVariable var) {
+  private AsmVariable interpVar(@Nullable ArgsProvider ap, @NotNull IrVariable var) {
     return switch (var) {
       case IrVariable.Local local -> getVar(local.index());
       case IrVariable.Arg arg -> {
         if (ap == null) yield Panic.unreachable();
         yield switch (ap) {
-          case AsmArgsProvider.FnParam aap -> aap.arg(arg.nth());
-          case AsmArgsProvider.FnParam.Lambda lap -> lap.arg(arg.nth());
+          case ArgsProvider.FnParam aap -> aap.arg(arg.nth());
+          case ArgsProvider.FnParam.Lambda lap -> lap.arg(arg.nth());
           default -> Panic.unreachable();
         };
       }
       case IrVariable.Capture(var nth) -> {
-        if (!(ap instanceof AsmArgsProvider.FnParam.Lambda lap))
+        if (!(ap instanceof ArgsProvider.FnParam.Lambda lap))
           yield Panic.unreachable();
         yield lap.capture(nth);
       }
     };
   }
 
-  private AsmValue interpVar(@Nullable AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrValue var) {
+  private AsmValue interpVar(@Nullable ArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrValue var) {
     return switch (var) {
       case IrVariable variable -> new AsmValue.AsmValuriable(interpVar(ap, variable));
-      case IrExpr.Const val -> new AsmValue.AsmExprValue(interpExpr(ap, builder, val).cont());
+      case IrExpr.Const val -> new AsmValue.AsmExprValue(interpExpr(ap, builder, val));
     };
   }
 
-  private AsmExpr interpExpr(@Nullable AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrExpr expr) {
+  private AsmExpr interpExpr(@Nullable ArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrExpr expr) {
     return switch (expr) {
       case IrExpr.Ref(var ref) -> AsmExpr.withType(Constants.CD_Term,
         builder0 -> interpVar(ap, builder0, ref).accept(builder0));
@@ -141,11 +141,11 @@ public final class IrCompiler<Carrier extends AsmOutputCollector> {
     };
   }
 
-  private void interpStmts(@NotNull AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<IrStmt> free) {
+  private void interpStmts(@NotNull ArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull ImmutableSeq<IrStmt> free) {
     free.forEach(it -> interpStmt(ap, builder, it));
   }
 
-  private void interpStmt(@NotNull AsmArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrStmt free) {
+  private void interpStmt(@NotNull ArgsProvider ap, @NotNull AsmCodeBuilder builder, @NotNull IrStmt free) {
     switch (free) {
       case IrStmt.SingletonStmt stmt -> {
         switch (stmt) {

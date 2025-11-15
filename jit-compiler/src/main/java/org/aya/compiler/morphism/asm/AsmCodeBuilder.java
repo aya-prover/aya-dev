@@ -296,7 +296,7 @@ public record AsmCodeBuilder(
   public @NotNull AsmExpr mkLambda(
     @NotNull ImmutableSeq<AsmVariable> captures,
     @NotNull MethodRef method,
-    @NotNull BiConsumer<AsmArgsProvider.FnParam.Lambda, AsmCodeBuilder> lamBody
+    @NotNull BiConsumer<ArgsProvider.FnParam.Lambda, AsmCodeBuilder> lamBody
   ) {
     var captureTypes = captures.map(AsmVariable::type);
     var indy = parent.makeLambda(captureTypes, method, lamBody);

@@ -8,17 +8,17 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.constant.ClassDesc;
 
 /// The implementation should be pure (at least, same input same output, some kind of side effect is acceptable)
-public interface AsmArgsProvider {
+public interface ArgsProvider {
   @NotNull AsmVariable arg(int nth);
 
-  @NotNull AsmArgsProvider EMPTY = _ -> {
+  @NotNull ArgsProvider EMPTY = _ -> {
     throw new IndexOutOfBoundsException();
   };
 
   record FnParam(
     @NotNull ImmutableSeq<ClassDesc> parameters,
     boolean isStatic
-  ) implements AsmArgsProvider {
+  ) implements ArgsProvider {
     @Override public @NotNull AsmVariable arg(int nth) {
       assert nth < parameters.size();
       return new AsmVariable((isStatic ? 0 : 1) + nth, parameters.get(nth), false);
@@ -28,7 +28,7 @@ public interface AsmArgsProvider {
   record Lambda(
     @NotNull ImmutableSeq<ClassDesc> captures,
     @NotNull ImmutableSeq<ClassDesc> parameters
-  ) implements AsmArgsProvider {
+  ) implements ArgsProvider {
     public @NotNull AsmVariable capture(int nth) {
       assert nth < captures.size();
       return new AsmVariable(nth, captures.get(nth), false);

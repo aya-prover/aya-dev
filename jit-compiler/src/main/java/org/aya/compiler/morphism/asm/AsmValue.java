@@ -13,10 +13,9 @@ public sealed interface AsmValue extends Consumer<AsmCodeBuilder> {
     }
   }
 
-  /// Same as [AsmExpr] but without a type
-  record AsmExprValue(@NotNull Consumer<AsmCodeBuilder> cont) implements AsmValue {
+  record AsmExprValue(@NotNull AsmExpr expr) implements AsmValue {
     @Override public void accept(AsmCodeBuilder builder) {
-      cont.accept(builder);
+      expr.accept(builder);
     }
   }
 }
