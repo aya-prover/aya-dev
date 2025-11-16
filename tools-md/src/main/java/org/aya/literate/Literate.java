@@ -34,7 +34,6 @@ public interface Literate extends Docile {
   @NotNull Raw EOL = new Raw(Doc.line());
 
   record List(@NotNull ImmutableSeq<Literate> children, boolean ordered) implements HasChild {
-
     @Override public @NotNull Doc toDoc() {
       return Doc.list(ordered, children.map(Literate::toDoc));
     }
