@@ -5,9 +5,12 @@ package org.aya.states;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Instance;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
@@ -114,7 +117,36 @@ public final class TyckState {
     }
   }
 
-  public @NotNull Term computeSolution(@NotNull MetaCall meta, @NotNull UnaryOperator<Term> f) {
+  public @NotNull Term computeSolution(
+    @Closed @NotNull MetaCall meta,
+    @Bound @NotNull MetaVar.OfType.ClassType classType,
+    @NotNull UnaryOperator<@Closed Term> f
+  ) {
+    var insted = classType.instTele(meta.args().view());
+    insted.instances().filter(it -> {
+      return switch (it) {
+        // try replace all param of [def] with meta, then solve by unify with [insted.type()]
+        case Instance.Global(var def) -> throw new UnsupportedOperationException("TODO");
+        case Instance.Local(var ref, var ty) -> {
+          // TODO: which unifier we should use?
+          // i guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
+          Unifier someUnifier = null;
+          var result = someUnifier.compare(insted.type(), ty, null);
+          // still keep unsure
+          // TODO: what if YES for 1 instance and UNSURE for many other instances, is it possible?
+          yield result != Decision.NO;
+        }
+      };
+    });
+
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  public @Closed @NotNull Term computeSolution(@Closed @NotNull MetaCall meta, @NotNull UnaryOperator<@Closed Term> f) {
+    if (meta.ref().req() instanceof MetaVar.OfType.ClassType classType) {
+      return computeSolution(meta, classType, f);
+    }
+
     return solutions.getOption(meta.ref())
       .map(sol -> f.apply(MetaCall.app(sol, meta.args(), meta.ref().ctxSize())))
       .getOrDefault(meta);

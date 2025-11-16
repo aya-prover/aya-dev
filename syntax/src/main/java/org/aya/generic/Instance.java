@@ -18,16 +18,20 @@ public sealed interface Instance extends AyaDocile {
   @Bound @NotNull Instance bindTele(@NotNull SeqView<LocalVar> vars);
   @NoInherit @NotNull Instance instTele(@NotNull SeqView<Term> tele);
 
-  // TODO: seems incorrect, [ref] should be able to be bind so that it refer to meta args
-  record Local(@NotNull FreeTermLike ref, @Override @NotNull ClassCall type) implements Instance {
+  /// @param ref is either [org.aya.syntax.core.term.FreeTermLike] or [org.aya.syntax.core.term.LocalTerm]
+  record Local(@NotNull Term ref, @Override @NotNull ClassCall type) implements Instance {
+    public static @NotNull Local of(@NotNull FreeTermLike term, @NotNull ClassCall type) {
+      return new Local(term, type);
+    }
+
     @Override
     public @NotNull Instance bindTele(@NotNull SeqView<LocalVar> vars) {
-      return new Local(ref, (ClassCall) type.bindTele(vars));
+      return new Local(ref.bindTele(vars), (ClassCall) type.bindTele(vars));
     }
 
     @Override
     public @NoInherit @NotNull Instance instTele(@NotNull SeqView<Term> tele) {
-      return new Local(ref, (ClassCall) type.instTele(tele));
+      return new Local(ref.instTele(tele), (ClassCall) type.instTele(tele));
     }
   }
 

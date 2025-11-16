@@ -59,7 +59,7 @@ public record InstanceSet(
       (inst, acc) -> inst.instanceMap.getOption(clazz.ref())
         .map(Seq::view)
         .getOrDefault(SeqView.empty())
-        .map(ref -> new Instance.Local(ref, inst.getLocal(ref).get()))
+        .map(ref -> Instance.Local.of(ref, inst.getLocal(ref).get()))
         .concat(acc)
     ).toSeq();    // collect even we still turn this to a view later, cause we used `MutableList::view`
 
