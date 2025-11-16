@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -26,8 +27,6 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
   /// @return new [This] object, which [#parent()] is `this` object
   @Contract("-> new") @NotNull This derive();
 
-  /// Fold from bottom, you may treat a [Scoped] as a telescope, then
-  /// this method is exactly `foldRight`.
   default <R> @Nullable R findFirst(Function<This, @Nullable R> folder) {
     @Nullable var scope = self();
     while (scope != null) {
@@ -37,6 +36,19 @@ public interface Scoped<K, V, This extends Scoped<K, V, This>> {
     }
 
     return null;
+  }
+
+  /// Fold from bottom, you may treat a [Scoped] as a telescope, then
+  /// this method is exactly `foldRight`.
+  default <R> @NotNull R foldBottom(R zero, @NotNull BiFunction<This, R, R> folder) {
+    @Nullable var scope = self();
+    var acc = zero;
+    while (scope != null) {
+      acc = folder.apply(scope, acc);
+      scope = scope.parent();
+    }
+
+    return acc;
   }
 
   default void forEach(@NotNull Consumer<This> consumer) {
