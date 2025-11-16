@@ -9,12 +9,11 @@ import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 public interface LabelProblems extends Problem {
-  @NotNull String label();
   @Override default @NotNull Severity level() { return Severity.WARN; }
 
   record Redefinition(
     @Override @NotNull SourcePos sourcePos,
-    @Override @NotNull String label
+    @NotNull String label
   ) implements LabelProblems {
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
@@ -25,12 +24,18 @@ public interface LabelProblems extends Problem {
 
   record UnknownLabel(
     @Override @NotNull SourcePos sourcePos,
-    @Override @NotNull String label
+    @NotNull String label
   ) implements LabelProblems {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.sep(Doc.plain("Label"),
         Doc.plain(label),
         Doc.english("is undefined."));
+    }
+  }
+
+  record EmptyLink(@Override @NotNull SourcePos sourcePos) implements LabelProblems {
+    @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.english("Link target shouldn't be empty.");
     }
   }
 }

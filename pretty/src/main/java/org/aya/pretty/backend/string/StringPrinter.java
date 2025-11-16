@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.string;
 
@@ -96,7 +96,7 @@ public class StringPrinter<Config extends StringPrinterConfig<?>> implements Pri
       case Doc.Styled styled -> renderStyled(cursor, styled, outer);
       case Doc.Line _ -> renderHardLineBreak(cursor, outer);
       case Doc.FlatAlt alt -> renderFlatAlt(cursor, alt, outer);
-      case Doc.Cat cat -> cat.inner().forEach(inner -> renderDoc(cursor, inner, outer));
+      case Doc.Cat(var cat) -> cat.forEach(inner -> renderDoc(cursor, inner, outer));
       case Doc.Nest nest -> renderNest(cursor, nest, outer);
       case Doc.Union union -> renderUnionDoc(cursor, union, outer);
       case Doc.Column column -> renderDoc(cursor, column.docBuilder().apply(cursor.getCursor()), outer);

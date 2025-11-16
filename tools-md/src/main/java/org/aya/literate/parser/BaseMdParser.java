@@ -150,12 +150,15 @@ public class BaseMdParser {
 
   protected @NotNull InlineLinkData mapInlineLink(@NotNull ASTNode node) {
     var childNode = node.childOfType(MarkdownElementTypes.LINK_TEXT);
-    var destinationNode = node.childOfType(MarkdownElementTypes.LINK_DESTINATION);
+    var destinationNode = node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION);
+    if (destinationNode == null) {
+      reporter.report(new LabelProblems.EmptyLink(fromNode(node)));
+    }
 
     var titleNode = peekChild(node, MarkdownElementTypes.LINK_TITLE);
     var titleTextNode = titleNode.map(x -> x.childOfType(MarkdownTokenTypes.TEXT));
 
-    var destination = getTextInNode(destinationNode);
+    var destination = destinationNode != null ? getTextInNode(destinationNode) : "";
     var title = titleTextNode.map(this::getTextInNode);
     var children = childNode.childrenWithoutSurrounding(1);
 
@@ -276,8 +279,17 @@ public class BaseMdParser {
     }
 
     if (type == MarkdownElementTypes.LIST_ITEM) {
-      // not exactly the same as the old one, just hope there is no bugs
-      return flatten(mapChildren(node.getChildren().view().drop(1)));
+      var children = mapChildren(node.getChildren().view().drop(1));
+      // Usually children are all paragraphs, and we render paragraphs as items with two hard line breaks.
+      // this is not good for list items. So we un-paragraph the last child if possible.
+      if (children.isNotEmpty()
+        && children.getLast() instanceof Literate.Many many
+        && many.style() == MdStyle.GFM.Paragraph) {
+        children = children.view().dropLast(1)
+          .appendedAll(many.childrenView())
+          .toSeq();
+      }
+      return flatten(children);
     }
 
     if (type == MarkdownElementTypes.UNORDERED_LIST) {

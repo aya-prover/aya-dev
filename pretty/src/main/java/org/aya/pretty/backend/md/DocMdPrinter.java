@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.pretty.backend.md;
 
@@ -105,8 +105,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     formatList(cursor, list, outer);
   }
 
-  @Override
-  protected void renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
+  @Override protected void
+  renderInlineMath(@NotNull Cursor cursor, Doc.@NotNull InlineMath code, EnumSet<Outer> outer) {
     formatInline(cursor, code.formula(), "$", "$", EnumSet.of(Outer.Math));
   }
 
@@ -119,8 +119,8 @@ public class DocMdPrinter extends DocHtmlPrinter<DocMdPrinter.Config> {
     formatBlock(cursor, block.formula(), "$$", "$$", EnumSet.of(Outer.Math));
   }
 
-  @Override
-  protected void renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
+  @Override protected void
+  renderInlineCode(@NotNull Cursor cursor, @NotNull Doc.InlineCode code, EnumSet<Outer> outer) {
     // assumption: inline code cannot be nested in markdown, but don't assert it.
     Runnable pureMd = () -> formatInline(cursor, code.code(), "`", "`", EnumSet.of(Outer.Code));
     runSwitch(pureMd, () -> {
