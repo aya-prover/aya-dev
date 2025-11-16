@@ -1,10 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.term.DTKind;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
@@ -29,7 +31,9 @@ public record MetaCall(
     var restArgs = args.sliceView(ctxSize, args.size());
     return AppTerm.make(rhs.instTele(directArgs), restArgs);
   }
-  public static @NotNull Term appType(MetaCall call, Term rhsType) {
+
+  /// rhsType is supposed to live under [MetaCall#args]
+  public static @Closed @NotNull Term appType(@Closed MetaCall call, @Bound Term rhsType) {
     var ref = call.ref;
     var args = call.args;
     var directArgs = args.sliceView(0, ref.ctxSize());

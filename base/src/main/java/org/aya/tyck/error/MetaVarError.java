@@ -45,9 +45,10 @@ public sealed interface MetaVarError extends Problem {
     @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var list = MutableList.of(Doc.english("The meta (denoted ? below) is supposed to satisfy:"),
         Doc.par(1, switch (term.ref().req()) {
-          case MetaVar.OfType(var type) -> {
+          case MetaVar.OfType ofType -> {
+            var type = ofType.type();
             type = freezeHoles(MetaCall.appType(term, type));
-            yield new MetaVar.OfType(type).toDoc(options);
+            yield new MetaVar.OfType.Default(type).toDoc(options);
           }
           case MetaVar.Requirement misc -> misc.toDoc(options);
         }),
