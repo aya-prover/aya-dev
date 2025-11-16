@@ -118,7 +118,7 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.Hole hole -> {
         var freshHole = freshMeta(Constants.randomName(hole), expr.sourcePos(),
-          new MetaVar.OfType(type), hole.explicit());
+          new MetaVar.OfType.Default(type), hole.explicit());
         hole.solution().set(freshHole);
         Jdg filling = null;
         if (hole.filling() != null) filling = synthesize(hole.filling());
@@ -482,7 +482,7 @@ public final class ExprTycker extends ScopedTycker {
         // List (A : Type)
         var sort = def.signature().telescopeRich(0);
         // the sort of type below.
-        var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType(sort.type()), false);
+        var elementTy = freshMeta(sort.name(), expr.sourcePos(), new MetaVar.OfType.Default(sort.type()), false);
 
         // do type check
         var results = ImmutableTreeSeq.from(elements.map(element -> inherit(element, elementTy).wellTyped()));

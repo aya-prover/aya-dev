@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
+import org.aya.generic.Instance;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
@@ -69,15 +70,22 @@ public class ArgsComputer {
 
   private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
     if (param.type() instanceof ClassCall clazz) {
+      var unifier = tycker.unifier(pos, Ordering.Eq);
       var thises = tycker.instanceSet
-        .find(clazz, tycker.unifier(pos, Ordering.Eq))
+        .find(clazz, unifier)
         .toSeq();
+
+      // TODO: impl instance filter by Requirement.OfType.ClassType
       if (thises.isEmpty() || thises.sizeGreaterThan(1)) {
         if (thises.isEmpty()) tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
         else tycker.fail(new ClassError.InstanceAmbiguous(pos, clazz, thises));
         return new ErrorTerm(_ -> BasePrettier.refVar(clazz.ref()));
       } else {
-        return thises.getAny();
+        // TODO: garbage code, fix it
+        return switch (thises.getAny()) {
+          case Instance.Global global -> throw new UnsupportedOperationException("TODO");
+          case Instance.Local local -> local.ref();
+        };
       }
     } else {
       return tycker.mockTerm(param, pos);

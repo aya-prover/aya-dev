@@ -82,7 +82,7 @@ public record DoubleChecker(
       case MetaCall(var ref, var args) when !(ref.req() instanceof MetaVar.OfType) -> {
         // dblity depends on args
         @Closed var newMeta = new MetaCall(new MetaVar(
-          ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType(expected), false), args);
+          ref.name(), ref.pos(), ref.ctxSize(), new MetaVar.OfType.Default(expected), false), args);
         // Intends for solving meta only, should always success
         unifier.compare(preterm, newMeta, null);
         yield true;

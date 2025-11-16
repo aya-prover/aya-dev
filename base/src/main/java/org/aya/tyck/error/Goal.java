@@ -27,7 +27,7 @@ public record Goal(
 ) implements Problem, Stateful {
   @Override public @NotNull Doc describe(@NotNull PrettierOptions options) {
     var meta = hole.ref();
-    var result = meta.req() instanceof MetaVar.OfType(var type) ? freezeHoles(MetaCall.appType(hole, type))
+    var result = meta.req() instanceof MetaVar.OfType ofType ? freezeHoles(MetaCall.appType(hole, ofType.type()))
       : new ErrorTerm(_ -> Doc.plain("???"));
     var lines = MutableList.of(
       Doc.english("Goal of type"),

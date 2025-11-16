@@ -6,6 +6,7 @@ import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
@@ -108,8 +109,8 @@ public record Synthesizer(
         .result(teleCall.args())
         .elevate(teleCall.ulift());
 
-      case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType(var type) ->
-        type.instTele(args.view());
+      case MetaCall(var ref, var args) when ref.req() instanceof MetaVar.OfType ofType ->
+        ofType.type().instTele(args.view());
       case MetaCall meta -> {
         if (!state().solutions.containsKey(meta.ref())) yield null;
         yield trySynth(whnf(meta));
@@ -145,13 +146,17 @@ public record Synthesizer(
     return tycker.setLocalCtx(ctx);
   }
 
-  public boolean isTypeMeta(@NotNull MetaVar.Requirement req) {
+  public boolean isTypeMeta(@Bound @NotNull MetaVar.Requirement req) {
     return switch (req) {
       case MetaVar.Misc misc -> switch (misc) {
         case Whatever -> false;
         case IsType -> true;
       };
-      case MetaVar.OfType(@Closed var type) -> trySynth(type) instanceof SortTerm;
+      case MetaVar.OfType ofType -> {
+        var type = ofType.type();
+        var what = trySynth(type);
+        yield what instanceof SortTerm;
+      }
       case MetaVar.PiDom _ -> true;
     };
   }

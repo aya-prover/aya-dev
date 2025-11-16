@@ -43,14 +43,14 @@ public final class Unifier extends TermComparator {
   }
 
   @Override protected @Closed @NotNull RelDec<Term>
-  doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  doSolveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     // Assumption: rhs is in whnf
     var spine = meta.args();
 
     var inverted = MutableArrayList.<LocalVar>create(spine.size());
     var overlap = MutableList.<LocalVar>create();
     var wantToReturn = false;
-    for (var arg : spine) {
+    for (@Closed var arg : spine) {
       // TODO: apply uneta
       if (whnf(arg) instanceof FreeTerm(var var)) {
         if (inverted.contains(var)) overlap.append(var);
@@ -133,7 +133,7 @@ public final class Unifier extends TermComparator {
   }
 
   private @Closed @NotNull RelDec<Term>
-  computeReturnType(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type) {
+  computeReturnType(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
     var needUnify = true;
     var returnType = type;
     var ref = meta.ref();
@@ -161,13 +161,14 @@ public final class Unifier extends TermComparator {
         }
         needUnify = false;
       }
-      case MetaVar.OfType(var target) -> {
-        target = MetaCall.appType(meta, target);
-        if (type != null && compare(type, target, null) != Decision.YES) {
+      case MetaVar.OfType ofType -> {
+        var target = ofType.type();
+        var instTarget = MetaCall.appType(meta, target);
+        if (type != null && compare(type, instTarget, null) != Decision.YES) {
           reportIllTyped(meta, rhs);
           return RelDec.no();
         }
-        returnType = freezeHoles(target);
+        returnType = freezeHoles(instTarget);
       }
       case MetaVar.PiDom(var sort) -> {
         if (!checker.synthesizer().inheritPiDom(rhs, sort)) reportIllTyped(meta, rhs);

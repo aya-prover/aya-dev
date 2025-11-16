@@ -70,7 +70,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * @param rhs in whnf
    */
   protected abstract @Closed @NotNull RelDec<Term>
-  doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
+  doSolveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type);
 
   /// The "flex-flex" case with identical meta ref.
   /// Already knows that {@param meta} and {@param rMeta} have the same ref.
@@ -86,7 +86,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
     if (ret == Decision.YES) {
       if (type != null) return RelDec.of(type);
-      if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return RelDec.of(ty);
+      if (meta.ref().req() instanceof MetaVar.OfType ofType) {
+        @Closed var term = ofType.type();
+        return RelDec.of(term);
+      }
+
       // TODO: might need to inst the type
     }
     return RelDec.from(ret);

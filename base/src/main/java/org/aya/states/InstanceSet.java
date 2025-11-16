@@ -8,10 +8,10 @@ import kala.collection.mutable.MutableHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.control.Option;
+import org.aya.generic.Instance;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.FreeTermLike;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
@@ -54,13 +54,19 @@ public record InstanceSet(
     put(new FreeTerm(instance), type);
   }
 
-  public @NotNull SeqView<Term> find(ClassCall clazz, TermComparator comparator) {
-    Seq<FreeTermLike> local = findFirst(inst -> inst.instanceMap.getOrNull(clazz.ref()));
-    if (local == null) local = Seq.empty();
+  public @NotNull SeqView<Instance> find(ClassCall clazz, TermComparator comparator) {
+    var local = foldBottom(SeqView.<Instance.Local>empty(),
+      (inst, acc) -> inst.instanceMap.getOption(clazz.ref())
+        .map(Seq::view)
+        .getOrDefault(SeqView.empty())
+        .map(ref -> new Instance.Local(ref, inst.getLocal(ref).get()))
+        .concat(acc)
+    ).toSeq();    // collect even we still turn this to a view later, cause we used `MutableList::view`
+
     var global = root.findInstanceDecls(clazz.ref());
     if (global.isEmpty() && local.isEmpty()) return SeqView.empty();
     comparator.instanceFilteringMode();
-    // TODO: consider instances from `parent`
+
     return SeqView.narrow(local.view());
   }
 
