@@ -17,6 +17,7 @@ import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.xtt.ConjunctionCof;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
@@ -297,15 +298,30 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  record Partial(@NotNull WithPos<Expr> body) implements Expr {
-    public @NotNull Expr.Partial update(@NotNull WithPos<Expr> body) {
-      return body == body() ? this : new Partial(body);
+  sealed interface CofElement permits SingleCof, TopCof, BotCof {}
+  record SingleCof(@NotNull Expr lhs, @NotNull Expr rhs) implements CofElement {}
+  record TopCof() implements CofElement {}
+  record BotCof() implements CofElement {}
+
+  record ConjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
+  record DisjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
+
+  record Partial(@NotNull Clause clause) implements Expr {
+
+    public static record Clause(@NotNull ConjunctionCof cof, @NotNull Term tm){}
+
+    public @NotNull Expr.Partial update(@NotNull Clause clause) {
+      return clause == clause() ? this : new Partial(clause);
     }
 
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(body.descent(f));
+      return this;
+      // TODO
     }
-    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) { f.accept(body); }
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      return;
+      // TODO
+    }
   }
 
   record RawSort(@NotNull SortKind kind) implements Expr, Sugar {
