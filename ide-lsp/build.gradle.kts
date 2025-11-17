@@ -52,7 +52,7 @@ jlink {
   addExtraDependencies("jline-terminal-ni")
   imageDir.set(allPlatformImageDir)
   mergedModule {
-    uses("org.jline.terminal.impl.jni.JniTerminalProvider")
+    uses("org.jline.terminal.impl.ffm.FfmTerminalProvider")
     requires("java.logging")
   }
   launcher {
