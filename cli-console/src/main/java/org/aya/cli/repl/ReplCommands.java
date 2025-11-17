@@ -6,8 +6,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Either;
 import org.aya.cli.render.RenderOptions;
-import org.aya.compiler.morphism.ir.IrDecl;
 import org.aya.compiler.morphism.ir.BlockSimplifier;
+import org.aya.compiler.morphism.ir.IrDecl;
 import org.aya.compiler.serializers.FnSerializer;
 import org.aya.compiler.serializers.ModuleSerializer;
 import org.aya.prettier.AyaPrettierOptions;
@@ -182,7 +182,7 @@ public interface ReplCommands {
   @NotNull Command QUIT = new Command(ImmutableSeq.of("quit", "exit"), "Quit the REPL") {
     @Entry public @NotNull Command.Result execute(@NotNull AyaRepl repl) {
       return Result.ok(repl.config.quiet ? "" :
-        "See you space cow woof woof :3", false);
+        "See you cowgirl, someday, somewhere!", false);
     }
   };
 
