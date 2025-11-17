@@ -10,7 +10,7 @@
 AYA_MODULE="aya.cli.console"
 AYA_MAIN="org.aya.cli.console.Main"
 AYA_NAME="Aya"
-AYA_JVM_OPTS='"--enable-preview" "-XX:+UseCompactObjectHeaders"'
+AYA_JVM_OPTS='"--enable-preview" "-XX:+UseCompactObjectHeaders" "--enable-native-access=org.aya.prover.merged.module"'
 
 ###################################
 # DO NOT EDIT BELOW
