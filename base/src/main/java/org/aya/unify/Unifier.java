@@ -44,6 +44,11 @@ public final class Unifier extends TermComparator {
 
   @Override protected @Closed @NotNull RelDec<Term>
   doSolveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
+    if (meta.ref().req() instanceof MetaVar.OfType.ClassType) {
+      // TODO: not sure, maybe just unsure or TyckState#compuleSolution
+      return Panic.unreachable();
+    }
+
     // Assumption: rhs is in whnf
     var spine = meta.args();
 

@@ -107,14 +107,18 @@ public record MetaVar(
       }
     }
 
-    record ClassType(@Override @NotNull ClassCall type, @NotNull ImmutableSeq<Instance> instances) implements OfType {
+    record ClassType(
+      @Override @NotNull ClassCall type,
+      @NotNull ImmutableSeq<Instance> instances,
+      @NotNull LocalCtx localCtx
+    ) implements OfType {
       public ClassType instTele(@NotNull SeqView<Term> tele) {
-        return new ClassType((ClassCall) type.instTele(tele), instances.map(it -> it.instTele(tele)));
+        return new ClassType((ClassCall) type.instTele(tele), instances.map(it -> it.instTele(tele)), localCtx);
       }
 
       @Override
       public @Bound Requirement bind(SeqView<LocalVar> vars) {
-        return new ClassType((ClassCall) type.bindTele(vars), instances.map(it -> it.bindTele(vars)));
+        return new ClassType((ClassCall) type.bindTele(vars), instances.map(it -> it.bindTele(vars)), localCtx);
       }
 
       @Override public @NotNull Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {

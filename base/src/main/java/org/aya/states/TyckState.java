@@ -12,6 +12,7 @@ import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.FreeTermLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
@@ -23,6 +24,7 @@ import org.aya.unify.Unifier;
 import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
+import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -123,23 +125,43 @@ public final class TyckState {
     @NotNull UnaryOperator<@Closed Term> f
   ) {
     var insted = classType.instTele(meta.args().view());
-    insted.instances().filter(it -> {
-      return switch (it) {
-        // try replace all param of [def] with meta, then solve by unify with [insted.type()]
-        case Instance.Global(var def) -> throw new UnsupportedOperationException("TODO");
-        case Instance.Local(var ref, var ty) -> {
-          // TODO: which unifier we should use?
-          // i guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
-          Unifier someUnifier = null;
-          var result = someUnifier.compare(insted.type(), ty, null);
-          // still keep unsure
-          // TODO: what if YES for 1 instance and UNSURE for many other instances, is it possible?
-          yield result != Decision.NO;
+    var available = insted.instances().mapNotNull(it -> switch (it) {
+      // try replace all param of [def] with meta, then solve by unify with [insted.type()]
+      case Instance.Global(var def) -> {
+        var tele = def.signature();
+
+        // TODO: how
+        throw new UnsupportedOperationException("TODO");
+      }
+      case Instance.Local(var ref, var ty) -> {
+        assert ref instanceof FreeTermLike : "uninsted";
+        // ctx |- meta.args()
+        // and
+        // ty consists of meta.args() and top-level things, thus
+        // ctx |- ty
+        var ctx = classType.localCtx();
+        // I guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
+        // I guess we can safely ignore the problems, as we are "trying" to compare, not "requiring" them to equal.
+        // Thus `sourcePos` is also safe to be `SourcePos.NONE`
+        // TODO: what about allowDelay
+        var someUnifier = new Unifier(this, ctx, IgnoringReporter.INSTANCE, SourcePos.NONE, Ordering.Eq, false);
+        someUnifier.instanceFilteringMode();
+
+        var result = someUnifier.compare(insted.type(), ty, null);
+        // still keep unsure
+        if (result != Decision.NO) {
+          yield ref;
+        } else {
+          yield null;
         }
-      };
+      }
     });
 
-    throw new UnsupportedOperationException("TODO");
+    if (available.sizeEquals(1)) {
+      return available.getAny();
+    } else {
+      return meta;
+    }
   }
 
   public @Closed @NotNull Term computeSolution(@Closed @NotNull MetaCall meta, @NotNull UnaryOperator<@Closed Term> f) {
