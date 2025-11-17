@@ -7,11 +7,16 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public record ConjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {
   public @NotNull ConjunctionCof add(@NotNull CofElement c) {
     return new ConjunctionCof(elements.appended(c));
   }
   public @NotNull ConjunctionCof descent(@NotNull IndexedFunction<Term, Term> f) {
     return new ConjunctionCof(elements().map(e -> e.descent(f)));
+  }
+  public ConjunctionCof map(@NotNull Function<Term, Term> f) {
+    return new ConjunctionCof(elements().map(e -> e.map(f)));
   }
 }

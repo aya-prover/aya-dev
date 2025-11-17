@@ -306,11 +306,11 @@ public sealed interface Expr extends AyaDocile {
   record ConjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
   record DisjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
 
-  record Partial(@NotNull Clause clause) implements Expr {
+  record Partial(@NotNull ImmutableSeq<Clause> clause) implements Expr {
 
     public static record Clause(@NotNull ConjunctionCof cof, @NotNull Term tm){}
 
-    public @NotNull Expr.Partial update(@NotNull Clause clause) {
+    public @NotNull Expr.Partial update(@NotNull ImmutableSeq<Clause> clause) {
       return clause == clause() ? this : new Partial(clause);
     }
 

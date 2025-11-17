@@ -7,6 +7,8 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public record DisjunctionCof(@NotNull ImmutableSeq<ConjunctionCof> elements) {
   public @NotNull DisjunctionCof add(ConjunctionCof c) {
     return new DisjunctionCof(elements().appended(c));
@@ -14,5 +16,9 @@ public record DisjunctionCof(@NotNull ImmutableSeq<ConjunctionCof> elements) {
 
   public @NotNull DisjunctionCof decent(@NotNull IndexedFunction<Term, Term> f) {
     return new DisjunctionCof(elements().map(e -> e.descent(f)));
+  }
+
+  public DisjunctionCof map(@NotNull Function<Term, Term> f) {
+    return new DisjunctionCof(elements().map(e -> e.map(f)));
   }
 }

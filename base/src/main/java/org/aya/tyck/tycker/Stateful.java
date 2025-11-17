@@ -43,7 +43,7 @@ public interface Stateful {
     state().connect(lhs, rhs);
     var result = action.get();
     state().disconnect(lhs, rhs);
-    return result;
+    return  result;
   }
 
   default <R> R withConnection(@NotNull CofElement cof, @NotNull Supplier<R> action) {
