@@ -170,11 +170,8 @@ public final class ExprTycker extends ScopedTycker {
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, storedTy), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
-      case Expr.Partial(var element) -> whnf(type) instanceof PartialTyTerm(var A, var cof)
-        ? withConnection(whnf(cof), () -> { // TODO
-        var wellElement = inherit(element, A);
-        return new Jdg.Default(new PartialTerm(wellElement.wellTyped()), type);
-      })
+      case Expr.Partial(var clause) -> whnf(type) instanceof PartialTyTerm(var A, var cof)
+        ? null // TODO: check each clause and the coverage.
         : fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };

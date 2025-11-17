@@ -6,6 +6,9 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public sealed interface CofElement permits SingleCof, TopCof, BotCof {
   @NotNull CofElement descent(@NotNull IndexedFunction<Term, Term> f);
+  @NotNull CofElement map(Function<Term, Term> f);
 }
