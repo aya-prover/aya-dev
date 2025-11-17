@@ -48,7 +48,7 @@ kala-gson = { group = "org.glavo.kala", name = "kala-common-gson", version.ref =
 picocli-runtime = { group = "info.picocli", name = "picocli", version.ref = "picocli" }
 picocli-codegen = { group = "info.picocli", name = "picocli-codegen", version.ref = "picocli" }
 
-jline-terminal-native = { group = "org.jline", name = "jline-terminal-jni", version.ref = "jline" }
+jline-terminal-native = { group = "org.jline", name = "jline-terminal-ffm", version.ref = "jline" }
 jline-terminal-api = { group = "org.jline", name = "jline-terminal", version.ref = "jline" }
 jline-builtins = { group = "org.jline", name = "jline-builtins", version.ref = "jline" }
 jline-reader = { group = "org.jline", name = "jline-reader", version.ref = "jline" }

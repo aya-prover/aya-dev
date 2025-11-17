@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #
-# Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+# Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 # Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 #
 
@@ -10,7 +10,7 @@
 AYA_MODULE="aya.ide.lsp"
 AYA_MAIN="org.aya.lsp.LspMain"
 AYA_NAME="Aya"
-AYA_JVM_OPTS='"--enable-preview"'
+AYA_JVM_OPTS='"--enable-preview" "-XX:+UseCompactObjectHeaders" "--enable-native-access=org.aya.prover.merged.module"'
 
 ###################################
 # DO NOT EDIT BELOW
@@ -90,11 +90,6 @@ if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
     fi
 fi
 
-# For Darwin, add options to make imgui work
-if $darwin; then
-    AYA_VM_OPTS="$AYA_VM_OPTS -XstartOnFirstThread"
-fi
-
 # For Cygwin or MSYS, switch paths to Windows format before running java
 if [ "$cygwin" = "true" -o "$msys" = "true" ] ; then
     APP_HOME=`cygpath --path --mixed "$APP_HOME"`
@@ -147,6 +142,6 @@ save () {
 APP_ARGS=`save "$@"`
 
 # Collect all arguments for the java command, following the shell quoting and substitution rules
-eval set -- $DEFAULT_JVM_OPTS $AYA_VM_OPTS -p "$APP_HOME/../app" -m "$AYA_MODULE/$AYA_MAIN" "$APP_ARGS"
+eval set -- $DEFAULT_JVM_OPTS -p "$APP_HOME/../app" -m "$AYA_MODULE/$AYA_MAIN" "$APP_ARGS"
 
 exec "$JAVACMD" "$@"

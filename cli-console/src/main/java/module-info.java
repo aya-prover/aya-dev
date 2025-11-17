@@ -7,6 +7,7 @@ module aya.cli.console {
   requires org.jline.builtins;
   requires org.jline.reader;
   requires org.jline.terminal;
+  requires org.jline.terminal.ffm;
   requires java.net.http;
   requires aya.producer;
   requires aya.compiler;

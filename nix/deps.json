@@ -313,9 +313,9 @@
    "jar": "sha256-RnbML0KKkxEYZkN43oVkmhP2mJ6wYzZUmGk2Hw2wNRM=",
    "pom": "sha256-L762sNqEZbUfV8uSl22slAY12HWFXrbSDFV1pAttM2c="
   },
-  "org/jline#jline-terminal-jni/3.30.6": {
-   "jar": "sha256-9CohrBEh4lNnOjd6r+wkMw2LZG2DHh4CrIVsFqkt6V4=",
-   "pom": "sha256-LmwEyXf/Xy0pIBPDWxK5wRG98/WLBzRAjUUNNOHdgEA="
+  "org/jline#jline-terminal-ffm/3.30.6": {
+   "jar": "sha256-5qgf+X6ZPIlUfcoOZr6qulrrsFcZXDyqJNHMECZdo30=",
+   "pom": "sha256-ln8ko64lxNa6eZtLJTXZ6AVCuRxJ8B6GKiu/FEtEVw0="
   },
   "org/jline#jline-terminal/3.30.6": {
    "jar": "sha256-mo396KJbCpaHzxHg3UoShmXoMfFPnO2F/8KE062603Q=",
