@@ -7,6 +7,10 @@ import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.xtt.BotCof;
+import org.aya.syntax.core.term.xtt.CofElement;
+import org.aya.syntax.core.term.xtt.SingleCof;
+import org.aya.syntax.core.term.xtt.TopCof;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.ForLSP;
@@ -40,6 +44,21 @@ public interface Stateful {
     var result = action.get();
     state().disconnect(lhs, rhs);
     return result;
+  }
+
+  default <R> R withConnection(@NotNull CofElement cof, @NotNull Supplier<R> action) {
+    switch (cof) {
+      case SingleCof(var lsh, var rhs) -> {
+        return this.withConnection(lsh, rhs, action);
+      }
+      case TopCof() -> {
+        return action.get();
+      }
+      case BotCof() -> {
+        return null;
+        // TODO: ?
+      }
+    }
   }
 
   /// Used too often, make a specialized version

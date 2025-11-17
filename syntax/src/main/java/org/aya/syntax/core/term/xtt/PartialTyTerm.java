@@ -8,12 +8,13 @@ import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
-public record PartialTyTerm(@NotNull Term lhs, @NotNull Term rhs, @NotNull  Term ty) implements StableWHNF, Formation {
-  public @NotNull PartialTyTerm update(@NotNull Term lhs, @NotNull Term rhs, @NotNull  Term ty) {
-    return lhs == lhs() && rhs == rhs() && ty == ty() ? this : new PartialTyTerm(lhs, rhs, ty);
+///
+public record PartialTyTerm(@NotNull Term ty, @NotNull DisjunctionCof cof) implements StableWHNF, Formation {
+  public @NotNull PartialTyTerm update(@NotNull DisjunctionCof cof, @NotNull Term ty) {
+    return cof == cof() && ty == ty() ? this : new PartialTyTerm(ty, cof);
   }
 
   @Override public @NotNull PartialTyTerm descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, lhs), f.apply(1, rhs), f.apply(0,ty));
+    return update(cof().decent(f), f.apply(0,ty));
   }
 }
