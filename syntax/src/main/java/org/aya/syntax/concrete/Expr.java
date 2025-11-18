@@ -17,7 +17,6 @@ import org.aya.prettier.ConcretePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.ConjunctionCof;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.Arg;
@@ -298,29 +297,55 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  sealed interface CofElement permits SingleCof, TopCof, BotCof {}
-  record SingleCof(@NotNull Expr lhs, @NotNull Expr rhs) implements CofElement {}
-  record TopCof() implements CofElement {}
-  record BotCof() implements CofElement {}
+  sealed interface CofExpr permits EqCof, ConstCof {
+    @NotNull CofExpr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
+  }
+  record EqCof(@NotNull Expr lhs, @NotNull Expr rhs) implements CofExpr {
+    public @NotNull EqCof update(@NotNull Expr lhs, @NotNull Expr rhs) {
+      return lhs == lhs() && rhs == rhs() ? this : new EqCof(lhs, rhs);
+    }
 
-  record ConjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
-  record DisjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {}
+    @Override public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(f.apply(SourcePos.NONE, lhs), f.apply(SourcePos.NONE, rhs));
+    }
+  }
+  enum ConstCof implements CofExpr {
+    Top, Bottom;
+    @Override public @NotNull CofExpr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return this;
+    }
+  }
 
-  record Partial(@NotNull ImmutableSeq<Clause> clause) implements Expr {
+  record ConjCof(@NotNull ImmutableSeq<CofExpr> elements) {
+    public @NotNull ConjCof update(@NotNull ImmutableSeq<CofExpr> elements) {
+      return elements.sameElements(elements(), true) ? this : new ConjCof(elements);
+    }
 
-    public static record Clause(@NotNull ConjunctionCof cof, @NotNull Term tm){}
+    public @NotNull ConjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(elements.map(x -> x.descent(f)));
+    }
+  }
+  record DisjCof(@NotNull ImmutableSeq<CofExpr> elements) { }
+
+  record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
+    public record Clause(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
+      public @NotNull Clause update(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
+        return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
+      }
+
+      public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+        return update(cof, tm.descent(f));
+      }
+    }
 
     public @NotNull Expr.Partial update(@NotNull ImmutableSeq<Clause> clause) {
-      return clause == clause() ? this : new Partial(clause);
+      return clause.sameElements(clauses(), true) ? this : new Partial(clause);
     }
-
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return this;
-      // TODO
+      return update(clauses.map(clause -> clause.descent(f)));
     }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
-      return;
-      // TODO
+      clauses.forEach(clause -> f.accept(clause.tm));
     }
   }
 
