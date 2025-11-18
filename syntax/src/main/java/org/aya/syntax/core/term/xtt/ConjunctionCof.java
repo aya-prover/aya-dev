@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public record ConjunctionCof(@NotNull ImmutableSeq<CofElement> elements) {
-  public @NotNull ConjunctionCof add(@NotNull CofElement c) {
+public record ConjunctionCof(@NotNull ImmutableSeq<CofTerm> elements) {
+  public @NotNull ConjunctionCof add(@NotNull CofTerm c) {
     return new ConjunctionCof(elements.appended(c));
   }
   public @NotNull ConjunctionCof descent(@NotNull IndexedFunction<Term, Term> f) {
