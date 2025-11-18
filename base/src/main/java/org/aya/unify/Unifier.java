@@ -42,13 +42,10 @@ public final class Unifier extends TermComparator {
     return new Unifier(state, localCtx().derive(), reporter, pos, ordering, allowDelay);
   }
 
+  /// @implNote about class meta: this function performs conversion check, and class metas can totally
+  /// be solved just like a regular typed meta.
   @Override protected @Closed @NotNull RelDec<Term>
   doSolveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type) {
-    if (meta.ref().req() instanceof MetaVar.OfType.ClassType) {
-      // TODO: not sure, maybe just unsure or TyckState#compuleSolution
-      return Panic.unreachable();
-    }
-
     // Assumption: rhs is in whnf
     var spine = meta.args();
 

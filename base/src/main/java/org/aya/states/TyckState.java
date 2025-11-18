@@ -135,10 +135,10 @@ public final class TyckState {
       }
       case Instance.Local(var ref, var ty) -> {
         assert ref instanceof FreeTermLike : "uninsted";
-        // ctx |- meta.args()
+        // ctx ⊢ meta.args()
         // and
         // ty consists of meta.args() and top-level things, thus
-        // ctx |- ty
+        // ctx ⊢ ty
         var ctx = classType.localCtx();
         // I guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
         // I guess we can safely ignore the problems, as we are "trying" to compare, not "requiring" them to equal.
