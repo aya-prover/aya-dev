@@ -133,7 +133,7 @@ public final class TyckState {
         // TODO: how
         throw new UnsupportedOperationException("TODO");
       }
-      case Instance.Local(var ref, var ty) -> {
+      case Instance.Local(var ref, @Closed var ty) -> {
         assert ref instanceof FreeTermLike : "uninsted";
         // ctx ⊢ meta.args()
         // and
