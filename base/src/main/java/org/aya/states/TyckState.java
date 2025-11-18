@@ -165,13 +165,12 @@ public final class TyckState {
   }
 
   public @Closed @NotNull Term computeSolution(@Closed @NotNull MetaCall meta, @NotNull UnaryOperator<@Closed Term> f) {
-    if (meta.ref().req() instanceof MetaVar.OfType.ClassType classType) {
-      return computeSolution(meta, classType, f);
-    }
-
     return solutions.getOption(meta.ref())
       .map(sol -> f.apply(MetaCall.app(sol, meta.args(), meta.ref().ctxSize())))
-      .getOrDefault(meta);
+      .getOrElse(() -> {
+        if (!(meta.ref().req() instanceof MetaVar.OfType.ClassType classType)) return meta;
+        return computeSolution(meta, classType, f);
+      });
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */
