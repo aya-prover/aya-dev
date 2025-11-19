@@ -21,4 +21,16 @@ public record DisjunctionCof(@NotNull ImmutableSeq<ConjunctionCof> elements) {
   public DisjunctionCof map(@NotNull Function<Term, Term> f) {
     return new DisjunctionCof(elements().map(e -> e.map(f)));
   }
+
+  public boolean empty() {
+    return elements().isEmpty();
+  }
+
+  public ConjunctionCof head() {
+    return elements().get(0);
+  }
+
+  public DisjunctionCof tail() {
+    return new DisjunctionCof(elements().drop(1));
+  }
 }
