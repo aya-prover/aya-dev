@@ -213,10 +213,8 @@ public class CorePrettier extends BasePrettier<Term> {
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
-      case PartialTyTerm(var lhs, var rhs, var A) -> {
-        yield Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, lhs), term(Outer.AppSpine, rhs), term(Outer.AppSpine, A));
-      }
-      case PartialTerm(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
+      case PartialTyTerm(var A, var cof) -> Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, A), visitCof(cof));
+      case PartialTerm(var clause) -> Doc.braced(Doc.vcat(clause.map(cls -> Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm())) )));
       case LetTerm let -> {
         var unlet = let.unlet(nameGen);
         if (unlet.definedAs().isEmpty()) {
@@ -462,6 +460,22 @@ public class CorePrettier extends BasePrettier<Term> {
 
   private @NotNull Doc visitClauses(@NotNull SeqView<Term.Matching> clauses, @NotNull SeqView<Boolean> licits) {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
+  }
+
+  private @NotNull Doc visitCof(@NotNull CofTerm cof) {
+    return switch (cof) {
+      case CofTerm.EqCof(var lhs, var rhs) -> Doc.sep(term(Outer.BinOp, lhs), EQ, term(Outer.BinOp, rhs));
+      case CofTerm.ConstCof.Top -> KW_TOP;
+      case CofTerm.ConstCof.Bottom -> KW_BOT;
+    };
+  }
+
+  private @NotNull Doc visitCof(@NotNull ConjunctionCof cof) {
+    return Doc.join(AND, cof.elements().map(this::visitCof));
+  }
+
+  private @NotNull Doc visitCof(@NotNull DisjunctionCof cof) {
+    return Doc.braced(Doc.join(OR, cof.elements().map(this::visitCof)));
   }
 
   // region Name Generation

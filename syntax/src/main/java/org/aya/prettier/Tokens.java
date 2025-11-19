@@ -29,6 +29,8 @@ public final class Tokens {
   public static final Doc LIST_RIGHT = Doc.symbol("]");
   public static final Doc EQ = Doc.symbol("=");
   public static final Doc AT = Doc.symbol("@");
+  public static final Doc OR = Doc.symbol("\\/");  // temp
+  public static final Doc AND = Doc.symbol("/\\"); // temp
 
   public static final Doc KW_DO = Doc.styled(KEYWORD, "do");
   public static final Doc KW_AS = Doc.styled(KEYWORD, "as");
@@ -54,6 +56,9 @@ public final class Tokens {
   public static final Doc KW_COE = Doc.styled(KEYWORD, "coe");
   public static final Doc KW_PARTIAL_TYPE = Doc.styled(KEYWORD, "Partial");
   public static final Doc KW_PARTIAL = Doc.styled(KEYWORD, "partial");
+
+  public static final Doc KW_TOP = Doc.styled(KEYWORD, "COF_TOP"); // temp
+  public static final Doc KW_BOT = Doc.styled(KEYWORD, "COF_BOT"); // temp
 
   public static final Doc COMMENT_COMPILED_CODE = Doc.styled(COMMENT, "/* compiled code */");
   public static final Doc COMMENT_COMPILED_PATTERN = Doc.styled(COMMENT, "/* compiled pattern */");
