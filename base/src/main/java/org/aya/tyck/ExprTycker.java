@@ -564,7 +564,7 @@ public final class ExprTycker extends ScopedTycker {
 
   private @NotNull DoCheckApp computeArgs(
     @NotNull SourcePos pos, @NotNull ImmutableSeq<Expr.NamedArg> args,
-    @NotNull AbstractTele params, @NotNull BiFunction<Term[], @Nullable Term, Jdg> k
+    @NotNull AbstractTele params, @NotNull AppTycker.TeleChecker k
   ) throws NotPi {
     var argsComputer = new ArgsComputer(this, pos, args, params);
     var result = argsComputer.boot(k);

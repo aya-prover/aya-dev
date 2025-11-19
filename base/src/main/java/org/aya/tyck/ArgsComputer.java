@@ -4,6 +4,7 @@ package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableStack;
 import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
@@ -21,6 +22,7 @@ import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.ClassError;
 import org.aya.tyck.error.LicitError;
+import org.aya.tyck.tycker.AppTycker;
 import org.aya.util.ForLSP;
 import org.aya.util.Ordering;
 import org.aya.util.Pair;
@@ -101,19 +103,19 @@ public class ArgsComputer {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) tycker.fail(new LicitError.BadNamedArg(arg));
       switch (tycker.whnf(acc.type())) {
-        case DepTypeTerm(var kind, @Closed var piParam, @Closed var body) when kind == DTKind.Pi -> {
-          @Closed var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
+        case DepTypeTerm(var kind, var piParam, var body) when kind == DTKind.Pi -> {
+          var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }
         case EqTerm eq -> {
-          @Closed var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
+          var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
-        case @Closed MetaCall metaCall -> {
+        case MetaCall metaCall -> {
           // dom is solved immediately by the `inherit` below
-          @Closed var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
+          var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
           if (pi == null) throw new ExprTycker.NotPi(acc.type());
-          @Closed var argJdg = tycker.inherit(arg.arg(), pi.param());
+          var argJdg = tycker.inherit(arg.arg(), pi.param());
           var cod = pi.body().apply(argJdg.wellTyped());
           tycker.unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
@@ -123,11 +125,12 @@ public class ArgsComputer {
     });
   }
 
-  private @Closed @NotNull Jdg kon(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) {
-    return k.apply(result, firstTy);
+  private @Closed @NotNull Jdg kon(@NotNull AppTycker.TeleChecker k, @NotNull ImmutableSeq<LocalVar> extraParams) {
+    // TODO: fix dblity
+    return k.check(result, firstTy, extraParams);
   }
 
-  @NotNull Jdg boot(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) throws ExprTycker.NotPi {
+  @NotNull Jdg boot(@NotNull AppTycker.TeleChecker k) throws ExprTycker.NotPi {
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       // dblity inherits from params
@@ -161,17 +164,21 @@ public class ArgsComputer {
       param = params.telescopeRich(paramIx, result);
       onParamTyck(insertImplicit(param, pos));
     }
-    var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
+    var extraParams = MutableArrayList.<Pair<LocalVar, Term>>create();
     if (argIx < args.size()) {
-      return generateApplication(tycker, args.drop(argIx), kon(k));
+      return generateApplication(tycker, args.drop(argIx), kon(k, ImmutableSeq.empty()));
     } else while (paramIx < params.telescopeSize()) {
       param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.push(new Pair<>(atarashiVar, param.type()));
       onParamTyck(new FreeTerm(atarashiVar));
     }
-    var generated = kon(k);
+
+    var generated = kon(k, extraParams.view().map(Pair::component1).toSeq());
+
+    // elaborate non-full application to full application
     while (extraParams.isNotEmpty()) {
+      // if extraParams.isNotEmpty, then `localCtx, extraParams |- generated`
       var pair = extraParams.pop();
       generated = new Jdg.Default(
         new LamTerm(generated.wellTyped().bind(pair.component1())),
