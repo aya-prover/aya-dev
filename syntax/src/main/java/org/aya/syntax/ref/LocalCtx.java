@@ -29,6 +29,16 @@ public sealed interface LocalCtx extends Scoped<LocalVar, @Closed Term, LocalCtx
   @NotNull LocalCtx clone();
   @Override default @NotNull LocalCtx self() { return this; }
 
+  /// Put all "name : type" pair in {@param ctx} to `this`.
+  ///
+  /// @param ctx parent must be null
+  default void putAll(@NotNull LocalCtx ctx) {
+    assert ctx.parent() == null;
+
+    ctx.extractLocal().forEach(it ->
+      put(it, ctx.getLocal(it).get()));
+  }
+
   /// @return using empty maps because we either don't use it (we're using let instead) or we
   /// insert to it a lot
   @Override @Contract("-> new") default @NotNull LocalCtx derive() {

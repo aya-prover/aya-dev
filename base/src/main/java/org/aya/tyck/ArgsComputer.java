@@ -17,7 +17,9 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MapLocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.ClassError;
@@ -125,9 +127,17 @@ public class ArgsComputer {
     });
   }
 
-  private @Closed @NotNull Jdg kon(@NotNull AppTycker.TeleChecker k, @NotNull ImmutableSeq<LocalVar> extraParams) {
-    // TODO: fix dblity
-    return k.check(result, firstTy, extraParams);
+  private @Closed @NotNull Jdg kon(@NotNull AppTycker.TeleChecker k, @Nullable LocalCtx ctx) {
+    var extraParams = ctx == null ? ImmutableSeq.<LocalVar>empty() : ctx.extractLocal().toSeq();
+    // maybe we can eliminate a subscope when ctx is null, but I am 2 lazy.
+    try (var _ = tycker.subLocalCtx()) {
+      if (ctx != null) {
+        tycker.localCtx().putAll(ctx);
+      }
+
+      // TODO: fix dblity
+      return k.check(result, firstTy, extraParams);
+    }
   }
 
   @NotNull Jdg boot(@NotNull AppTycker.TeleChecker k) throws ExprTycker.NotPi {
@@ -164,27 +174,30 @@ public class ArgsComputer {
       param = params.telescopeRich(paramIx, result);
       onParamTyck(insertImplicit(param, pos));
     }
-    var extraParams = MutableArrayList.<Pair<LocalVar, Term>>create();
+    var extraParams = new MapLocalCtx();
     if (argIx < args.size()) {
-      return generateApplication(tycker, args.drop(argIx), kon(k, ImmutableSeq.empty()));
+      return generateApplication(tycker, args.drop(argIx), kon(k, null));
     } else while (paramIx < params.telescopeSize()) {
       param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
-      extraParams.push(new Pair<>(atarashiVar, param.type()));
+      extraParams.put(atarashiVar, param.type());
       onParamTyck(new FreeTerm(atarashiVar));
     }
 
-    var generated = kon(k, extraParams.view().map(Pair::component1).toSeq());
+    var generated = kon(k, extraParams);
 
     // elaborate non-full application to full application
-    while (extraParams.isNotEmpty()) {
+    if (!extraParams.isEmpty()) {
       // if extraParams.isNotEmpty, then `localCtx, extraParams |- generated`
-      var pair = extraParams.pop();
-      generated = new Jdg.Default(
-        new LamTerm(generated.wellTyped().bind(pair.component1())),
-        new DepTypeTerm(DTKind.Pi, pair.component2(), generated.type().bind(pair.component1()))
-      );
+      for (var var : extraParams.extractLocal().reversed()) {
+        var ty = extraParams.getLocal(var).get();
+        generated = new Jdg.Default(
+          new LamTerm(generated.wellTyped().bind(var)),
+          new DepTypeTerm(DTKind.Pi, ty, generated.type().bind(var))
+        );
+      }
     }
+
     return generated;
   }
 
