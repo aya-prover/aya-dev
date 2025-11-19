@@ -47,13 +47,28 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
       new Synthesizer(this).synthDontNormalize(wellTyped)));
   }
 
-  public @NotNull SubscopedVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
+  public @NotNull SubscopedFreshVar subscope(@NotNull Term type, @NotNull Renamer nameGen) {
     var var = nameGen.bindName(type);
     var parentCtx = setLocalCtx(localCtx.derive1(var, type));
-    return new SubscopedVar(var, nameGen, parentCtx, this);
+    return new SubscopedFreshVar(var, nameGen, parentCtx, this);
   }
 
-  public record SubscopedVar(
+  public @NotNull SubscopedLocalVar subscope(@NotNull LocalVar var, @NotNull Term type) {
+    return new SubscopedLocalVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
+  }
+
+  public record SubscopedLocalVar(
+    @NotNull LocalCtx parentCtx,
+    @NotNull LocalVar var,
+    @NotNull AbstractTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+      tycker.setLocalCtx(parentCtx);
+      tycker.state.removeConnection(var);
+    }
+  }
+
+  public record SubscopedFreshVar(
     @NotNull LocalVar var, @NotNull Renamer nameGen,
     @NotNull LocalCtx parentCtx,
     @NotNull AbstractTycker tycker

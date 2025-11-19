@@ -624,7 +624,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return !from;
   }
 
-  public @NotNull SubscopedVar subscope(@NotNull Term type) {
+  public @NotNull AbstractTycker.SubscopedFreshVar subscope(@NotNull Term type) {
     return super.subscope(type, nameGen);
   }
 
