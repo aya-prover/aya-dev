@@ -287,12 +287,11 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
           args.map(this::doSerialize), captures.map(this::doSerialize));
       }
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
-      case PartialTyTerm(var lhs, var rhs, var A) -> builder.mkNew(PartialTyTerm.class, ImmutableSeq.of(
-        doSerialize(lhs),
-        doSerialize(rhs),
+      case PartialTyTerm(var A, var cof) -> builder.mkNew(PartialTyTerm.class, ImmutableSeq.of(
+        // doSerialize(cof),
         doSerialize(A)
       ));
-      case PartialTerm(var element) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
+      case PartialTerm(var clauses) -> builder.mkNew(PartialTerm.class, ImmutableSeq.of(doSerialize(element)));
       case LetTerm(var definedAs, var body) -> {
         var defVar = new LocalVar("<let>");
         var letDef = doSerialize(definedAs);
