@@ -323,8 +323,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(lProj, rProj, lTy).lub(() ->
           compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj)));
       }
-      case PartialTerm(var clauses1) -> {
-        if (!(rhs instanceof PartialTerm(var clauses2)) || !(type instanceof PartialTyTerm(var A, var cof)))
+      case PartialTyTerm(var A, var cof) -> {
+        if (!(lhs instanceof PartialTerm(var clauses1)) || !(rhs instanceof PartialTerm(var clauses2)))
           yield Decision.NO;
         // yield withConnection(whnf(r), whnf(s), () -> doCompareTyped(element1, element2, A));
         // TODO
