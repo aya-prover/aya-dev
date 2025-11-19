@@ -34,6 +34,7 @@ import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.*;
 import org.aya.tyck.pat.ClauseTycker;
 import org.aya.tyck.tycker.AppTycker;
+import org.aya.util.Decision;
 import org.aya.util.Ordering;
 import org.aya.util.Panic;
 import org.aya.util.position.SourceNode;
@@ -170,11 +171,59 @@ public final class ExprTycker extends ScopedTycker {
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, storedTy), type);
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
-      case Expr.Partial(var clause) -> whnf(type) instanceof PartialTyTerm(var A, var cof)
-        ? null // TODO: check each clause and the coverage.
-        : fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
+      case Expr.Partial(var clause) -> {
+        if (!(whnf(type) instanceof PartialTyTerm(var A, var cof)))
+          yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
+        // check each clause
+        ImmutableSeq<PartialTerm.Clause> cls = ImmutableSeq.empty();
+        ImmutableSeq<ConjunctionCof> all_cof = ImmutableSeq.empty();
+        for (var rcls : clause) {
+          var cls_cof = elabCof(rcls.cof(), expr.sourcePos());
+          var cls_rhs = inherit(rcls.tm(), A).wellTyped();
+          cls = cls.appended(new PartialTerm.Clause(cls_cof, cls_rhs));
+          all_cof = all_cof.appended(cls_cof);
+        }
+        // coverage. cof <=> all_cof
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjunctionCof(all_cof))))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjunctionCof(all_cof), expr.sourcePos(), state()));
+        // boundary
+        for (var c1 : cls) for (var c2 : cls) {
+          if (c1 == c2) continue;
+          if (!(withConnection(c1.cof().add(c2.cof().map(this::whnf)),
+                () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
+                () -> true)))
+            yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
+        }
+        yield new Jdg.Default(new PartialTerm(cls), type);
+      }
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
+  }
+
+  private @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof, @NotNull SourcePos sourcePos) {
+    return switch (cof) {
+      case Expr.EqCof(var elhs, var erhs) -> {
+        var lhs = inherit(new WithPos<>(sourcePos, elhs), DimTyTerm.INSTANCE);
+        var rhs = inherit(new WithPos<>(sourcePos, erhs), DimTyTerm.INSTANCE);
+        yield new CofTerm.EqCof(lhs.wellTyped(), rhs.wellTyped());
+      }
+      case Expr.ConstCof.Bottom -> CofTerm.ConstCof.Bottom;
+      case Expr.ConstCof.Top -> CofTerm.ConstCof.Top;
+    };
+  }
+
+  private @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj, @NotNull SourcePos sourcePos) {
+    ImmutableSeq<CofTerm> ret = ImmutableSeq.empty();
+    for (var c : conj.elements())
+      ret = ret.appended(elabCof(c, sourcePos));
+    return new ConjunctionCof(ret);
+  }
+
+  private  @NotNull DisjunctionCof elabCof(@NotNull Expr.DisjCof disj, @NotNull SourcePos sourcePos) {
+    ImmutableSeq<ConjunctionCof> ret = ImmutableSeq.empty();
+    for (var c : disj.elements())
+      ret = ret.appended(elabCof(c, sourcePos));
+    return new DisjunctionCof(ret);
   }
 
   /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level

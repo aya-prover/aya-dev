@@ -679,7 +679,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
   }
 
-  private boolean cofibrationEquiv(@NotNull DisjunctionCof c1, @NotNull DisjunctionCof c2) {
+  public boolean cofibrationEquiv(@NotNull DisjunctionCof c1, @NotNull DisjunctionCof c2) {
     return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
   }
 

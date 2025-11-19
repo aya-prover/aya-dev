@@ -324,8 +324,33 @@ public sealed interface Expr extends AyaDocile {
     public @NotNull ConjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(elements.map(x -> x.descent(f)));
     }
+
+    public boolean empty() {
+      return elements().isEmpty();
+    }
+
+    public CofExpr head() {
+      return elements().get(0);
+    }
+
+    public ConjCof tail() {
+      return new ConjCof(elements().drop(1));
+    }
   }
-  record DisjCof(@NotNull ImmutableSeq<CofExpr> elements) { }
+  record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
+
+    public boolean empty() {
+      return elements().isEmpty();
+    }
+
+    public ConjCof head() {
+      return elements().get(0);
+    }
+
+    public DisjCof tail() {
+      return new DisjCof(elements().drop(1));
+    }
+  }
 
   record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
     public record Clause(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
