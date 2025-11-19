@@ -8,6 +8,8 @@ import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.CofTerm;
+import org.aya.syntax.core.term.xtt.ConjunctionCof;
+import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.ForLSP;
@@ -49,15 +51,19 @@ public interface Stateful {
     @NotNull Supplier<R> ifBottom
   ) {
     return switch (cof) {
-      case CofTerm.EqCof(var lhs, var rhs) -> {
-        if (state().isConnected(lhs, rhs)) yield ifBottom.get();
-        yield this.withConnection(lhs, rhs, action);
-      }
+      case CofTerm.EqCof(var lhs, var rhs) ->
+        this.withConnection(lhs, rhs, () -> state().isConnected(DimTerm.I0, DimTerm.I1) ? ifBottom.get() : action.get());
       case CofTerm.ConstCof val -> switch (val) {
         case Top -> action.get();
         case Bottom -> ifBottom.get();
       };
     };
+  }
+
+  default <R> R withConnection(@NotNull ConjunctionCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
+    if (cof.empty())
+      return action.get();
+    return this.withConnection(cof.head(), () -> withConnection(cof.tail(), action, ifBottom), ifBottom);
   }
 
   /// Used too often, make a specialized version

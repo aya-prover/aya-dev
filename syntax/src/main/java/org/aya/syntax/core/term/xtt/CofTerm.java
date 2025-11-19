@@ -6,13 +6,20 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 public sealed interface CofTerm permits CofTerm.ConstCof, CofTerm.EqCof {
   @NotNull CofTerm descent(@NotNull IndexedFunction<Term, Term> f);
+  CofTerm map(@NotNull Function<Term, Term> f);
 
   /// lhs = rhs
   record EqCof(@NotNull Term lhs, @NotNull Term rhs) implements CofTerm {
     @Override public @NotNull CofTerm descent(@NotNull IndexedFunction<Term, Term> f) {
       return new EqCof(f.apply(0, lhs()), f.apply(0, rhs));
+    }
+
+    @Override public CofTerm map(@NotNull Function<Term, Term> f) {
+      return new EqCof(f.apply(lhs()), f.apply(rhs));
     }
   }
 
@@ -20,6 +27,10 @@ public sealed interface CofTerm permits CofTerm.ConstCof, CofTerm.EqCof {
     Top, Bottom;
 
     @Override public @NotNull CofTerm descent(@NotNull IndexedFunction<Term, Term> f) {
+      return this;
+    }
+
+    @Override public CofTerm map(@NotNull Function<Term, Term> f) {
       return this;
     }
   }
