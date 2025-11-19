@@ -9,6 +9,7 @@ import org.aya.syntax.ref.*;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /// - The fourth chain is "complied def" chain, which are well-typed, compiled definition
 ///
 /// Note that [ConDef.Delegate] **contains** a [ConDef] rather than a super class of.
+@Debug.Renderer(text = "name()")
 public sealed interface AnyDef extends OpDecl
   permits JitDef, ClassDefLike, ConDefLike, DataDefLike, FnDefLike, MemberDefLike, PrimDefLike, TyckAnyDef {
   /**

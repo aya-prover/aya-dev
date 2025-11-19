@@ -50,7 +50,9 @@ public record InstanceSet(
     instanceTypes.put(instance.name(), type);
   }
 
-  public void putParam(@NotNull LocalVar instance, @NotNull ClassCall type) { put(new FreeTerm(instance), type); }
+  public void putParam(@NotNull LocalVar instance, @NotNull ClassCall type) {
+    put(new FreeTerm(instance), type);
+  }
 
   public @NotNull SeqView<Term> find(ClassCall clazz, TermComparator comparator) {
     Seq<FreeTermLike> local = findFirst(inst -> inst.instanceMap.getOrNull(clazz.ref()));

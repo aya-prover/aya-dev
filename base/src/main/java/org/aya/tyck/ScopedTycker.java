@@ -8,6 +8,7 @@ import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.term.LetFreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
@@ -132,11 +133,11 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
   ) {
     localLet().put(ref, subst, inline);
     if (subst.type() instanceof ClassCall call) {
-      instanceSet.putParam(ref, call);
+      instanceSet.put(new LetFreeTerm(ref, subst), call);
     } else if (reallyWant) {
       var whnf = whnf(subst.type());
       if  (whnf instanceof ClassCall call2) {
-        instanceSet.putParam(ref, call2);
+        instanceSet.put(new LetFreeTerm(ref, subst), call2);
       } else {
         fail(new ClassError.NotInstance(ref.definition(), subst.type(), this));
       }

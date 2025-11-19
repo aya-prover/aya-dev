@@ -1,25 +1,37 @@
 open import prelude
 
-class Kontainer
-| classifying Taipe : Type
-| walue : Taipe
+module Simple {
+  class Kontainer
+  | classifying Tie-piu : Type
+  | walue : Tie-piu
 
-def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
+  def tyck0 : Nat => Kontainer::walue {new Kontainer Nat 0}
 
-def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
+  def norm0 : Kontainer::walue {new Kontainer Nat 0} = 0 => refl
 
-def subtype : Kontainer Nat => new Kontainer Nat 0
-// In core:
-// def subtype : Kontainer Nat => cast [Taipe := Nat] [walue := 0] (new Kontainer Nat 0)
+  def subtype : Kontainer Nat => new Kontainer Nat 0
+  // In core:
+  // def subtype : Kontainer Nat => cast [Tie-piu := Nat] [walue := 0] (new Kontainer Nat 0)
 
-def norm1 : Kontainer::walue {subtype} = 0 => refl
-// In core:
-// (cast [Taipe := Nat] [walue := 0] (new Kontainer Nat 0)) .walue
-// -> 0 (it is recorded in the ClassCastTerm!)
+  def norm1 : Kontainer::walue {subtype} = 0 => refl
+  // In core:
+  // (cast [Tie-piu := Nat] [walue := 0] (new Kontainer Nat 0)) .walue
+  // -> 0 (it is recorded in the ClassCastTerm!)
 
-def projTest (a : Kontainer) => Kontainer::walue
+  def projTest (a : Kontainer) => Kontainer::walue
 
-def letTest (f : Nat -> Kontainer) =>
-  let instance x := f 0 in Kontainer::Taipe
+  def letTest (f : Nat → Kontainer) =>
+    let instance x := f 0 in Kontainer::Tie-piu
 
-def classifyingTest {A : Kontainer} (a : A) => a
+  def classifyingTest {A : Kontainer} (a : A) => a
+}
+
+module PM {
+  open class PlusOp
+  | car : Type
+  | infixl + : car -> car -> car
+
+  def choose (inst : PlusOp) (b : Bool) (x y : car) : car elim b
+  | true => x + y
+  | false => y + x
+}
