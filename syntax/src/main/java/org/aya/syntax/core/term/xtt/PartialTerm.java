@@ -10,9 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 // { phi1 => rhs; ... }
 public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements StableWHNF {
-
-  public static record Clause(@NotNull ConjunctionCof cof,  @NotNull Term tm) {
-
+  public record Clause(@NotNull ConjunctionCof cof, @NotNull Term tm) {
     public @NotNull Clause update(@NotNull ConjunctionCof cof, @NotNull Term tm) {
       return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
     }
@@ -23,7 +21,7 @@ public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements Stab
   }
 
   public @NotNull PartialTerm update(@NotNull ImmutableSeq<Clause> clauses) {
-    return clauses == clauses() ? this : new PartialTerm(clauses);
+    return clauses.sameElements(clauses(), true) ? this : new PartialTerm(clauses);
   }
 
   @Override public @NotNull PartialTerm descent(@NotNull IndexedFunction<Term, Term> f) {
