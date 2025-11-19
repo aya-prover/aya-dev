@@ -18,6 +18,7 @@ public record DisjunctionCof(@NotNull ImmutableSeq<ConjunctionCof> elements) {
     return new DisjunctionCof(elements().map(e -> e.descent(f)));
   }
 
+  // Usually map(this::whnf).
   public DisjunctionCof map(@NotNull Function<Term, Term> f) {
     return new DisjunctionCof(elements().map(e -> e.map(f)));
   }
