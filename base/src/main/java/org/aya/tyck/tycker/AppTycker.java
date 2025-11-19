@@ -30,12 +30,13 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 public record AppTycker<Ex extends Exception, R>(
-  @Override @NotNull TyckState state,
   @NotNull ScopedTycker tycker,
   @NotNull SourcePos pos,
   int argsCount, int lift,
   @NotNull Factory<Ex, R> makeArgs
 ) implements Stateful {
+  @Override public @NotNull TyckState state() { return tycker.state; }
+
   /// ```
   /// Signature (0th param) --------> Argument Parser (this interface)
   ///                                        |
@@ -44,16 +45,10 @@ public record AppTycker<Ex extends Exception, R>(
   ///                                        v
   /// Well-typed Call (result) <---- Factory (1st param)
   /// ```
+  /// @see #checkProjCall
   @FunctionalInterface
   public interface Factory<Ex extends Exception, R> extends
     CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg>, R, Ex> {
-  }
-
-  public AppTycker(
-    @NotNull ScopedTycker tycker, @NotNull SourcePos pos,
-    int argsCount, int lift, @NotNull Factory<Ex, R> makeArgs
-  ) {
-    this(tycker.state, tycker, pos, argsCount, lift, makeArgs);
   }
 
   public R checkCompiledApplication(@NotNull JitDef def) throws Ex {
@@ -76,7 +71,7 @@ public record AppTycker<Ex extends Exception, R>(
     return switch (defVar.concrete) {
       case FnDecl _ -> {
         var fnDef = new FnDef.Delegate((DefVar<FnDef, FnDecl>) defVar);
-        var op = state.shapeFactory.find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
+        var op = state().shapeFactory.find(fnDef).map(recog -> AyaShape.ofFn(fnDef, recog.shape())).getOrNull();
         yield checkFnCall(fnDef, op);
       }
       // Extracted to prevent pervasive influence of suppression of unchecked warning.
@@ -106,7 +101,7 @@ public record AppTycker<Ex extends Exception, R>(
       var conArgs = realArgs.drop(conVar.ownerTeleSize());
 
       var type = (DataCall) fullSignature.result(realArgs);
-      var shape = state.shapeFactory.find(dataVar)
+      var shape = state().shapeFactory.find(dataVar)
         .mapNotNull(recog -> AyaShape.ofCon(conVar, recog, type))
         .getOrNull();
       if (shape != null) return new Jdg.Default(new RuleReducer.Con(shape, 0, ownerArgs, conArgs), type);
@@ -120,7 +115,7 @@ public record AppTycker<Ex extends Exception, R>(
       // Closed cause [args] are Closed
       @Closed var primCall = new PrimCall(primVar, 0, ImmutableArray.from(args));
       return new Jdg.Default(
-        state.primFactory.unfold(primCall, state),
+        state().primFactory.unfold(primCall, state()),
         signature.result(args)
       );
     });
@@ -175,8 +170,9 @@ public record AppTycker<Ex extends Exception, R>(
     var signature = member.signature().lift(lift);
     return makeArgs.applyChecked(signature, (args, fstTy) -> {
       assert args.length >= 1;
+      assert fstTy != null;
       var ofTy = whnf(fstTy);
-      if (!(ofTy instanceof ClassCall classTy)) throw new UnsupportedOperationException("report");   // TODO
+      if (!(ofTy instanceof ClassCall classTy)) return Panic.unreachable();
       var fieldArgs = ImmutableArray.fill(args.length - 1, i -> args[i + 1]);
       return new Jdg.Default(
         MemberCall.make(classTy, args[0], member, 0, fieldArgs),
