@@ -57,7 +57,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new SubscopedFreshVar(var, nameGen, parentCtx, this);
   }
 
-  public @NotNull SubscopedFreshArgs subtelescope(@NotNull AbstractTele tele, @NotNull Renamer nameGen) {
+  public @NotNull SubscopedFreshArgs subtelescope(@Closed @NotNull AbstractTele tele, @NotNull Renamer nameGen) {
     var parentCtx = setLocalCtx(localCtx.derive());
     var vars = new FreeTerm[tele.telescopeSize()];
     for (int i = 0; i < tele.telescopeSize(); i++) {
@@ -98,7 +98,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
 
   public record SubscopedFreshArgs(
     @NotNull ImmutableSeq<FreeTerm> vars,
-    @NotNull Term result,
+    @Closed @NotNull Term result,
     @NotNull Renamer nameGen,
     @NotNull LocalCtx parentCtx,
     @NotNull AbstractTycker tycker
