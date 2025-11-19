@@ -36,6 +36,7 @@ public interface Stateful {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 
+  /// Assume ¬(lhs = rhs ⊢ ⊥)
   default <R> R withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull Supplier<R> action) {
     state().connect(lhs, rhs);
     var result = action.get();
@@ -43,14 +44,18 @@ public interface Stateful {
     return  result;
   }
 
-  default <R> R withConnection(@NotNull CofTerm cof, @NotNull Supplier<R> action) {
+  default <R> R withConnection(
+    @NotNull CofTerm cof, @NotNull Supplier<R> action,
+    @NotNull Supplier<R> ifBottom
+  ) {
     return switch (cof) {
-      case CofTerm.EqCof(var lsh, var rhs) -> {
-        this.withConnection(lsh, rhs, action);
+      case CofTerm.EqCof(var lhs, var rhs) -> {
+        if (state().isConnected(lhs, rhs)) yield ifBottom.get();
+        yield this.withConnection(lhs, rhs, action);
       }
       case CofTerm.ConstCof val -> switch (val) {
         case Top -> action.get();
-        case Bottom -> null;
+        case Bottom -> ifBottom.get();
       };
     };
   }
