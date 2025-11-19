@@ -2,8 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.value.Value;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Instance;
 import org.aya.pretty.doc.Doc;
@@ -12,8 +14,8 @@ import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
-import org.aya.syntax.core.term.FreeTermLike;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -24,8 +26,8 @@ import org.aya.unify.Unifier;
 import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
-import org.aya.util.reporter.IgnoringReporter;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +136,6 @@ public final class TyckState {
         throw new UnsupportedOperationException("TODO");
       }
       case Instance.Local(var ref, @Closed var ty) -> {
-        assert ref instanceof FreeTermLike : "uninsted";
         // ctx ⊢ meta.args()
         // and
         // ty consists of meta.args() and top-level things, thus
@@ -143,16 +144,20 @@ public final class TyckState {
         // I guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
         // I guess we can safely ignore the problems, as we are "trying" to compare, not "requiring" them to equal.
         // Thus `sourcePos` is also safe to be `SourcePos.NONE`
-        var someUnifier = new Unifier(this, ctx, IgnoringReporter.INSTANCE, SourcePos.NONE, Ordering.Eq, false);
+        var someUnifier = new Unifier(this, ctx, new ThrowingReporter(Value.lazy(Panic::unreachable)), SourcePos.NONE, Ordering.Eq, false);
         someUnifier.instanceFilteringMode();
 
-        var result = someUnifier.compare(insted.type(), ty, null);
-        // still keep unsure
-        if (result != Decision.NO) {
-          yield ref;
-        } else {
-          yield null;
+        var required = insted.type();
+        for (int i = 0; i < required.args().size(); i++) {
+          var field = required.ref().members().get(i);
+          var proj = MemberCall.make(ty, ref, field, 0, ImmutableSeq.empty());
+          var projTy = field.signature().makePi();
+          // Keep the unsure
+          if (someUnifier.compare(required.args().get(i).apply(ref), proj, projTy) == Decision.NO) {
+            yield null;
+          }
         }
+        yield ref;
       }
     });
 

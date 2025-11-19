@@ -591,6 +591,17 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @NotNull Decision doCompareType(@Closed @NotNull Formation preLhs, @Closed @NotNull Term preRhs) {
     if (preLhs.getClass() != preRhs.getClass()) return Decision.NO;
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
+      case Pair(ClassCall lhs, ClassCall rhs) -> {
+        if (!lhs.ref().equals(rhs.ref())) yield Decision.NO;
+        if (!lhs.args().sizeEquals(rhs.args())) yield Decision.NO;
+        try (var bind = subscope(lhs)) {
+          var self = new FreeTerm(bind.var());
+          var result = compareMany(
+            lhs.args(self), rhs.args(self),
+            lhs.ref().signature().lift(Math.min(lhs.ulift(), rhs.ulift())));
+          yield result.downgrade();
+        }
+      }
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
       case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
       case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) -> lK == rK

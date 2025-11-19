@@ -3,10 +3,12 @@
 package org.aya.generic;
 
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.NoInherit;
 import org.aya.syntax.core.def.FnDefLike;
+import org.aya.syntax.core.term.ClassCastTerm;
 import org.aya.syntax.core.term.FreeTermLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
@@ -21,7 +23,11 @@ public sealed interface Instance extends AyaDocile {
   /// @param ref is either [org.aya.syntax.core.term.FreeTermLike] or [org.aya.syntax.core.term.LocalTerm]
   record Local(@NotNull Term ref, @Override @NotNull ClassCall type) implements Instance {
     public static @NotNull Local of(@NotNull FreeTermLike term, @NotNull ClassCall type) {
-      return new Local(term, type);
+      Term realTerm = term;
+      if (type.args().isNotEmpty()) {
+        realTerm = new ClassCastTerm(type.ref(), term, type.args(), ImmutableSeq.empty());
+      }
+      return new Local(realTerm, type);
     }
 
     @Override
