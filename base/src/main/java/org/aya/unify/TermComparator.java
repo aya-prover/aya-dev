@@ -274,7 +274,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case ClassCall classCall -> {
         if (classCall.args().size() == classCall.ref().members().size()) yield Decision.YES;
         // TODO: skip comparing fields that already have impl specified in the type
-        // FIXME: not a good idea to use view
         yield Decision.minOfAll(classCall.ref().members(), member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]

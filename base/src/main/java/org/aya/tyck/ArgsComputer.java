@@ -17,6 +17,7 @@ import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.ClassError;
 import org.aya.tyck.error.LicitError;
@@ -75,17 +76,18 @@ public class ArgsComputer {
         .find(clazz, unifier)
         .toSeq();
 
-      // TODO: impl instance filter by Requirement.OfType.ClassType
-      if (thises.isEmpty() || thises.sizeGreaterThan(1)) {
-        if (thises.isEmpty()) tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
-        else tycker.fail(new ClassError.InstanceAmbiguous(pos, clazz, thises));
+      if (thises.isEmpty()) {
+        tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
         return new ErrorTerm(_ -> BasePrettier.refVar(clazz.ref()));
-      } else {
+      } else if (thises.sizeEquals(1)) {
         // TODO: garbage code, fix it
         return switch (thises.getAny()) {
           case Instance.Global global -> throw new UnsupportedOperationException("TODO");
           case Instance.Local local -> local.ref();
         };
+      } else {
+        return tycker.freshMeta(param.name(), pos,
+          new MetaVar.OfType.ClassType(clazz, thises, tycker.localCtx()), false);
       }
     } else {
       return tycker.mockTerm(param, pos);
