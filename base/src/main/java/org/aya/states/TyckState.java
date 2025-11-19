@@ -143,7 +143,6 @@ public final class TyckState {
         // I guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
         // I guess we can safely ignore the problems, as we are "trying" to compare, not "requiring" them to equal.
         // Thus `sourcePos` is also safe to be `SourcePos.NONE`
-        // TODO: what about allowDelay
         var someUnifier = new Unifier(this, ctx, IgnoringReporter.INSTANCE, SourcePos.NONE, Ordering.Eq, false);
         someUnifier.instanceFilteringMode();
 

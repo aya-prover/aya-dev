@@ -62,6 +62,8 @@ public final class Unifier extends TermComparator {
       } else if (allowDelay) {
         wantToReturn = true;
         break;
+      } else if (!solveMetaInstances) {
+        return RelDec.unsure();
       } else {
         reportBadSpine(meta, rhs);
         return RelDec.no();
@@ -98,6 +100,8 @@ public final class Unifier extends TermComparator {
       if (allowDelay) {
         state.addEqn(createEqn(meta, rhs, returnType));
         return RelDec.yes(returnType);
+      } else if (!solveMetaInstances) {
+        return RelDec.unsure();
       } else {
         reportBadSpine(meta, rhs);
         return RelDec.no();

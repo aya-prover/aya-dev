@@ -47,7 +47,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   /// Used for approximate comparison.
   private boolean solveMetaForApprox = true;
   /// If false, do not try to solve metas. This is used for filtering instance candidates.
-  private boolean solveMetaInstances = true;
+  protected boolean solveMetaInstances = true;
   private final MutableStack<MutableList<TyckState.Eqn>> weWillSee = MutableStack.create();
 
   public void instanceFilteringMode() {
