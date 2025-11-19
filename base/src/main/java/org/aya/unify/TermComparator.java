@@ -276,9 +276,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
           @Closed var ty = member.signature().inst(ImmutableSeq.of(lhs));
           // l/r proj are closed since l/r hs are closed
-          @Closed var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.empty());
-          @Closed var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.empty());
-          return compare(lproj, rproj, ty.makePi());
+          try (var scope = subtelescope(ty)) {
+            @Closed var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.narrow(scope.vars()));
+            @Closed var rproj = MemberCall.make(classCall, rhs, member, 0, ImmutableSeq.narrow(scope.vars()));
+            return compare(lproj, rproj, scope.result());
+          }
         });
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
