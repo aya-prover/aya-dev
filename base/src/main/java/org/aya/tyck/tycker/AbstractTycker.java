@@ -2,14 +2,18 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.value.LazyValue;
 import org.aya.generic.Renamer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.ScopedTycker;
 import org.aya.unify.Synthesizer;
 import org.aya.unify.TermComparator;
@@ -53,6 +57,18 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
     return new SubscopedFreshVar(var, nameGen, parentCtx, this);
   }
 
+  public @NotNull SubscopedFreshArgs subtelescope(@NotNull AbstractTele tele, @NotNull Renamer nameGen) {
+    var parentCtx = setLocalCtx(localCtx.derive());
+    var vars = new FreeTerm[tele.telescopeSize()];
+    for (int i = 0; i < tele.telescopeSize(); i++) {
+      var var = nameGen.bindName(tele.telescopeName(i));
+      localCtx.put(var, tele.telescope(i, vars));
+      vars[i] = new FreeTerm(var);
+    }
+    return new SubscopedFreshArgs(ImmutableArray.Unsafe.wrap(vars),
+      tele.result(vars), nameGen, parentCtx, this);
+  }
+
   public @NotNull SubscopedLocalVar subscope(@NotNull LocalVar var, @NotNull Term type) {
     return new SubscopedLocalVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
   }
@@ -77,6 +93,22 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
       tycker.setLocalCtx(parentCtx);
       nameGen.unbindName(var);
       tycker.state.removeConnection(var);
+    }
+  }
+
+  public record SubscopedFreshArgs(
+    @NotNull ImmutableSeq<FreeTerm> vars,
+    @NotNull Term result,
+    @NotNull Renamer nameGen,
+    @NotNull LocalCtx parentCtx,
+    @NotNull AbstractTycker tycker
+  ) implements AutoCloseable {
+    @Override public void close() {
+      tycker.setLocalCtx(parentCtx);
+      vars.forEach(v -> {
+        nameGen.unbindName(v.name());
+        tycker.state.removeConnection(v.name());
+      });
     }
   }
 }
