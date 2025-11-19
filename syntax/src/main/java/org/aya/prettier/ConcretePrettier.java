@@ -195,7 +195,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
-      case Expr.Partial(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
+      case Expr.Partial(var clause) -> Doc.english("<I am a raw partial element>");
       case Expr.LambdaHole _ -> Doc.symbol("__");
     };
   }
