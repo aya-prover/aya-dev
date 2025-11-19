@@ -107,7 +107,7 @@ public record DoubleChecker(
   @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) { return unifier.setLocalCtx(ctx); }
   @Override public @NotNull TyckState state() { return unifier.state(); }
   @Override public @NotNull Reporter reporter() { return unifier.reporter(); }
-  public AbstractTycker.@NotNull SubscopedVar subscope(@NotNull Term type) { return unifier.subscope(type); }
+  public AbstractTycker.@NotNull SubscopedFreshVar subscope(@NotNull Term type) { return unifier.subscope(type); }
   @Override public @NotNull TermComparator unifier(@NotNull SourcePos pos, @NotNull Ordering order) {
     return unifier.derive(pos, order);
   }

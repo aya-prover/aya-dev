@@ -9,7 +9,6 @@ import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.LetFreeTerm;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
@@ -61,17 +60,6 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
     return new Unifier(state(), localCtx(), reporter(), pos, order, true);
   }
 
-  public record SubscopedVar(
-    @NotNull LocalCtx parentCtx,
-    @NotNull LocalVar var,
-    @NotNull ScopedTycker tycker
-  ) implements AutoCloseable {
-    @Override public void close() {
-      tycker.setLocalCtx(parentCtx);
-      tycker.state.removeConnection(var);
-    }
-  }
-
   public record SubscopedAll(
     @Nullable LocalCtx parentCtx, @Nullable LocalLet parentDef,
     @Nullable InstanceSet parentInstanceSet,
@@ -110,10 +98,6 @@ public sealed abstract class ScopedTycker extends AbstractTycker implements Unif
       deriveInstanceSet ? setInstanceSet(instanceSet.derive()) : null,
       this
     );
-  }
-
-  public @NotNull SubscopedVar subscope(@NotNull LocalVar var, @NotNull Term type) {
-    return new SubscopedVar(setLocalCtx(localCtx().derive1(var, type)), var, this);
   }
 
   public @NotNull LocalLet localLet() { return localLet; }
