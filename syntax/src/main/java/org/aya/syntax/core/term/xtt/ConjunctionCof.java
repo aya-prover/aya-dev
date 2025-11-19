@@ -19,4 +19,16 @@ public record ConjunctionCof(@NotNull ImmutableSeq<CofTerm> elements) {
   public ConjunctionCof map(@NotNull Function<Term, Term> f) {
     return new ConjunctionCof(elements().map(e -> e.map(f)));
   }
+  public @NotNull CofTerm head() {
+    return elements().get(0);
+  }
+  public @NotNull ConjunctionCof tail() {
+    return new ConjunctionCof(elements().drop(1));
+  }
+  public boolean empty() {
+    return elements().isEmpty();
+  }
+  public @NotNull ConjunctionCof add(@NotNull ConjunctionCof c) {
+    return new ConjunctionCof(elements().appendedAll(c.elements()));
+  }
 }
