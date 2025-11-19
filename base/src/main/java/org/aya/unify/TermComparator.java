@@ -330,7 +330,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
-          if (withConnection(cl1.cof().add(cl2.cof()), () -> doCompareTyped(cl1.tm(), cl2.tm(), A), () -> Decision.YES) == Decision.NO)
+          if (withConnection(cl1.cof().add(cl2.cof().map(this::whnf)), () -> doCompareTyped(cl1.tm(), cl2.tm(), A), () -> Decision.YES) == Decision.NO)
             yield Decision.NO;
         }
         yield Decision.YES;
@@ -625,24 +625,62 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
-      case Pair(PartialTyTerm(var lhs1, var rhs1, var A1), PartialTyTerm(var lhs2, var rhs2, var A2)) -> {
-        var wl2 = whnf(lhs2);
-        var wr2 = whnf(rhs2);
-        if (logicallyInequivalent(whnf(lhs1), whnf(rhs1), wl2, wr2)) yield Decision.NO;
-        yield withConnection(wl2, wr2, () -> compare(A1, A2, null));
+      case Pair(PartialTyTerm(var A1, var cof1), PartialTyTerm(var A2, var cof2)) -> {
+        var wl2 = cof1.map(this::whnf);
+        var wr2 = cof2.map(this::whnf);
+        if (!cofibrationEquiv(wl2, wr2)) yield Decision.NO;
+        yield compare(A1, A2, null);
       }
       default -> throw noRules(preLhs);
     };
   }
 
-  /// Params are assumed to be in whnf
-  private boolean logicallyInequivalent(@Closed Term wl1, @Closed Term wr1, @Closed Term wl2, @Closed Term wr2) {
-    // lhs1 = rhs1 ==> lhs2 = rhs2
-    var to = withConnection(wl1, wr1, () -> state.isConnected(wl2, wr2));
-    if (!to) return true;
-    // lhs1 = rhs1 <== lhs2 = rhs2
-    var from = withConnection(wl2, wr2, () -> state.isConnected(wl1, wr1));
-    return !from;
+  private boolean cofibrationImply(@NotNull ConjunctionCof c1, CofTerm c2) {
+    return withConnection(c1,
+      () -> switch (c2) {
+        case CofTerm.EqCof(var lhs, var rhs) -> state.isConnected(lhs, rhs);
+        case CofTerm.ConstCof.Top -> true;
+        case CofTerm.ConstCof.Bottom -> false;
+      },
+      () -> true // exfalso
+    );
+  }
+
+  // a => c ∩ d?
+  private boolean cofibrationImply(@NotNull ConjunctionCof c1, @NotNull ConjunctionCof c2) {
+    // a => c ∩ d
+    // iff. (a => c) and (a => d)
+    if (c2.empty())
+      return true; // An empty conjunction should be considered as true.
+    return withConnection(c1,
+      () -> cofibrationImply(c1, c2.head()) && cofibrationImply(c1, c2.tail()),
+      () -> true // exfalso
+    );
+  }
+
+  // a => c ∪ d?
+  private boolean cofibrationImply(@NotNull ConjunctionCof c1, @NotNull DisjunctionCof c2) {
+    // a => c ∪ d
+    // iff. (a => c) or (a => d)
+    if (c2.empty())
+      return false;
+    return withConnection(c1,
+      () -> cofibrationImply(c1, c2.head()) || cofibrationImply(c1, c2.tail()),
+      () -> true // exfalso
+    );
+  }
+
+  // a ∪ b => c ∪ d?
+  private boolean cofibrationImply(@NotNull DisjunctionCof c1, @NotNull DisjunctionCof c2) {
+    // a ∪ b => c ∪ d
+    // iff. (a => c ∪ d) and (b => c ∪ d)
+    if (c1.empty())
+      return true; // empty disjunction is bottom, hence exfalso.
+    return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
+  }
+
+  private boolean cofibrationEquiv(@NotNull DisjunctionCof c1, @NotNull DisjunctionCof c2) {
+    return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
   }
 
   public @NotNull SubscopedFreshVar subscope(@NotNull Term type) {
