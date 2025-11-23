@@ -5,15 +5,19 @@ package org.aya.syntax.ref;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Instance;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.SortTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.util.Panic;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +37,7 @@ import java.util.function.UnaryOperator;
 public record MetaVar(
   @Override @NotNull String name,
   @NotNull SourcePos pos,
-  int ctxSize, @NotNull Requirement req,
+  int ctxSize, @Bound @NotNull Requirement req,
   boolean isUser
 ) implements AnyVar {
   @Override public boolean equals(@Nullable Object o) { return this == o; }
@@ -59,7 +63,7 @@ public record MetaVar(
   }
 
   public sealed interface Requirement extends AyaDocile {
-    Requirement bind(SeqView<LocalVar> vars);
+    @Bound Requirement bind(SeqView<LocalVar> vars);
     default @Nullable Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) { return this; }
   }
   public enum Misc implements Requirement {
@@ -78,24 +82,51 @@ public record MetaVar(
       else return this;
     }
   }
-  /**
-   * @param type hopefully in the closed context.
-   *             Upon creation, it will be bound with all the local vars.
-   */
-  public record OfType(@NotNull Term type) implements Requirement {
-    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
-      return Doc.sep(Doc.symbol("?"), Doc.symbol(":"), type.toDoc(options));
+  public sealed interface OfType extends Requirement {
+    @NotNull Term type();
+
+    @Override
+    default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      return Doc.sep(Doc.symbol("?"), Doc.symbol(":"), type().toDoc(options));
     }
-    @Override public OfType bind(SeqView<LocalVar> vars) {
-      return new OfType(type.bindTele(vars));
-    }
-    @Override public @Nullable Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {
-      if (!(whnf.apply(type) instanceof SortTerm sort) || sort.kind() == SortKind.ISet) {
-        return null;
+
+    /**
+     * @param type hopefully in the closed context.
+     *             Upon creation, it will be bound with all the local vars.
+     */
+    record Default(@Override @NotNull Term type) implements OfType {
+      @Override public @Bound Default bind(SeqView<LocalVar> vars) {
+        return new Default(type.bindTele(vars));
       }
-      return this;
+
+      @Override public @Nullable Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {
+        if (!(whnf.apply(type) instanceof SortTerm sort) || sort.kind() == SortKind.ISet) {
+          return null;
+        }
+        return this;
+      }
+    }
+
+    record ClassType(
+      @Override @NotNull ClassCall type,
+      @NotNull ImmutableSeq<Instance> instances,
+      @NotNull LocalCtx localCtx
+    ) implements OfType {
+      public ClassType instTele(@NotNull SeqView<Term> tele) {
+        return new ClassType((ClassCall) type.instTele(tele), instances.map(it -> it.instTele(tele)), localCtx);
+      }
+
+      @Override
+      public @Bound Requirement bind(SeqView<LocalVar> vars) {
+        return new ClassType((ClassCall) type.bindTele(vars), instances.map(it -> it.bindTele(vars)), localCtx);
+      }
+
+      @Override public @NotNull Requirement asDepTypeReq(@NotNull UnaryOperator<Term> whnf) {
+        return Panic.unreachable();
+      }
     }
   }
+
   /**
    * The meta variable is the domain of a pi type which is of a known type.
    */

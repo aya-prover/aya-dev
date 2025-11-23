@@ -96,7 +96,7 @@ jobs:
         with:
           path: |
             ./cli-fatjar.jar
-          key: nightly-build
+          key: nightly-build-${{ github.sha }}
 
       - name: Get current date
         id: date

@@ -5,6 +5,7 @@ package org.aya.tyck.tycker;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
+import kala.collection.immutable.ImmutableSeq;
 import kala.function.CheckedBiFunction;
 import org.aya.generic.Modifier;
 import org.aya.generic.stmt.Shaped;
@@ -37,6 +38,16 @@ public record AppTycker<Ex extends Exception, R>(
 ) implements Stateful {
   @Override public @NotNull TyckState state() { return tycker.state; }
 
+  @FunctionalInterface
+  public interface TeleChecker {
+    /// @param args         the arguments of current call, this is always full
+    /// @param firstParamTy the type of first parameter
+    /// @param extraParams  extra parameters that makes the call full, i.e. for user call `f a` where `f : A -> B -> C`,
+    ///                                        we will tyck `b : B |- f a b` and make `fn b => f a b`.
+    @Closed
+    Jdg check(@Closed Term[] args, @Closed @Nullable Term firstParamTy, @NotNull ImmutableSeq<LocalVar> extraParams);
+  }
+
   /// ```
   /// Signature (0th param) --------> Argument Parser (this interface)
   ///                                        |
@@ -48,7 +59,7 @@ public record AppTycker<Ex extends Exception, R>(
   /// @see #checkProjCall
   @FunctionalInterface
   public interface Factory<Ex extends Exception, R> extends
-    CheckedBiFunction<AbstractTele, BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg>, R, Ex> {
+    CheckedBiFunction<AbstractTele, TeleChecker, R, Ex> {
   }
 
   public R checkCompiledApplication(@NotNull JitDef def) throws Ex {
@@ -95,7 +106,7 @@ public record AppTycker<Ex extends Exception, R>(
     // ownerTele + selfTele
     var fullSignature = conVar.signature().lift(lift);
 
-    return makeArgs.applyChecked(fullSignature, (args, _) -> {
+    return makeArgs.applyChecked(fullSignature, (args, _, _) -> {
       var realArgs = ImmutableArray.from(args);
       var ownerArgs = realArgs.take(conVar.ownerTeleSize());
       var conArgs = realArgs.drop(conVar.ownerTeleSize());
@@ -111,7 +122,7 @@ public record AppTycker<Ex extends Exception, R>(
   }
   private R checkPrimCall(@NotNull PrimDefLike primVar) throws Ex {
     var signature = primVar.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, _) -> {
+    return makeArgs.applyChecked(signature, (args, _, _) -> {
       // Closed cause [args] are Closed
       @Closed var primCall = new PrimCall(primVar, 0, ImmutableArray.from(args));
       return new Jdg.Default(
@@ -122,7 +133,7 @@ public record AppTycker<Ex extends Exception, R>(
   }
   private R checkDataCall(@NotNull DataDefLike data) throws Ex {
     var signature = data.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, _) -> new Jdg.Default(
+    return makeArgs.applyChecked(signature, (args, _, _) -> new Jdg.Default(
       new DataCall(data, 0, ImmutableArray.from(args)),
       signature.result(args)
     ));
@@ -131,7 +142,7 @@ public record AppTycker<Ex extends Exception, R>(
     @NotNull FnDefLike fnDef, @Nullable Shaped.Applicable<FnDefLike> operator
   ) throws Ex {
     var signature = fnDef.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, _) -> {
+    return makeArgs.applyChecked(signature, (args, _, _) -> {
       var argsSeq = ImmutableArray.from(args);
       var result = signature.result(args);
       if (operator != null) {
@@ -158,7 +169,7 @@ public record AppTycker<Ex extends Exception, R>(
     var appliedParams = ofClassMembers(clazz, argsCount).lift(lift);
     tycker.pushThis(self, new ClassCall(clazz, 0, ImmutableArray.empty()));
     // TODO: we ought to update the type info of `self` in the TyckState
-    var result = makeArgs.applyChecked(appliedParams, (args, _) -> new Jdg.Default(
+    var result = makeArgs.applyChecked(appliedParams, (args, _, _) -> new Jdg.Default(
       new ClassCall(clazz, 0, ImmutableArray.from(args).map(x -> x.bind(self))),
       appliedParams.result(args)
     ));
@@ -168,7 +179,7 @@ public record AppTycker<Ex extends Exception, R>(
 
   private R checkProjCall(@NotNull MemberDefLike member) throws Ex {
     var signature = member.signature().lift(lift);
-    return makeArgs.applyChecked(signature, (args, fstTy) -> {
+    return makeArgs.applyChecked(signature, (args, fstTy, _) -> {
       assert args.length >= 1;
       assert fstTy != null;
       var ofTy = whnf(fstTy);

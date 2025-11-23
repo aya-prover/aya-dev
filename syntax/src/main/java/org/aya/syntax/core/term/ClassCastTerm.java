@@ -12,24 +12,16 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * This term is used for subtyping of class, a term {@code x : SomeClass (foo := 114514)} is treated an
- * instance of {@code SomeClass} in user side. In core side, we use {@code cast x [] [(foo := 114514)] : SomeClass}
- * to make {@code x} an instance of {@code SomeClass}, it also store the type information in expression
- * so that the {@link org.aya.syntax.core.term.call.MemberCall} can access them without synthesizing.
- */
+/// This term is used for subtyping of class, a term `x : SomeClass (foo := 114514)` is treated an
+/// instance of `SomeClass` in user side. In core side, we use `cast x [] [(foo := 114514)] : SomeClass`
+/// to make `x` an instance of `SomeClass`, it also store the type information in expression
+/// so that the [org.aya.syntax.core.term.call.MemberCall] can access them without synthesizing.
 public record ClassCastTerm(
   @NotNull ClassDefLike ref,
   @NotNull Term subterm,
   @NotNull ImmutableSeq<Closure> remember,
   @NotNull ImmutableSeq<Closure> forget
 ) implements StableWHNF, Term, BindingIntro {
-  public ClassCastTerm {
-    // forget cannot be empty, I think it is not good because we can make an infinite size term,
-    // i.e. fix (\x => cast x [] [])
-    assert forget.isNotEmpty();
-  }
-
   public @NotNull ClassCastTerm update(
     @NotNull Term subterm,
     @NotNull ImmutableSeq<Closure> remember,
@@ -68,8 +60,7 @@ public record ClassCastTerm(
     };
   }
 
-  @Override
-  public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return update(f.apply(0, subterm), remember.map(x -> x.descent(f)), forget.map(x -> x.descent(f)));
   }
 

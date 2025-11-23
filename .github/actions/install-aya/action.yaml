@@ -1,5 +1,6 @@
 name: Install Nightly Aya
 
+# TODO: try replace with aya-prover/setup-aay
 runs:
   using: composite
   steps:
@@ -13,7 +14,7 @@ runs:
       uses: 'actions/cache@v4'
       with:
         path: ./cli-fatjar.jar
-        key: nightly-build
+        key: nightly-build-${{ github.sha }}
     - name: Download Nightly Build
       if: steps.restore-aya.outputs.cache-hit != 'true'
       shell: bash
