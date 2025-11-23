@@ -423,6 +423,7 @@ public final class ExprTycker extends ScopedTycker {
           };
         }, member -> {
           // TODO: MemberCall
+          // This should be similar to Expr.Ref case, except a class instance is provided
           throw new UnsupportedOperationException("TODO");
         });
       }

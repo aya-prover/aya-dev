@@ -57,7 +57,7 @@ public sealed interface Instance extends AyaDocile {
   @Override
   default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return switch (this) {
-      case Global(var def) -> throw new UnsupportedOperationException("TODO");
+      case Global(var def) -> Doc.plain(def.name());    // FIXME
       case Local(var ref, _) -> ref.toDoc(options);
     };
   }

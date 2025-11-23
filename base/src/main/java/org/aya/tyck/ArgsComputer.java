@@ -168,16 +168,25 @@ public class ArgsComputer {
       // consume argument
       argIx++;
     }
+
+    // now: ! (argIx < args.size()) || ! (paramIx < params.telescopeSize())
+
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       param = params.telescopeRich(paramIx, result);
       onParamTyck(insertImplicit(param, pos));
     }
-    var extraParams = new MapLocalCtx();
+
     if (argIx < args.size()) {
+      // thus ! paramIx < params.telescopeSize(), that means we run out all parameters,
+      // but remains arguments.
       return generateApplication(tycker, args.drop(argIx), kon(k, null));
-    } else while (paramIx < params.telescopeSize()) {
+    }
+
+    var extraParams = new MapLocalCtx();
+    while (paramIx < params.telescopeSize()) {
+      // we run out all arguments, but the call is not a full call for now
       param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
       extraParams.put(atarashiVar, param.type());
