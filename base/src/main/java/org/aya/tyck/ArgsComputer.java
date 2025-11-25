@@ -4,12 +4,11 @@ package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableArrayList;
-import kala.collection.mutable.MutableStack;
+import org.aya.generic.Instance;
 import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
-import org.aya.generic.Instance;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
@@ -27,13 +26,11 @@ import org.aya.tyck.error.LicitError;
 import org.aya.tyck.tycker.AppTycker;
 import org.aya.util.ForLSP;
 import org.aya.util.Ordering;
-import org.aya.util.Pair;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
 
 public class ArgsComputer {
   // arguments
@@ -90,8 +87,26 @@ public class ArgsComputer {
           case Instance.Local local -> local.ref();
         };
       } else {
-        return tycker.freshMeta(param.name(), pos,
+        var meta = tycker.freshMeta(param.name(), pos,
           new MetaVar.OfType.ClassType(clazz, thises, tycker.localCtx()), false);
+        // If there is no implicit argument for the classifying field,
+        //  we generate a metavariable for it.
+        int knownSize = clazz.args().size();
+        int requiredSize = clazz.ref().classifyingIndex() + 1;
+        if (knownSize >= requiredSize) {
+          return meta;
+        }
+        var untilClassifying = new Closure.Jit[requiredSize - knownSize];
+        for (int i = 0; i < untilClassifying.length; i++) {
+          var member = clazz.ref().members().get(knownSize + i);
+          var arg = tycker.freshMeta(member.name(), pos,
+            new MetaVar.OfType.Default(member.signature().makePi()), false);
+          untilClassifying[i + knownSize] = new Closure.Jit(self ->
+            AppTerm.make(arg, self));
+        }
+        return new ClassCastTerm(clazz.ref(), meta,
+          ImmutableSeq.empty(),
+          ImmutableArray.Unsafe.wrap(untilClassifying));
       }
     } else {
       return tycker.mockTerm(param, pos);
