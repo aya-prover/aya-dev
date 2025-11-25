@@ -87,14 +87,13 @@ public class ArgsComputer {
           case Instance.Local local -> local.ref();
         };
       } else {
-        var meta = tycker.freshMeta(param.name(), pos,
-          new MetaVar.OfType.ClassType(clazz, thises, tycker.localCtx()), false);
         // If there is no implicit argument for the classifying field,
         //  we generate a metavariable for it.
         int knownSize = clazz.args().size();
         int requiredSize = clazz.ref().classifyingIndex() + 1;
         if (knownSize >= requiredSize) {
-          return meta;
+          return tycker.freshMeta(param.name(), pos,
+            new MetaVar.OfType.ClassType(clazz, thises, tycker.localCtx()), false);
         }
         var untilClassifying = new Closure.Jit[requiredSize - knownSize];
         for (int i = 0; i < untilClassifying.length; i++) {
@@ -104,9 +103,14 @@ public class ArgsComputer {
           untilClassifying[i + knownSize] = new Closure.Jit(self ->
             AppTerm.make(arg, self));
         }
-        return new ClassCastTerm(clazz.ref(), meta,
-          ImmutableSeq.empty(),
-          ImmutableArray.Unsafe.wrap(untilClassifying));
+        var refinedClazz = new ClassCall(
+          clazz.ref(), clazz.ulift(),
+          clazz.args().appendedAll(untilClassifying));
+        var req = new MetaVar.OfType.ClassType(refinedClazz, thises, tycker.localCtx());
+        return new ClassCastTerm(clazz.ref(),
+          tycker.freshMeta(param.name(), pos, req, false),
+          ImmutableArray.Unsafe.wrap(untilClassifying),
+          ImmutableSeq.empty());
       }
     } else {
       return tycker.mockTerm(param, pos);
