@@ -47,7 +47,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   /// Used for approximate comparison.
   private boolean solveMetaForApprox = true;
   /// If false, do not try to solve metas. This is used for filtering instance candidates.
-  private boolean solveMetaInstances = true;
+  protected boolean solveMetaInstances = true;
   private final MutableStack<MutableList<TyckState.Eqn>> weWillSee = MutableStack.create();
 
   public void instanceFilteringMode() {
@@ -70,7 +70,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
    * @param rhs in whnf
    */
   protected abstract @Closed @NotNull RelDec<Term>
-  doSolveMeta(@NotNull MetaCall meta, @NotNull Term rhs, @Nullable Term type);
+  doSolveMeta(@Closed @NotNull MetaCall meta, @Closed @NotNull Term rhs, @Closed @Nullable Term type);
 
   /// The "flex-flex" case with identical meta ref.
   /// Already knows that {@param meta} and {@param rMeta} have the same ref.
@@ -86,7 +86,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     }
     if (ret == Decision.YES) {
       if (type != null) return RelDec.of(type);
-      if (meta.ref().req() instanceof MetaVar.OfType(var ty)) return RelDec.of(ty);
+      if (meta.ref().req() instanceof MetaVar.OfType ofType) {
+        @Closed var term = ofType.type();
+        return RelDec.of(term);
+      }
+
       // TODO: might need to inst the type
     }
     return RelDec.from(ret);
@@ -270,7 +274,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case ClassCall classCall -> {
         if (classCall.args().size() == classCall.ref().members().size()) yield Decision.YES;
         // TODO: skip comparing fields that already have impl specified in the type
-        // FIXME: not a good idea to use view
         yield Decision.minOfAll(classCall.ref().members(), member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
@@ -588,6 +591,17 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   private @NotNull Decision doCompareType(@Closed @NotNull Formation preLhs, @Closed @NotNull Term preRhs) {
     if (preLhs.getClass() != preRhs.getClass()) return Decision.NO;
     return switch (new Pair<>(preLhs, (Formation) preRhs)) {
+      case Pair(ClassCall lhs, ClassCall rhs) -> {
+        if (!lhs.ref().equals(rhs.ref())) yield Decision.NO;
+        if (!lhs.args().sizeEquals(rhs.args())) yield Decision.NO;
+        try (var bind = subscope(lhs)) {
+          var self = new FreeTerm(bind.var());
+          var result = compareMany(
+            lhs.args(self), rhs.args(self),
+            lhs.ref().signature().lift(Math.min(lhs.ulift(), rhs.ulift())));
+          yield result.downgrade();
+        }
+      }
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
       case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
       case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) -> lK == rK

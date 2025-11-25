@@ -94,6 +94,8 @@ public final class _class_45structure {
   `IntegerTerm`,
   如果失败再进行朴素匹配. 此时, 如果 fastpath 匹配成功, 则 `subMathState` 会被设置为 `true`, 从而跳过朴素匹配.
 
+> 以下内容中有部分过时
+
 示例: `nat.aya`
 
 ```aya

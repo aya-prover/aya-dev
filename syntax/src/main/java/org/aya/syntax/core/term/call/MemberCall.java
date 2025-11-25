@@ -4,7 +4,9 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.MemberDefLike;
+import org.aya.syntax.core.term.AppTerm;
 import org.aya.syntax.core.term.ClassCastTerm;
 import org.aya.syntax.core.term.NewTerm;
 import org.aya.syntax.core.term.Term;
@@ -55,17 +57,18 @@ public record MemberCall(
    * </ul>
    */
   @Override public @NotNull Term make(@NotNull UnaryOperator<Term> mapper) {
-    return switch (of()) {
+    // `this` must be closed by assumption
+    @Closed var self = this;
+
+    return switch (self.of()) {
       case NewTerm neu -> {
         var impl = neu.inner().get(ref);
         assert impl != null; // NewTerm is always fully applied
-        // FIXME: apply the projArgs
-        yield mapper.apply(impl.apply(neu));
+        yield mapper.apply(AppTerm.make(impl.apply(neu), self.projArgs.view()));
       }
       case ClassCastTerm cast -> {
         var impl = cast.get(ref);
-        // FIXME: apply the projArgs
-        if (impl != null) yield mapper.apply(impl.apply(cast));
+        if (impl != null) yield mapper.apply(AppTerm.make(impl.apply(cast), self.projArgs.view()));
         // no impl, try inner
         assert !(cast.subterm() instanceof ClassCastTerm) : "eliminated by ClassCastTerm#make";
         yield update(cast.subterm(), projArgs, mapper);

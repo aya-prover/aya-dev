@@ -60,6 +60,18 @@ public record MapLocalCtx(
   }
   @Override public @NotNull SeqView<LocalVar> extractLocal() { return vars.view(); }
 
+  @Override
+  public void putAll(@NotNull LocalCtx ctx) {
+    if (!(ctx instanceof MapLocalCtx mCtx)) {
+      LocalCtx.super.putAll(ctx);
+    } else {
+      assert ctx.parent() == null;
+
+      binds.putAll(mCtx.binds);
+      vars.appendAll(mCtx.vars);
+    }
+  }
+
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override public @NotNull MapLocalCtx clone() {
     return new MapLocalCtx(binds.clone(), vars.clone(), parent != null ? parent.clone() : null);

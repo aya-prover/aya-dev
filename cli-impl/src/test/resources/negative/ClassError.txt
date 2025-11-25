@@ -110,7 +110,7 @@ In file $FILE:2:22 ->
   2 │   def test (a b : A) => foo
     │                         ╰─╯
 
-Error: Non-unique instances for the class-call A found: a, b
+Error: Non-unique instances for the class-call A found: ^1, ^0
 
 1 error(s), 0 warning(s).
 Let's learn from that.

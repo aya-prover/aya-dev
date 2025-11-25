@@ -2,14 +2,20 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states;
 
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.value.Value;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.Instance;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
+import org.aya.syntax.core.annotation.Bound;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -21,6 +27,7 @@ import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
+import org.aya.util.reporter.ThrowingReporter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,10 +121,60 @@ public final class TyckState {
     }
   }
 
-  public @NotNull Term computeSolution(@NotNull MetaCall meta, @NotNull UnaryOperator<Term> f) {
+  public @NotNull Term computeSolution(
+    @Closed @NotNull MetaCall meta,
+    @Bound @NotNull MetaVar.OfType.ClassType classType,
+    @NotNull UnaryOperator<@Closed Term> f
+  ) {
+    var insted = classType.instTele(meta.args().view());
+    var available = insted.instances().mapNotNull(it -> switch (it) {
+      // try replace all param of [def] with meta, then solve by unify with [insted.type()]
+      case Instance.Global(var def) -> {
+        var tele = def.signature();
+
+        // TODO: how
+        throw new UnsupportedOperationException("TODO");
+      }
+      case Instance.Local(var ref, @Closed var ty) -> {
+        // ctx ⊢ meta.args()
+        // and
+        // ty consists of meta.args() and top-level things, thus
+        // ctx ⊢ ty
+        var ctx = classType.localCtx();
+        // I guess this won't cause infinite recursion, as the context of `meta` doesn't contain itself
+        // I guess we can safely ignore the problems, as we are "trying" to compare, not "requiring" them to equal.
+        // Thus `sourcePos` is also safe to be `SourcePos.NONE`
+        var someUnifier = new Unifier(this, ctx, new ThrowingReporter(Value.lazy(Panic::unreachable)), SourcePos.NONE, Ordering.Eq, false);
+        someUnifier.instanceFilteringMode();
+
+        var required = insted.type();
+        for (int i = 0; i < required.args().size(); i++) {
+          var field = required.ref().members().get(i);
+          var proj = MemberCall.make(ty, ref, field, 0, ImmutableSeq.empty());
+          var projTy = field.signature().makePi();
+          // Keep the unsure
+          if (someUnifier.compare(required.args().get(i).apply(ref), proj, projTy) == Decision.NO) {
+            yield null;
+          }
+        }
+        yield ref;
+      }
+    });
+
+    if (available.sizeEquals(1)) {
+      return available.getAny();
+    } else {
+      return meta;
+    }
+  }
+
+  public @Closed @NotNull Term computeSolution(@Closed @NotNull MetaCall meta, @NotNull UnaryOperator<@Closed Term> f) {
     return solutions.getOption(meta.ref())
       .map(sol -> f.apply(MetaCall.app(sol, meta.args(), meta.ref().ctxSize())))
-      .getOrDefault(meta);
+      .getOrElse(() -> {
+        if (!(meta.ref().req() instanceof MetaVar.OfType.ClassType classType)) return meta;
+        return computeSolution(meta, classType, f);
+      });
   }
 
   /** @return true if <code>this.eqns</code> and <code>this.activeMetas</code> are mutated. */

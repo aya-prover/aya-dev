@@ -35,3 +35,19 @@ module PM {
   | true => x + y
   | false => y + x
 }
+
+module MultiLocalInstances {
+  open class Monoid
+  | classifying car : Type
+  | infix + : car → car → car
+
+  def selectLocalNat
+    {instNat : Monoid Nat}
+    {instBool : Monoid Bool}
+    (a b : Nat) (p q : Bool) : Nat => a + b
+
+  def selectLocalBool
+    {instNat : Monoid Nat}
+    {instBool : Monoid Bool}
+    (a b : Nat) (p q : Bool) : Bool => p + q
+}

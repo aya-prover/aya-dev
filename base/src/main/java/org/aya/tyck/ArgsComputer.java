@@ -4,10 +4,11 @@ package org.aya.tyck;
 
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableStack;
+import org.aya.generic.Instance;
 import org.aya.generic.term.DTKind;
 import org.aya.prettier.BasePrettier;
 import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
@@ -15,19 +16,21 @@ import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MapLocalCtx;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.syntax.telescope.AbstractTele;
 import org.aya.tyck.error.ClassError;
 import org.aya.tyck.error.LicitError;
+import org.aya.tyck.tycker.AppTycker;
 import org.aya.util.ForLSP;
 import org.aya.util.Ordering;
-import org.aya.util.Pair;
 import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.function.BiFunction;
 
 public class ArgsComputer {
   // arguments
@@ -69,15 +72,45 @@ public class ArgsComputer {
 
   private @NotNull Term insertImplicit(@NotNull Param param, @NotNull SourcePos pos) {
     if (param.type() instanceof ClassCall clazz) {
+      var unifier = tycker.unifier(pos, Ordering.Eq);
       var thises = tycker.instanceSet
-        .find(clazz, tycker.unifier(pos, Ordering.Eq))
+        .find(clazz, unifier)
         .toSeq();
-      if (thises.isEmpty() || thises.sizeGreaterThan(1)) {
-        if (thises.isEmpty()) tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
-        else tycker.fail(new ClassError.InstanceAmbiguous(pos, clazz, thises));
+
+      if (thises.isEmpty()) {
+        tycker.fail(new ClassError.InstanceNotFound(pos, clazz));
         return new ErrorTerm(_ -> BasePrettier.refVar(clazz.ref()));
+      } else if (thises.sizeEquals(1)) {
+        // TODO: garbage code, fix it
+        return switch (thises.getAny()) {
+          case Instance.Global global -> throw new UnsupportedOperationException("TODO");
+          case Instance.Local local -> local.ref();
+        };
       } else {
-        return thises.getAny();
+        // If there is no implicit argument for the classifying field,
+        //  we generate a metavariable for it.
+        int knownSize = clazz.args().size();
+        int requiredSize = clazz.ref().classifyingIndex() + 1;
+        if (knownSize >= requiredSize) {
+          return tycker.freshMeta(param.name(), pos,
+            new MetaVar.OfType.ClassType(clazz, thises, tycker.localCtx()), false);
+        }
+        var untilClassifying = new Closure.Jit[requiredSize - knownSize];
+        for (int i = 0; i < untilClassifying.length; i++) {
+          var member = clazz.ref().members().get(knownSize + i);
+          var arg = tycker.freshMeta(member.name(), pos,
+            new MetaVar.OfType.Default(member.signature().makePi()), false);
+          untilClassifying[i + knownSize] = new Closure.Jit(self ->
+            AppTerm.make(arg, self));
+        }
+        var refinedClazz = new ClassCall(
+          clazz.ref(), clazz.ulift(),
+          clazz.args().appendedAll(untilClassifying));
+        var req = new MetaVar.OfType.ClassType(refinedClazz, thises, tycker.localCtx());
+        return new ClassCastTerm(clazz.ref(),
+          tycker.freshMeta(param.name(), pos, req, false),
+          ImmutableArray.Unsafe.wrap(untilClassifying),
+          ImmutableSeq.empty());
       }
     } else {
       return tycker.mockTerm(param, pos);
@@ -91,19 +124,19 @@ public class ArgsComputer {
     return args.foldLeftChecked(start, (acc, arg) -> {
       if (arg.name() != null || !arg.explicit()) tycker.fail(new LicitError.BadNamedArg(arg));
       switch (tycker.whnf(acc.type())) {
-        case DepTypeTerm(var kind, @Closed var piParam, @Closed var body) when kind == DTKind.Pi -> {
-          @Closed var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
+        case DepTypeTerm(var kind, var piParam, var body) when kind == DTKind.Pi -> {
+          var wellTy = tycker.inherit(arg.arg(), piParam).wellTyped();
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }
         case EqTerm eq -> {
-          @Closed var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
+          var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
-        case @Closed MetaCall metaCall -> {
+        case MetaCall metaCall -> {
           // dom is solved immediately by the `inherit` below
-          @Closed var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
+          var pi = metaCall.asDt(tycker::whnf, "", "_cod", DTKind.Pi);
           if (pi == null) throw new ExprTycker.NotPi(acc.type());
-          @Closed var argJdg = tycker.inherit(arg.arg(), pi.param());
+          var argJdg = tycker.inherit(arg.arg(), pi.param());
           var cod = pi.body().apply(argJdg.wellTyped());
           tycker.unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), argJdg.wellTyped()), cod);
@@ -113,11 +146,20 @@ public class ArgsComputer {
     });
   }
 
-  private @Closed @NotNull Jdg kon(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) {
-    return k.apply(result, firstTy);
+  private @Closed @NotNull Jdg kon(@NotNull AppTycker.TeleChecker k, @Nullable LocalCtx ctx) {
+    var extraParams = ctx == null ? ImmutableSeq.<LocalVar>empty() : ctx.extractLocal().toSeq();
+    // maybe we can eliminate a subscope when ctx is null, but I am 2 lazy.
+    try (var _ = tycker.subLocalCtx()) {
+      if (ctx != null) {
+        tycker.localCtx().putAll(ctx);
+      }
+
+      // TODO: fix dblity
+      return k.check(result, firstTy, extraParams);
+    }
   }
 
-  @NotNull Jdg boot(@NotNull BiFunction<@Closed Term[], @Closed @Nullable Term, @Closed Jdg> k) throws ExprTycker.NotPi {
+  @NotNull Jdg boot(@NotNull AppTycker.TeleChecker k) throws ExprTycker.NotPi {
     while (argIx < args.size() && paramIx < params.telescopeSize()) {
       var arg = args.get(argIx);
       // dblity inherits from params
@@ -145,29 +187,45 @@ public class ArgsComputer {
       // consume argument
       argIx++;
     }
+
+    // now: ! (argIx < args.size()) || ! (paramIx < params.telescopeSize())
+
     // Trailing implicits
     while (paramIx < params.telescopeSize()) {
       if (params.telescopeLicit(paramIx)) break;
       param = params.telescopeRich(paramIx, result);
       onParamTyck(insertImplicit(param, pos));
     }
-    var extraParams = MutableStack.<Pair<LocalVar, Term>>create();
+
     if (argIx < args.size()) {
-      return generateApplication(tycker, args.drop(argIx), kon(k));
-    } else while (paramIx < params.telescopeSize()) {
+      // thus ! paramIx < params.telescopeSize(), that means we run out all parameters,
+      // but remains arguments.
+      return generateApplication(tycker, args.drop(argIx), kon(k, null));
+    }
+
+    var extraParams = new MapLocalCtx();
+    while (paramIx < params.telescopeSize()) {
+      // we run out all arguments, but the call is not a full call for now
       param = params.telescopeRich(paramIx, result);
       var atarashiVar = LocalVar.generate(param.name());
-      extraParams.push(new Pair<>(atarashiVar, param.type()));
+      extraParams.put(atarashiVar, param.type());
       onParamTyck(new FreeTerm(atarashiVar));
     }
-    var generated = kon(k);
-    while (extraParams.isNotEmpty()) {
-      var pair = extraParams.pop();
-      generated = new Jdg.Default(
-        new LamTerm(generated.wellTyped().bind(pair.component1())),
-        new DepTypeTerm(DTKind.Pi, pair.component2(), generated.type().bind(pair.component1()))
-      );
+
+    var generated = kon(k, extraParams);
+
+    // elaborate non-full application to full application
+    if (!extraParams.isEmpty()) {
+      // if extraParams.isNotEmpty, then `localCtx, extraParams |- generated`
+      for (var var : extraParams.extractLocal().reversed()) {
+        var ty = extraParams.getLocal(var).get();
+        generated = new Jdg.Default(
+          new LamTerm(generated.wellTyped().bind(var)),
+          new DepTypeTerm(DTKind.Pi, ty, generated.type().bind(var))
+        );
+      }
     }
+
     return generated;
   }
 

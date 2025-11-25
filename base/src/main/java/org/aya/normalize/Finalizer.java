@@ -17,8 +17,10 @@ import org.aya.syntax.core.term.call.MatchCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 import org.aya.syntax.ref.MetaVar;
+import org.aya.tyck.error.ClassError;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.tyck.tycker.Stateful;
+import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,10 +73,15 @@ public interface Finalizer {
       switch (result) {
         case MetaCall(var ref, _) when !ref.isUser() && !alreadyReported.contains(ref) -> {
           alreadyReported.append(ref);
-          fail(new UnsolvedMeta(stack.view()
+          Problem error;
+          if (ref.req() instanceof MetaVar.OfType.ClassType clazz) {
+            error = new ClassError.InstanceAmbiguous(ref.pos(),
+              clazz.type(), clazz.instances());
+          } else error = new UnsolvedMeta(stack.view()
             .drop(1)
             .map(this::freezeHoles)
-            .toSeq(), ref.pos(), ref.name()));
+            .toSeq(), ref.pos(), ref.name());
+          fail(error);
         }
         case MetaLitTerm mlt -> fail(new UnsolvedLit(mlt));
         default -> {

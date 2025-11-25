@@ -42,4 +42,8 @@ public record SeqLocalCtx(
   @Override public @NotNull LocalCtx derive1(@NotNull LocalVar var1, @NotNull Term type1) {
     return new SeqLocalCtx(type.prepended(type1), var.prepended(var1), this);
   }
+  @Override
+  public void putAll(@NotNull LocalCtx ctx) {
+    throw new Panic("LocalCtx1 is immutable");
+  }
 }

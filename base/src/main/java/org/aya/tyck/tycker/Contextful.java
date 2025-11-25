@@ -41,7 +41,7 @@ public interface Contextful {
    * Generate a fresh {@link MetaCall} with type {@link Param#type()}
    */
   default @NotNull MetaCall mockTerm(@NotNull Param param, @NotNull SourcePos pos) {
-    return freshMeta(param.name(), pos, new MetaVar.OfType(param.type()), false);
+    return freshMeta(param.name(), pos, new MetaVar.OfType.Default(param.type()), false);
   }
 
   /**
