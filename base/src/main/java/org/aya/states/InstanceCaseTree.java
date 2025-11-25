@@ -13,7 +13,7 @@ import org.aya.generic.AyaDocile;
 import org.aya.generic.Instance;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.annotation.Closed;
-import org.aya.syntax.core.def.*;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
@@ -28,26 +28,17 @@ import org.jetbrains.annotations.Nullable;
 /// The case tree is used for eliminating meaningless comparison on [Term]s by compare the "type shape" first.
 /// [post](https://amelia.how/posts/efficient-instance-resolution-for-agda.html)
 public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, Contextful {
-  @Override
-  public @NotNull LocalCtx localCtx() {
-    return tycker.localCtx();
-  }
-
-  @Override
-  public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) {
+  @Override public @NotNull LocalCtx localCtx() { return tycker.localCtx(); }
+  @Override public @NotNull LocalCtx setLocalCtx(@NotNull LocalCtx ctx) {
     return tycker.setLocalCtx(ctx);
   }
 
-  @Override
-  public @NotNull TyckState state() {
-    return tycker.state();
-  }
+  @Override public @NotNull TyckState state() { return tycker.state(); }
 
   /// @param idx     see [#splitTerm()]
   /// @param klauses clause of this case, can only overlap with wildcard
   public record Case(int idx, @NotNull ImmutableSeq<Clause> klauses) implements AyaDocile {
-    @Override
-    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return Doc.vcat(
         Doc.sep(Doc.plain("case"), Doc.plain(Integer.toString(idx)), Doc.plain("of")),
         Doc.vcat(klauses.map(it -> it.toDoc(options)))
@@ -56,11 +47,10 @@ public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, 
   }
 
   /// @param pat  the "pattern" of this clause, it should be [org.aya.syntax.core.def.ClassDefLike] or [org.aya.syntax.core.def.DataDefLike]
-  ///                                    null if wildcard
+  ///                                                null if wildcard
   /// @param kase the "body" of this clause
   public record Clause(@Nullable AnyDef pat, @NotNull Either<Case, ImmutableSeq<Done>> kase) implements AyaDocile {
-    @Override
-    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       var body = kase.fold(
         it -> it.toDoc(options),
         it -> Doc.commaList(it.map(done -> done.toDoc(options))));
@@ -72,8 +62,7 @@ public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, 
   }
 
   public record Done(@NotNull Instance instance) implements AyaDocile {
-    @Override
-    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+    @Override public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
       return instance.toDoc(options);
     }
   }
@@ -86,15 +75,8 @@ public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, 
     enum Flex implements SplitDef {
       INSTANCE;
 
-      @Override
-      public @Nullable AnyDef head() {
-        return null;
-      }
-
-      @Override
-      public @NotNull ImmutableSeq<Term> remains() {
-        return ImmutableSeq.empty();
-      }
+      @Override public @Nullable AnyDef head() { return null; }
+      @Override public @NotNull ImmutableSeq<Term> remains() { return ImmutableSeq.empty(); }
     }
   }
 
@@ -153,20 +135,16 @@ public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, 
 
       // candy is never empty
       var any = candy.getAny();
-      if (candy.sizeEquals(1)) {
-        return new Clause(head.getOrNull(), Either.right(ImmutableSeq.of(new Done(any.done()))));
-      }
+      if (candy.sizeEquals(1)) return new Clause(head.getOrNull(), Either.right(ImmutableSeq.of(new Done(any.done()))));
 
       // we may assume all call is full (due to our elaboration),
       // and all [Preclause] in preclauses come from the same call (assumption),
       // TODO ^ this may be wrong on ClassCall
       // thus all [Preclause#remains] in preclauses must have the same length (so can use [any])
       // however, not all [Preclause#done] are equal to each other
-      if (any.remains.isEmpty()) {
-        // [done]s never duplicate, or in other words,
-        // [done]s duplicates iff [preclauses#done]s duplicates
-        return new Clause(head.getOrNull(), Either.right(candy.map(it -> new Done(it.done))));
-      }
+      // [done]s never duplicate, or in other words,
+      // [done]s duplicates iff [preclauses#done]s duplicates
+      if (any.remains.isEmpty()) return new Clause(head.getOrNull(), Either.right(candy.map(it -> new Done(it.done))));
 
       // unlike the article, we don't remove the matched term in the list, i think this is better (really?)
       var kase = buildCaseTree(idx + 1, candy.toSeq());
@@ -182,16 +160,14 @@ public record InstanceCaseTree(@NotNull ExprTycker tycker) implements Stateful, 
   public static @NotNull Either<Case, ImmutableSeq<Done>> optimize(@NotNull Case kase) {
     if (kase.klauses.sizeEquals(1)) {
       var any = kase.klauses.getAny();
-      if (any.pat == null) {
-        return any.kase;
-      }
+      if (any.pat == null) return any.kase;
     }
 
     // TODO: maybe descent (i.e. new only when effective update)
     var klauses = kase.klauses.map(k -> {
       if (k.kase.isRight()) return k;
 
-      // i need a leftFlatMap
+      // I need a leftFlatMap
       return new Clause(k.pat, optimize(k.kase.getLeftValue()));
     });
 
