@@ -195,9 +195,25 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
-      case Expr.Partial(var clause) -> Doc.english("<I am a raw partial element>");
+      case Expr.Partial(var clause) -> Doc.braced(Doc.vcat(clause.map(cls -> Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm())))));
       case Expr.LambdaHole _ -> Doc.symbol("__");
     };
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.CofExpr cof) {
+    return switch (cof) {
+      case Expr.EqCof(var lhs, var rhs) -> Doc.sep(term(Outer.BinOp, lhs), EQ, term(Outer.BinOp, rhs));
+      case Expr.ConstCof.Top -> KW_TOP;
+      case Expr.ConstCof.Bottom -> KW_BOT;
+    };
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.ConjCof cof) {
+    return Doc.join(AND, cof.elements().map(this::visitCof));
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.DisjCof cof) {
+    return Doc.braced(Doc.join(OR, cof.elements().map(this::visitCof)));
   }
 
   public @NotNull Doc patterns(@NotNull ImmutableSeq<Pattern> patterns) {
