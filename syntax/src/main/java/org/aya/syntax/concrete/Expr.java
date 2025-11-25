@@ -300,13 +300,13 @@ public sealed interface Expr extends AyaDocile {
   sealed interface CofExpr permits EqCof, ConstCof {
     @NotNull CofExpr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
   }
-  record EqCof(@NotNull Expr lhs, @NotNull Expr rhs) implements CofExpr {
-    public @NotNull EqCof update(@NotNull Expr lhs, @NotNull Expr rhs) {
+  record EqCof(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) implements CofExpr {
+    public @NotNull EqCof update(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
       return lhs == lhs() && rhs == rhs() ? this : new EqCof(lhs, rhs);
     }
 
     @Override public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(f.apply(SourcePos.NONE, lhs), f.apply(SourcePos.NONE, rhs));
+      return update(lhs.descent(f), rhs.descent(f));
     }
   }
   enum ConstCof implements CofExpr {
