@@ -70,7 +70,8 @@ public interface ExprTyckError {
     """;
 
   @Language("Aya") String testBadPartial = """
-    prim I
-    def test : I => partial 0
+    open import arith::nat::base
+    open import relation::binary::path
+    def test (i : I) : Nat => partial [ i = 1 => 3 ]
     """;
 }

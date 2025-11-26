@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -1621,14 +1618,14 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // cof DEFINE_AS expr
+  // cof IMPLIES expr
   public static boolean partialClause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "partialClause")) return false;
     if (!nextTokenIs(b, "<partial clause>", ID, NUMBER)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, PARTIAL_CLAUSE, "<partial clause>");
     r = cof(b, l + 1);
-    r = r && consumeToken(b, DEFINE_AS);
+    r = r && consumeToken(b, IMPLIES);
     r = r && expr(b, l + 1, -1);
     exit_section_(b, l, m, r, false, null);
     return r;

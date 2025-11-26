@@ -214,7 +214,9 @@ public class CorePrettier extends BasePrettier<Term> {
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
       case PartialTyTerm(var A, var cof) -> Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, A), visitCof(cof));
-      case PartialTerm(var clause) -> Doc.braced(Doc.vcat(clause.map(cls -> Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm())) )));
+      case PartialTerm(var clause) -> Doc.sep(KW_PARTIAL, Doc.wrap("[", "]",
+        Doc.vcommaList(clause.map(cls ->
+          Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
       case LetTerm let -> {
         var unlet = let.unlet(nameGen);
         if (unlet.definedAs().isEmpty()) {
