@@ -196,6 +196,7 @@ public class ConcretePrettier extends BasePrettier<Expr> {
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
       case Expr.Partial(var clause) -> Doc.braced(Doc.vcat(clause.map(cls -> Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm())))));
+      case Expr.PartialTy(var ty, var cof) -> Doc.sep(KW_PARTIAL_TYPE, LIST_LEFT, Doc.sep(visitCof(cof)), LIST_RIGHT, term(Outer.AppSpine, ty));
       case Expr.LambdaHole _ -> Doc.symbol("__");
     };
   }

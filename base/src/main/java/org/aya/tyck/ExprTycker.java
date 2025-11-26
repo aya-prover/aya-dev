@@ -558,6 +558,12 @@ public final class ExprTycker extends ScopedTycker {
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
       case Expr.Unresolved _ -> Panic.unreachable();
+      case Expr.PartialTy(var A, var cof) -> {
+        var wellA = synthesize(A);
+        var wellCof = elabCof(cof);
+        var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof);
+        yield new Jdg.Default(wellTyped, wellA.type());
+      }
       default -> fail(expr.data(), new NoRuleError(expr, null));
     };
   }
