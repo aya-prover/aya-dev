@@ -472,11 +472,11 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  private @NotNull Doc visitCof(@NotNull ConjunctionCof cof) {
+  private @NotNull Doc visitCof(@NotNull ConjCof cof) {
     return Doc.join(AND, cof.elements().map(this::visitCof));
   }
 
-  private @NotNull Doc visitCof(@NotNull DisjunctionCof cof) {
+  private @NotNull Doc visitCof(@NotNull DisjCof cof) {
     return Doc.braced(Doc.join(OR, cof.elements().map(this::visitCof)));
   }
 

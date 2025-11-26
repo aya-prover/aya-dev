@@ -8,7 +8,7 @@ import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.CofTerm;
-import org.aya.syntax.core.term.xtt.ConjunctionCof;
+import org.aya.syntax.core.term.xtt.ConjCof;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
@@ -60,7 +60,7 @@ public interface Stateful {
     };
   }
 
-  default <R> R withConnection(@NotNull ConjunctionCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
+  default <R> R withConnection(@NotNull ConjCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
     if (cof.empty())
       return action.get();
     return this.withConnection(cof.head(), () -> withConnection(cof.tail(), action, ifBottom), ifBottom);

@@ -42,10 +42,8 @@ import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class ExprTycker extends ScopedTycker {
@@ -176,7 +174,7 @@ public final class ExprTycker extends ScopedTycker {
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         // check each clause
         ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
-        ImmutableSeq<@Closed ConjunctionCof> all_cof = ImmutableSeq.empty();
+        ImmutableSeq<@Closed ConjCof> all_cof = ImmutableSeq.empty();
         for (var rcls : clause) {
           var cls_cof = elabCof(rcls.cof());
           var cls_rhs = inherit(rcls.tm(), A).wellTyped();
@@ -184,8 +182,8 @@ public final class ExprTycker extends ScopedTycker {
           all_cof = all_cof.appended(cls_cof);
         }
         // coverage. cof <=> all_cof
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjunctionCof(all_cof))))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjunctionCof(all_cof), expr.sourcePos(), state()));
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjCof(all_cof))))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjCof(all_cof), expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
@@ -213,18 +211,18 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj) {
+  private @Closed @NotNull ConjCof elabCof(@NotNull Expr.ConjCof conj) {
     ImmutableSeq<@Closed CofTerm> ret = ImmutableSeq.empty();
     for (var c : conj.elements())
       ret = ret.appended(elabCof(c));
-    return new ConjunctionCof(ret);
+    return new ConjCof(ret);
   }
 
-  private @Closed @NotNull DisjunctionCof elabCof(@NotNull Expr.DisjCof disj) {
-    ImmutableSeq<@Closed ConjunctionCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull DisjCof elabCof(@NotNull Expr.DisjCof disj) {
+    ImmutableSeq<@Closed ConjCof> ret = ImmutableSeq.empty();
     for (var c : disj.elements())
       ret = ret.appended(elabCof(c));
-    return new DisjunctionCof(ret);
+    return new DisjCof(ret);
   }
 
   /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level

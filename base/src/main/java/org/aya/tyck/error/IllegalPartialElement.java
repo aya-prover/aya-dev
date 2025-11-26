@@ -4,7 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.states.TyckState;
-import org.aya.syntax.core.term.xtt.DisjunctionCof;
+import org.aya.syntax.core.term.xtt.DisjCof;
 import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.tyck.tycker.Stateful;
 import org.aya.util.PrettierOptions;
@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 public interface IllegalPartialElement extends TyckError, Stateful {
 
-  record CofMismatch(@NotNull DisjunctionCof cof1,
-                     @NotNull DisjunctionCof cof2,
+  record CofMismatch(@NotNull DisjCof cof1,
+                     @NotNull DisjCof cof2,
                      @NotNull SourcePos sourcePos,
                      @NotNull TyckState state)
     implements IllegalPartialElement {
