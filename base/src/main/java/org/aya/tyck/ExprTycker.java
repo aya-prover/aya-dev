@@ -178,7 +178,7 @@ public final class ExprTycker extends ScopedTycker {
         ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
         ImmutableSeq<@Closed ConjunctionCof> all_cof = ImmutableSeq.empty();
         for (var rcls : clause) {
-          var cls_cof = elabCof(rcls.cof(), expr.sourcePos());
+          var cls_cof = elabCof(rcls.cof());
           var cls_rhs = inherit(rcls.tm(), A).wellTyped();
           cls = cls.appended(new PartialTerm.Clause(cls_cof, cls_rhs));
           all_cof = all_cof.appended(cls_cof);
@@ -201,11 +201,11 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof, @NotNull SourcePos sourcePos) {
+  private @Closed @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof) {
     return switch (cof) {
       case Expr.EqCof(var elhs, var erhs) -> {
-        var lhs = inherit(new WithPos<>(sourcePos, elhs), DimTyTerm.INSTANCE);
-        var rhs = inherit(new WithPos<>(sourcePos, erhs), DimTyTerm.INSTANCE);
+        var lhs = inherit(elhs, DimTyTerm.INSTANCE);
+        var rhs = inherit(erhs, DimTyTerm.INSTANCE);
         yield new CofTerm.EqCof(lhs.wellTyped(), rhs.wellTyped());
       }
       case Expr.ConstCof.Bottom -> CofTerm.ConstCof.Bottom;
@@ -213,17 +213,17 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj, @NotNull SourcePos sourcePos) {
+  private @Closed @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj) {
     ImmutableSeq<@Closed CofTerm> ret = ImmutableSeq.empty();
     for (var c : conj.elements())
-      ret = ret.appended(elabCof(c, sourcePos));
+      ret = ret.appended(elabCof(c));
     return new ConjunctionCof(ret);
   }
 
-  private  @NotNull DisjunctionCof elabCof(@NotNull Expr.DisjCof disj, @NotNull SourcePos sourcePos) {
-    ImmutableSeq<ConjunctionCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull DisjunctionCof elabCof(@NotNull Expr.DisjCof disj) {
+    ImmutableSeq<@Closed ConjunctionCof> ret = ImmutableSeq.empty();
     for (var c : disj.elements())
-      ret = ret.appended(elabCof(c, sourcePos));
+      ret = ret.appended(elabCof(c));
     return new DisjunctionCof(ret);
   }
 
