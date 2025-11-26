@@ -175,8 +175,8 @@ public final class ExprTycker extends ScopedTycker {
         if (!(whnf(type) instanceof PartialTyTerm(var A, var cof)))
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         // check each clause
-        ImmutableSeq<PartialTerm.Clause> cls = ImmutableSeq.empty();
-        ImmutableSeq<ConjunctionCof> all_cof = ImmutableSeq.empty();
+        ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
+        ImmutableSeq<@Closed ConjunctionCof> all_cof = ImmutableSeq.empty();
         for (var rcls : clause) {
           var cls_cof = elabCof(rcls.cof(), expr.sourcePos());
           var cls_rhs = inherit(rcls.tm(), A).wellTyped();
@@ -187,7 +187,8 @@ public final class ExprTycker extends ScopedTycker {
         if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjunctionCof(all_cof))))
           yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjunctionCof(all_cof), expr.sourcePos(), state()));
         // boundary
-        for (var c1 : cls) for (var c2 : cls) {
+        for (@Closed var c1 : cls)
+          for (@Closed var c2 : cls) {
           if (c1 == c2) continue;
           if (!(withConnection(c1.cof().add(c2.cof().map(this::whnf)),
                 () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
@@ -200,7 +201,7 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof, @NotNull SourcePos sourcePos) {
+  private @Closed @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof, @NotNull SourcePos sourcePos) {
     return switch (cof) {
       case Expr.EqCof(var elhs, var erhs) -> {
         var lhs = inherit(new WithPos<>(sourcePos, elhs), DimTyTerm.INSTANCE);
@@ -212,8 +213,8 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj, @NotNull SourcePos sourcePos) {
-    ImmutableSeq<CofTerm> ret = ImmutableSeq.empty();
+  private @Closed @NotNull ConjunctionCof elabCof(@NotNull Expr.ConjCof conj, @NotNull SourcePos sourcePos) {
+    ImmutableSeq<@Closed CofTerm> ret = ImmutableSeq.empty();
     for (var c : conj.elements())
       ret = ret.appended(elabCof(c, sourcePos));
     return new ConjunctionCof(ret);

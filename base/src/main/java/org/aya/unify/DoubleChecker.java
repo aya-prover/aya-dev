@@ -94,7 +94,7 @@ public record DoubleChecker(
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         // check each element
         ImmutableSeq<ConjunctionCof> cls_cof = ImmutableSeq.empty();
-        for (var c : cls) {
+        for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
                 () -> inherit(c.tm(), A),
                 () -> true)
