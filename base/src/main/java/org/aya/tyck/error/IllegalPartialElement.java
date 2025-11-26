@@ -21,7 +21,7 @@ public interface IllegalPartialElement extends TyckError, Stateful {
 
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.english("two cofibrations are not equivalent to each other."); // TODO: elaborate the info.
+      return Doc.english("Two cofibrations are not equivalent to each other."); // TODO: elaborate the info.
     }
 
   }
@@ -34,7 +34,7 @@ public interface IllegalPartialElement extends TyckError, Stateful {
 
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      return Doc.english("two partial clauses are different in their intersection"); // TODO: elaborate the info.
+      return Doc.english("Two partial clauses are different in their intersection"); // TODO: elaborate the info.
     }
   }
 }

@@ -338,7 +338,13 @@ public sealed interface Expr extends AyaDocile {
     }
   }
   record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
+    public @NotNull DisjCof update(@NotNull ImmutableSeq<ConjCof> elements) {
+      return elements.sameElements(elements(), true) ? this : new DisjCof(elements);
+    }
 
+    public @NotNull DisjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(elements.map(x -> x.descent(f)));
+    }
     public boolean empty() {
       return elements().isEmpty();
     }
@@ -359,7 +365,7 @@ public sealed interface Expr extends AyaDocile {
       }
 
       public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-        return update(cof, tm.descent(f));
+        return update(cof.descent(f), tm.descent(f));
       }
     }
 
@@ -382,7 +388,7 @@ public sealed interface Expr extends AyaDocile {
 
     @Override
     public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(ty.descent(f), cof);
+      return update(ty.descent(f), cof.descent(f));
     }
     @Override
     public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {

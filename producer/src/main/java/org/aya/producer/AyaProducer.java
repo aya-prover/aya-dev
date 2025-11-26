@@ -819,9 +819,10 @@ public record AyaProducer(
   }
 
   private @NotNull Expr.CofExpr cof(@NotNull GenericNode<?> node) {
+    var chd = node.childrenView().toSeq();
     return new Expr.EqCof(
-      expr(node.child(EXPR)),
-      expr(node.child(EXPR)));
+      expr(chd.getFirst()),
+      expr(chd.getLast()));
   }
 
   private @NotNull Expr.Partial.Clause partialClause(@NotNull GenericNode<?> node) {

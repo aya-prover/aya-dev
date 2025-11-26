@@ -8,6 +8,10 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
+import org.aya.prettier.AyaPrettierOptions;
+import org.aya.prettier.BasePrettier;
+import org.aya.prettier.ConcretePrettier;
+import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
@@ -555,13 +559,13 @@ public final class ExprTycker extends ScopedTycker {
         var type = matchReturnTy(discriminant, wellArgs, returns);
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
-      case Expr.Unresolved _ -> Panic.unreachable();
       case Expr.PartialTy(var A, var cof) -> {
         var wellA = synthesize(A);
         var wellCof = elabCof(cof);
         var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof);
         yield new Jdg.Default(wellTyped, wellA.type());
       }
+      case Expr.Unresolved _ -> Panic.unreachable();
       default -> fail(expr.data(), new NoRuleError(expr, null));
     };
   }
