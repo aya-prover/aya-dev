@@ -469,11 +469,11 @@ public class CorePrettier extends BasePrettier<Term> {
   }
 
   private @NotNull Doc visitCof(@NotNull ConjCof cof) {
-    return Doc.join(AND, cof.elements().map(this::visitCof));
+    return Doc.join(COF_AND, cof.elements().map(this::visitCof));
   }
 
   private @NotNull Doc visitCof(@NotNull DisjCof cof) {
-    return Doc.braced(Doc.join(OR, cof.elements().map(this::visitCof)));
+    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
   }
 
   // region Name Generation
