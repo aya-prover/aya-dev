@@ -3,6 +3,7 @@
 package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -14,13 +15,13 @@ public record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
     return new DisjCof(elements().appended(c));
   }
 
-  public @NotNull DisjCof decent(@NotNull IndexedFunction<Term, Term> f) {
-    return new DisjCof(elements().map(e -> e.descent(f)));
-  }
-
-  // Usually map(this::whnf).
-  public DisjCof map(@NotNull Function<Term, Term> f) {
-    return new DisjCof(elements().map(e -> e.map(f)));
+  public @NotNull DisjCof descent(@NotNull IndexedFunction<Term, Term> f) {
+    if (elements().isEmpty()) return this;
+    var ret = MutableArrayList.from(elements());
+    for (int i = 0; i < ret.size(); i++) {
+      ret.set(i, ret.get(i).descent(f));
+    }
+    return new DisjCof(ret.toImmutableArray());
   }
 
   public boolean empty() {

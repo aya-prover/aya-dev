@@ -330,7 +330,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
-          if (withConnection(cl1.cof().add(cl2.cof().map(this::whnf)), () -> doCompareTyped(cl1.tm(), cl2.tm(), A), () -> Decision.YES) == Decision.NO)
+          if (withConnection(cl1.cof().add(cl2.cof().descent((_, e) -> whnf(e))),
+                () -> doCompareTyped(cl1.tm(), cl2.tm(), A),
+                () -> Decision.YES)
+              == Decision.NO)
             yield Decision.NO;
         }
         yield Decision.YES;
@@ -626,8 +629,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
       case Pair(PartialTyTerm(var A1, var cof1), PartialTyTerm(var A2, var cof2)) -> {
-        var wl2 = cof1.map(this::whnf);
-        var wr2 = cof2.map(this::whnf);
+        var wl2 = cof1.descent((_, e) -> whnf(e));
+        var wr2 = cof2.descent((_, e) -> whnf(e));
         if (!cofibrationEquiv(wl2, wr2)) yield Decision.NO;
         yield compare(A1, A2, null);
       }
@@ -635,13 +638,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private boolean cofibrationImply(@NotNull ConjCof c1, CofTerm c2) {
+  private boolean cofibrationImply(@NotNull ConjCof c1, EqCof c2) {
     return withConnection(c1,
-      () -> switch (c2) {
-        case CofTerm.EqCof(var lhs, var rhs) -> state.isConnected(lhs, rhs);
-        case CofTerm.ConstCof.Top -> true;
-        case CofTerm.ConstCof.Bottom -> false;
-      },
+      () -> state.isConnected(c2.lhs(), c2.rhs()),
       () -> true // exfalso
     );
   }

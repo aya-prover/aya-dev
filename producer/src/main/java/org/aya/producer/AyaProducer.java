@@ -818,7 +818,7 @@ public record AyaProducer(
     return unreachable(node);
   }
 
-  private @NotNull Expr.CofExpr cof(@NotNull GenericNode<?> node) {
+  private @NotNull Expr.EqCof cof(@NotNull GenericNode<?> node) {
     var chd = node.childrenView().toSeq();
     return new Expr.EqCof(
       expr(chd.getFirst()),

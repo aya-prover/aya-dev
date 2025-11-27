@@ -8,10 +8,6 @@ import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableTreeSet;
 import org.aya.generic.Constants;
 import org.aya.generic.term.DTKind;
-import org.aya.prettier.AyaPrettierOptions;
-import org.aya.prettier.BasePrettier;
-import org.aya.prettier.ConcretePrettier;
-import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
@@ -192,7 +188,7 @@ public final class ExprTycker extends ScopedTycker {
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
           if (c1 == c2) continue;
-          if (!(withConnection(c1.cof().add(c2.cof().map(this::whnf)),
+          if (!(withConnection(c1.cof().add(c2.cof().descent((_, e) -> whnf(e))),
                 () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
                 () -> true)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
@@ -203,20 +199,14 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull CofTerm elabCof(@NotNull Expr.CofExpr cof) {
-    return switch (cof) {
-      case Expr.EqCof(var elhs, var erhs) -> {
-        var lhs = inherit(elhs, DimTyTerm.INSTANCE);
-        var rhs = inherit(erhs, DimTyTerm.INSTANCE);
-        yield new CofTerm.EqCof(lhs.wellTyped(), rhs.wellTyped());
-      }
-      case Expr.ConstCof.Bottom -> CofTerm.ConstCof.Bottom;
-      case Expr.ConstCof.Top -> CofTerm.ConstCof.Top;
-    };
+  private @Closed @NotNull EqCof elabCof(@NotNull Expr.EqCof cof) {
+    var lhs = inherit(cof.lhs(), DimTyTerm.INSTANCE);
+    var rhs = inherit(cof.rhs(), DimTyTerm.INSTANCE);
+    return new EqCof(lhs.wellTyped(), rhs.wellTyped());
   }
 
   private @Closed @NotNull ConjCof elabCof(@NotNull Expr.ConjCof conj) {
-    ImmutableSeq<@Closed CofTerm> ret = ImmutableSeq.empty();
+    ImmutableSeq<@Closed EqCof> ret = ImmutableSeq.empty();
     for (var c : conj.elements())
       ret = ret.appended(elabCof(c));
     return new ConjCof(ret);

@@ -7,7 +7,7 @@ import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.CofTerm;
+import org.aya.syntax.core.term.xtt.EqCof;
 import org.aya.syntax.core.term.xtt.ConjCof;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions;
@@ -47,17 +47,13 @@ public interface Stateful {
   }
 
   default <R> R withConnection(
-    @NotNull CofTerm cof, @NotNull Supplier<R> action,
+    @NotNull EqCof cof, @NotNull Supplier<R> action,
     @NotNull Supplier<R> ifBottom
   ) {
-    return switch (cof) {
-      case CofTerm.EqCof(var lhs, var rhs) ->
-        this.withConnection(lhs, rhs, () -> state().isConnected(DimTerm.I0, DimTerm.I1) ? ifBottom.get() : action.get());
-      case CofTerm.ConstCof val -> switch (val) {
-        case Top -> action.get();
-        case Bottom -> ifBottom.get();
-      };
-    };
+    return this.withConnection(cof.lhs(), cof.rhs(),
+      () -> state().isConnected(DimTerm.I0, DimTerm.I1) ?
+        ifBottom.get() :
+        action.get());
   }
 
   default <R> R withConnection(@NotNull ConjCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {

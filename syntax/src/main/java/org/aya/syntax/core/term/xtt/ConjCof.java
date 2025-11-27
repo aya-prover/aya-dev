@@ -3,23 +3,24 @@
 package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
-public record ConjCof(@NotNull ImmutableSeq<CofTerm> elements) {
-  public @NotNull ConjCof add(@NotNull CofTerm c) {
+public record ConjCof(@NotNull ImmutableSeq<EqCof> elements) {
+  public @NotNull ConjCof add(@NotNull EqCof c) {
     return new ConjCof(elements.appended(c));
   }
   public @NotNull ConjCof descent(@NotNull IndexedFunction<Term, Term> f) {
-    return new ConjCof(elements().map(e -> e.descent(f)));
+    if (elements().isEmpty()) return this;
+    var ret = MutableArrayList.from(elements());
+    for (int i = 0; i < ret.size(); i++) {
+      ret.set(i, ret.get(i).descent(f));
+    }
+    return new ConjCof(ret.toImmutableArray());
   }
-  public ConjCof map(@NotNull Function<Term, Term> f) {
-    return new ConjCof(elements().map(e -> e.map(f)));
-  }
-  public @NotNull CofTerm head() {
+  public @NotNull EqCof head() {
     return elements().get(0);
   }
   public @NotNull ConjCof tail() {

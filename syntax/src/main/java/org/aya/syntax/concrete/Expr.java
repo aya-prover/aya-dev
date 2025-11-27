@@ -296,28 +296,19 @@ public sealed interface Expr extends AyaDocile {
       f.accept(last);
     }
   }
-
-  sealed interface CofExpr permits EqCof, ConstCof {
-    @NotNull CofExpr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f);
-  }
-  record EqCof(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) implements CofExpr {
+  
+  record EqCof(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
     public @NotNull EqCof update(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
       return lhs == lhs() && rhs == rhs() ? this : new EqCof(lhs, rhs);
     }
 
-    @Override public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+    public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(lhs.descent(f), rhs.descent(f));
     }
   }
-  enum ConstCof implements CofExpr {
-    Top, Bottom;
-    @Override public @NotNull CofExpr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return this;
-    }
-  }
 
-  record ConjCof(@NotNull ImmutableSeq<CofExpr> elements) {
-    public @NotNull ConjCof update(@NotNull ImmutableSeq<CofExpr> elements) {
+  record ConjCof(@NotNull ImmutableSeq<EqCof> elements) {
+    public @NotNull ConjCof update(@NotNull ImmutableSeq<EqCof> elements) {
       return elements.sameElements(elements(), true) ? this : new ConjCof(elements);
     }
 
@@ -329,7 +320,7 @@ public sealed interface Expr extends AyaDocile {
       return elements().isEmpty();
     }
 
-    public CofExpr head() {
+    public EqCof head() {
       return elements().get(0);
     }
 

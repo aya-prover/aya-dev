@@ -15,6 +15,6 @@ public record PartialTyTerm(@NotNull Term ty, @NotNull DisjCof cof) implements S
   }
 
   @Override public @NotNull PartialTyTerm descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(cof().decent(f), f.apply(0,ty));
+    return update(cof().descent(f), f.apply(0,ty));
   }
 }

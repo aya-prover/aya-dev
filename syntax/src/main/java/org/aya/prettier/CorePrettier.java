@@ -464,12 +464,8 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  private @NotNull Doc visitCof(@NotNull CofTerm cof) {
-    return switch (cof) {
-      case CofTerm.EqCof(var lhs, var rhs) -> Doc.sep(term(Outer.BinOp, lhs), EQ, term(Outer.BinOp, rhs));
-      case CofTerm.ConstCof.Top -> KW_TOP;
-      case CofTerm.ConstCof.Bottom -> KW_BOT;
-    };
+  private @NotNull Doc visitCof(@NotNull EqCof cof) {
+    return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
   }
 
   private @NotNull Doc visitCof(@NotNull ConjCof cof) {
