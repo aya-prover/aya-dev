@@ -8,8 +8,6 @@ import kala.function.IndexedFunction;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Function;
-
 public record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
   public @NotNull DisjCof add(ConjCof c) {
     return new DisjCof(elements().appended(c));

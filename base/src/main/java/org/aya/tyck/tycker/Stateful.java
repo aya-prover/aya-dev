@@ -56,10 +56,28 @@ public interface Stateful {
         action.get());
   }
 
+  default void connectConj(@NotNull ConjCof cof) {
+    for (var eqcof : cof.elements()) {
+      state().connect(eqcof.lhs(), eqcof.rhs());
+    }
+  }
+
+  default void disconnectConj(@NotNull ConjCof cof) {
+    for (var eqcof : cof.elements()) {
+      state().disconnect(eqcof.lhs(), eqcof.rhs());
+    }
+  }
+
   default <R> R withConnection(@NotNull ConjCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
-    if (cof.empty())
-      return action.get();
-    return this.withConnection(cof.head(), () -> withConnection(cof.tail(), action, ifBottom), ifBottom);
+    connectConj(cof);
+    if (state().isConnected(DimTerm.I0, DimTerm.I1)) {
+      var ret = ifBottom.get();
+      disconnectConj(cof);
+      return ret;
+    }
+    var ret = action.get();
+    disconnectConj(cof);
+    return ret;
   }
 
   /// Used too often, make a specialized version
