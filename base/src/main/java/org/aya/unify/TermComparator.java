@@ -277,7 +277,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.minOfAll(classCall.ref().members(), member -> {
           // loop invariant: first [i] members are the "same". ([i] is the loop counter, count from 0)
           // Note that member can only refer to first [i] members, so it is safe that we supply [lhs] or [rhs]
-          @Closed var ty = member.signature().inst(ImmutableSeq.of(lhs));
+          var ty = member.signature().inst(ImmutableSeq.of(lhs));
           // l/r proj are closed since l/r hs are closed
           try (var scope = subtelescope(ty)) {
             @Closed var lproj = MemberCall.make(classCall, lhs, member, 0, ImmutableSeq.narrow(scope.vars()));
