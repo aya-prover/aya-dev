@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitPrim;
@@ -18,7 +19,9 @@ import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.core.term.repr.StringTerm;
-import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.core.term.xtt.CoeTerm;
+import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.ForLSP;
@@ -28,8 +31,8 @@ import java.util.EnumMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static org.aya.syntax.core.def.PrimDef.*;
-import static org.aya.syntax.core.term.SortTerm.Set0;
+import static org.aya.syntax.core.def.PrimDef.ID;
+import static org.aya.syntax.core.def.PrimDef.familyI2J;
 import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
@@ -72,9 +75,9 @@ public class PrimFactory {
   }, ref -> {
     // coe (r s : I) (A : I -> Type) : A r -> A s
     var telescope = ImmutableSeq.of(
-      DimTyTerm.param("r"),
-      DimTyTerm.param("s"),
-      new Param("A", intervalToType, true));
+      intervalParam("r"),
+      intervalParam("s"),
+      new Param("A", intervalToType(), true));
     var r = LocalVar.generate("r");
     var s = LocalVar.generate("s");
     var A = LocalVar.generate("A");
@@ -92,7 +95,7 @@ public class PrimFactory {
     return new EqTerm(closureParam(args.get(0)), args.get(1), args.get(2));
   }, ref -> {
     // (A : I -> Type) (a : A 0) (b : A 1) : Type
-    var paramA = new Param("A", intervalToType, true);
+    var paramA = new Param("A", intervalToType(), true);
     var paramLeft = new Param("a", new AppTerm(new LocalTerm(0), DimTerm.I0), true);
     var paramRight = new Param("b", new AppTerm(new LocalTerm(1), DimTerm.I1), true);
     return new PrimDef(ref, ImmutableSeq.of(paramA, paramLeft, paramRight), Type0, ID.PATH);
@@ -162,7 +165,7 @@ public class PrimFactory {
   */
 
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
-    ((_, _) -> DimTyTerm.INSTANCE),
+    ((prim, _) -> prim),
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
 
@@ -170,6 +173,15 @@ public class PrimFactory {
     var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref());
     definePrim(rst);
     return rst;
+  }
+
+  /// `I -> Type`
+  public @NotNull Term intervalToType() {
+    return new DepTypeTerm(DTKind.Pi, getCall(ID.I), Closure.mkConst(Type0));
+  }
+
+  public Param intervalParam(String r) {
+    return new Param(r, getCall(ID.I), true);
   }
 
   public @NotNull PrimCall getCall(@NotNull ID id, @NotNull ImmutableSeq<Term> args) {

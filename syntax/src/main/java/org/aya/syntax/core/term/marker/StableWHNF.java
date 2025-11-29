@@ -8,12 +8,15 @@ import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.repr.IntegerTerm;
 import org.aya.syntax.core.term.repr.ListTerm;
 import org.aya.syntax.core.term.repr.StringTerm;
-import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.PartialTerm;
+import org.aya.syntax.core.term.xtt.PartialTyTerm;
 
 /**
  * Cubical-stable WHNF: those who will not change to other term formers
  * after a substitution (this usually happens under face restrictions (aka cofibrations)).
  */
 public sealed interface StableWHNF extends Term
-  permits ClassCastTerm, DepTypeTerm, ErrorTerm, LamTerm, NewTerm, SortTerm, TupTerm, ClassCall, DataCall, IntegerTerm, ListTerm, StringTerm, DimTerm, DimTyTerm, EqTerm, PartialTerm, PartialTyTerm {
+  permits ClassCastTerm, DepTypeTerm, ErrorTerm, LamTerm, NewTerm, SortTerm, TupTerm, ClassCall, DataCall, IntegerTerm, ListTerm, StringTerm, DimTerm, EqTerm, PartialTerm, PartialTyTerm {
 }

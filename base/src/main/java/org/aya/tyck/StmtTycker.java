@@ -26,7 +26,6 @@ import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MapLocalCtx;
@@ -352,7 +351,7 @@ public record StmtTycker(
         tycker.unifyTermReported(eq.appA(fresh), freeDataCall, null, conTy.sourcePos(),
           cmp -> new UnifyError.ConReturn(con, cmp, new UnifyInfo(state)));
 
-        selfTele = selfTele.appended(new Param("i", DimTyTerm.INSTANCE, true));
+        selfTele = selfTele.appended(primFactory.intervalParam("i"));
         selfTelePos = selfTelePos.appended(conTy.sourcePos());
 
         selfBinds = selfBinds.appended(fresh.name());

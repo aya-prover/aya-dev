@@ -247,7 +247,6 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
         serializeClosure(A),
         doSerialize(a), doSerialize(b)
       ));
-      case DimTyTerm _ -> builder.refEnum(DimTyTerm.INSTANCE);
       case DimTerm dim -> builder.refEnum(dim);
       case TupTerm(var l, var r) -> builder.mkNew(TupTerm.class, ImmutableSeq.of(
         doSerialize(l), doSerialize(r)

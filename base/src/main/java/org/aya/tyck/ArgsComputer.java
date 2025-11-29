@@ -14,7 +14,6 @@ import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.MetaCall;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
@@ -129,7 +128,7 @@ public class ArgsComputer {
           return new Jdg.Default(AppTerm.make(acc.wellTyped(), wellTy), body.apply(wellTy));
         }
         case EqTerm eq -> {
-          var wellTy = tycker.inherit(arg.arg(), DimTyTerm.INSTANCE).wellTyped();
+          var wellTy = tycker.inherit(arg.arg(), tycker.interval()).wellTyped();
           return new Jdg.Default(eq.makePApp(acc.wellTyped(), wellTy), eq.appA(wellTy));
         }
         case MetaCall metaCall -> {

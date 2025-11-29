@@ -288,7 +288,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       }
       case EqTerm eq -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
-          try (var scope = subscope(DimTyTerm.INSTANCE)) {
+          try (var scope = subscope(interval())) {
             var var = scope.var();
             yield compare(
               lbody.apply(var),
@@ -394,18 +394,18 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         var fTy = compareUntyped(f, g);
         if (!fTy.isYes()) yield fTy;
         if (!(fTy.get() instanceof EqTerm eq)) yield RelDec.no();
-        yield compare(a, b, DimTyTerm.INSTANCE).toRelDec(() ->
+        yield compare(a, b, interval()).toRelDec(() ->
           eq.appA(a));
       }
       case CoeTerm coe -> {
         if (!(rhs instanceof CoeTerm(var rType, var rR, var rS))) yield RelDec.no();
 
-        var result = compare(coe.r(), rR, DimTyTerm.INSTANCE);
+        var result = compare(coe.r(), rR, interval());
         if (result == Decision.NO) yield RelDec.no();
-        result = result.lub(compare(coe.s(), rS, DimTyTerm.INSTANCE));
+        result = result.lub(compare(coe.s(), rS, interval()));
         if (result == Decision.NO) yield RelDec.no();
 
-        try (var scope = subscope(DimTyTerm.INSTANCE)) {
+        try (var scope = subscope(interval())) {
           var var = scope.var();
           var tyResult = result.lub(compare(coe.type().apply(var), rType.apply(var), null));
           if (tyResult != Decision.YES) yield RelDec.from(tyResult);
@@ -503,7 +503,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
   private @NotNull Decision
   compareLambda(@Closed @NotNull LamTerm lambda, @Closed @NotNull Term rhs, @Closed @NotNull EqTerm type) {
-    try (var scope = subscope(DimTyTerm.INSTANCE)) {
+    try (var scope = subscope(interval())) {
       var var = scope.var();
       @Closed var lhsBody = lambda.body().apply(var);
       @Closed var free = new FreeTerm(var);
@@ -611,7 +611,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
       }
       case Pair(DataCall lhs, DataCall rhs) -> compareCallApprox(lhs, rhs).downgrade();
-      case Pair(DimTyTerm _, DimTyTerm _) -> Decision.YES;
       case Pair(DepTypeTerm(var lK, var lParam, var lBody), DepTypeTerm(var rK, var rParam, var rBody)) -> lK == rK
         ? compareTypeWith(lParam, rParam, () -> Decision.NO, var ->
         compare(lBody.apply(var), rBody.apply(var), null))
@@ -619,7 +618,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       case Pair(SortTerm lhs, SortTerm rhs) -> compareSort(lhs, rhs);
       case Pair(EqTerm(var A, var a0, var a1), EqTerm(var B, var b0, var b1)) -> {
         var tyResult = Decision.YES;
-        try (var scope = subscope(DimTyTerm.INSTANCE)) {
+        try (var scope = subscope(interval())) {
           var var = scope.var();
           tyResult = Decision.min(tyResult, compare(A.apply(var), B.apply(var), null));
         }

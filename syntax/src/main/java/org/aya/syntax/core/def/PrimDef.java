@@ -2,22 +2,20 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
-import java.util.Objects;
-
-import static org.aya.syntax.core.term.SortTerm.Type0;
-
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.concrete.stmt.decl.PrimDecl;
 import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.DepTypeTerm;
 import org.aya.syntax.core.term.Param;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public record PrimDef(
   @Override @NotNull DefVar<@NotNull PrimDef, @NotNull PrimDecl> ref,
@@ -42,11 +40,8 @@ public record PrimDef(
     return result;
   }
 
-  /// `I -> Type`
-  public static final @NotNull Term intervalToType = new DepTypeTerm(DTKind.Pi, DimTyTerm.INSTANCE, Closure.mkConst(Type0));
-
   /// Let `A` be argument, then `A i -> A j`. Handles index shifting.
-  public static @NotNull DepTypeTerm familyI2J(Closure term, Term i, Term j) {
+  public static @NotNull DepTypeTerm familyI2J(Closure term, @Closed Term i, @Closed Term j) {
     return new DepTypeTerm(DTKind.Pi, term.apply(i), Closure.mkConst(term.apply(j)));
   }
 
