@@ -24,7 +24,9 @@ import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.QName;
 import org.aya.util.ForLSP;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
@@ -57,6 +59,13 @@ public class PrimFactory {
 
   public void importFrom(@NotNull PrimFactory primFactory) {
     for (var prim : primFactory.defs.values()) definePrim(prim);
+  }
+
+  @Contract("-> new")
+  public EnumMap<ID, QName> qnameMap() {
+    var map = new EnumMap<ID, QName>(ID.class);
+    defs.forEach((key, value) -> map.put(key, value.qualifiedName()));
+    return map;
   }
 
   @FunctionalInterface

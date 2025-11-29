@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * @param depGraph     local to this module
  * @param imports      importing information, it only contains the modules that is explicitly imported,
  *                     should not be confused with the {@code import} in {@link ModuleContext#importModuleContext}
+ *                     the prim factory will be copied to the current one
  * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String}
  *                     because we can re-export a module inside another module without import it.
  */
