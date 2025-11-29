@@ -59,7 +59,7 @@ public enum Decision {
     return switch (this) {
       case NO -> RelDec.no();
       case UNSURE -> RelDec.unsure();
-      case YES -> RelDec.of(onSucc.get());
+      case YES -> RelDec.yes(onSucc.get());
     };
   }
 

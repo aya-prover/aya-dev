@@ -50,8 +50,13 @@ public class PrimFactory {
   }
 
   public void definePrim(PrimDefLike prim) {
+    if (defs.get(prim.id()) == prim) return;
     assert !isForbiddenRedefinition(prim.id(), prim instanceof JitPrim);
     defs.put(prim.id(), prim);
+  }
+
+  public void importFrom(@NotNull PrimFactory primFactory) {
+    for (var prim : primFactory.defs.values()) definePrim(prim);
   }
 
   @FunctionalInterface
@@ -189,6 +194,8 @@ public class PrimFactory {
   }
 
   public @NotNull PrimCall getCall(@NotNull ID id) {
+    if (getOption(id).isEmpty())
+      throw new IllegalArgumentException("Unknown primitive: " + id);
     return new PrimCall(getOption(id).get());
   }
 
@@ -200,17 +207,12 @@ public class PrimFactory {
     return defs.containsKey(name);
   }
 
-  /**
-   * Whether this definition is a redefinition that should be treated as error.
-   * There are two cases where a redefinition is allowed:
-   * <ul>
-   *   <li>When we are working in an LSP, and users can reload a file to redefine things.</li>
-   *   <li>When we are serializing a file, which we will deserialize immediately, and this will
-   *     replace the existing PrimDefs with their JIT-compiled version.</li>
-   * </ul>
-   *
-   * @return true if redefinition is forbidden.
-   */
+  /// Whether this definition is a redefinition that should be treated as error.
+  /// There are two cases where a redefinition is allowed:
+  /// - When we are working in an LSP, and users can reload a file to redefine things.
+  /// - When we are serializing a file, which we will deserialize immediately, and this will
+  ///   replace the existing PrimDefs with their JIT-compiled version.
+  /// @return true if redefinition is forbidden.
   @ForLSP public boolean isForbiddenRedefinition(@NotNull PrimDef.ID id, boolean isJit) {
     if (isJit)
       return have(id) && defs.get(id) instanceof JitPrim;

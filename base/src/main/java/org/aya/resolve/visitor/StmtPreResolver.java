@@ -88,6 +88,7 @@ public final class StmtPreResolver {
         var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
 
         context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos(), thisReporter);
+        resolveInfo.primFactory().importFrom(success.primFactory());
 
         var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
         resolveInfo.imports().put(importedName, importInfo);
