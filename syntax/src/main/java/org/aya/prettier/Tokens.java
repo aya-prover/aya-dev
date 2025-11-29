@@ -29,6 +29,8 @@ public final class Tokens {
   public static final Doc LIST_RIGHT = Doc.symbol("]");
   public static final Doc EQ = Doc.symbol("=");
   public static final Doc AT = Doc.symbol("@");
+  public static final Doc COF_OR = Doc.symbol(",");
+  public static final Doc COF_AND = Doc.symbol(",");
 
   public static final Doc KW_DO = Doc.styled(KEYWORD, "do");
   public static final Doc KW_AS = Doc.styled(KEYWORD, "as");

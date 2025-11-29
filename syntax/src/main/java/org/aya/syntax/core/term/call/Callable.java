@@ -24,6 +24,7 @@ public sealed interface Callable extends Term permits MatchCall, Callable.Tele, 
 
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, IndexedFunction<Term, Term> f) {
     // return args.map(arg -> f.apply(0, arg));
+    if (args.isEmpty()) return args;
     var ret = MutableArrayList.from(args);
     for (int i = 0; i < ret.size(); i++) {
       ret.set(i, f.apply(0, ret.get(i)));

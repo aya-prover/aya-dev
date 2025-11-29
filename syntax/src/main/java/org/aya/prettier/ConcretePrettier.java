@@ -195,9 +195,23 @@ public class ConcretePrettier extends BasePrettier<Expr> {
 
         yield Doc.cblock(prefix, 2, clauseDoc);
       }
-      case Expr.Partial(var element) -> Doc.sep(KW_PARTIAL, term(Outer.AppSpine, element));
+      case Expr.Partial(var clause) -> Doc.sep(KW_PARTIAL, Doc.wrap("[", "]",
+        Doc.vcommaList(clause.map(cls -> Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
+      case Expr.PartialTy(var ty, var cof) -> Doc.sep(KW_PARTIAL_TYPE, LIST_LEFT, Doc.sep(visitCof(cof)), LIST_RIGHT, term(Outer.AppSpine, ty));
       case Expr.LambdaHole _ -> Doc.symbol("__");
     };
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.EqCof cof) {
+    return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.ConjCof cof) {
+    return Doc.join(COF_AND, cof.elements().map(this::visitCof));
+  }
+
+  private @NotNull Doc visitCof(@NotNull Expr.DisjCof cof) {
+    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
   }
 
   public @NotNull Doc patterns(@NotNull ImmutableSeq<Pattern> patterns) {

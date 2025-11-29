@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -30,6 +27,7 @@ public interface AyaPsiElementTypes {
   IElementType CLASS_MEMBER = new AyaPsiElementType("CLASS_MEMBER");
   IElementType CLAUSE = new AyaPsiElementType("CLAUSE");
   IElementType CLAUSES = new AyaPsiElementType("CLAUSES");
+  IElementType COF = new AyaPsiElementType("COF");
   IElementType COMMA_SEP = new AyaPsiElementType("COMMA_SEP");
   IElementType DATA_BODY = new AyaPsiElementType("DATA_BODY");
   IElementType DATA_CON = new AyaPsiElementType("DATA_CON");
@@ -76,7 +74,9 @@ public interface AyaPsiElementTypes {
   IElementType NAMED_IM_ARGUMENT = new AyaPsiElementType("NAMED_IM_ARGUMENT");
   IElementType NEW_EXPR = new AyaPsiElementType("NEW_EXPR");
   IElementType OPEN_CMD = new AyaPsiElementType("OPEN_CMD");
-  IElementType PARTIAL_EXPR = new AyaPsiElementType("PARTIAL_EXPR");
+  IElementType PARTIAL_ATOM = new AyaPsiElementType("PARTIAL_ATOM");
+  IElementType PARTIAL_CLAUSE = new AyaPsiElementType("PARTIAL_CLAUSE");
+  IElementType PARTIAL_TY_EXPR = new AyaPsiElementType("PARTIAL_TY_EXPR");
   IElementType PATTERN = new AyaPsiElementType("PATTERN");
   IElementType PATTERNS = new AyaPsiElementType("PATTERNS");
   IElementType PI_EXPR = new AyaPsiElementType("PI_EXPR");
@@ -160,6 +160,7 @@ public interface AyaPsiElementTypes {
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");
   IElementType KW_OVERRIDE = new AyaPsiTokenType("override");
   IElementType KW_PARTIAL = new AyaPsiTokenType("partial");
+  IElementType KW_PARTIAL_TY = new AyaPsiTokenType("Partial");
   IElementType KW_PI = new AyaPsiTokenType("Fn");
   IElementType KW_PRIM = new AyaPsiTokenType("prim");
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");

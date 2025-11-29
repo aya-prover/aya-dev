@@ -296,16 +296,95 @@ public sealed interface Expr extends AyaDocile {
       f.accept(last);
     }
   }
-
-  record Partial(@NotNull WithPos<Expr> body) implements Expr {
-    public @NotNull Expr.Partial update(@NotNull WithPos<Expr> body) {
-      return body == body() ? this : new Partial(body);
+  
+  record EqCof(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
+    public @NotNull EqCof update(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
+      return lhs == lhs() && rhs == rhs() ? this : new EqCof(lhs, rhs);
     }
 
+    public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(lhs.descent(f), rhs.descent(f));
+    }
+  }
+
+  record ConjCof(@NotNull ImmutableSeq<EqCof> elements) {
+    public @NotNull ConjCof update(@NotNull ImmutableSeq<EqCof> elements) {
+      return elements.sameElements(elements(), true) ? this : new ConjCof(elements);
+    }
+
+    public @NotNull ConjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(elements.map(x -> x.descent(f)));
+    }
+
+    public boolean empty() {
+      return elements().isEmpty();
+    }
+
+    public EqCof head() {
+      return elements().get(0);
+    }
+
+    public ConjCof tail() {
+      return new ConjCof(elements().drop(1));
+    }
+  }
+  record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
+    public @NotNull DisjCof update(@NotNull ImmutableSeq<ConjCof> elements) {
+      return elements.sameElements(elements(), true) ? this : new DisjCof(elements);
+    }
+
+    public @NotNull DisjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(elements.map(x -> x.descent(f)));
+    }
+    public boolean empty() {
+      return elements().isEmpty();
+    }
+
+    public ConjCof head() {
+      return elements().get(0);
+    }
+
+    public DisjCof tail() {
+      return new DisjCof(elements().drop(1));
+    }
+  }
+
+  record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
+    public record Clause(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
+      public @NotNull Clause update(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
+        return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
+      }
+
+      public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+        return update(cof.descent(f), tm.descent(f));
+      }
+    }
+
+    public @NotNull Expr.Partial update(@NotNull ImmutableSeq<Clause> clause) {
+      return clause.sameElements(clauses(), true) ? this : new Partial(clause);
+    }
     @Override public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(body.descent(f));
+      return update(clauses.map(clause -> clause.descent(f)));
     }
-    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) { f.accept(body); }
+    @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      clauses.forEach(clause -> f.accept(clause.tm));
+    }
+  }
+
+  record PartialTy(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) implements Expr {
+
+    public @NotNull PartialTy update(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) {
+      return ty == ty() && cof == cof() ? this : new PartialTy(ty, cof);
+    }
+
+    @Override
+    public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
+      return update(ty.descent(f), cof.descent(f));
+    }
+    @Override
+    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
+      f.accept(ty());
+    }
   }
 
   record RawSort(@NotNull SortKind kind) implements Expr, Sugar {

@@ -726,9 +726,18 @@ public record AyaProducer(
       var tele = unitPattern(node.child(UNIT_PATTERN));
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
     }
-    if (node.is(PARTIAL_EXPR)) {
-      var body = expr(node.child(EXPR));
-      return new WithPos<>(pos, new Expr.Partial(body));
+    if (node.is(PARTIAL_TY_EXPR)) {
+      var cof = new Expr.DisjCof(node.child(COMMA_SEP).childrenOfType(COF)
+        .map(c -> new Expr.ConjCof(ImmutableSeq.of(cof(c))))
+        .toSeq());
+      var ty = expr(node.child(EXPR));
+      return new WithPos<>(pos, new Expr.PartialTy(ty, cof));
+    }
+    if (node.is(PARTIAL_ATOM)) {
+      var clauses = node.child(COMMA_SEP).childrenOfType(PARTIAL_CLAUSE)
+        .map(this::partialClause)
+        .toSeq();
+      return new WithPos<>(pos, new Expr.Partial(clauses));
     }
     if (node.is(IDIOM_ATOM)) {
       var block = node.peekChild(IDIOM_BLOCK);
@@ -807,6 +816,18 @@ public record AyaProducer(
       return new Expr.NamedArg(false, id.data(), expr(node.child(EXPR)));
     }
     return unreachable(node);
+  }
+
+  private @NotNull Expr.EqCof cof(@NotNull GenericNode<?> node) {
+    var chd = node.childrenView().toSeq();
+    return new Expr.EqCof(
+      expr(chd.getFirst()),
+      expr(chd.getLast()));
+  }
+
+  private @NotNull Expr.Partial.Clause partialClause(@NotNull GenericNode<?> node) {
+    return new Expr.Partial.Clause(new Expr.ConjCof(ImmutableSeq.of(cof(node.child(COF)))),
+      expr(node.child(EXPR)));
   }
 
   private @NotNull Expr buildProj(

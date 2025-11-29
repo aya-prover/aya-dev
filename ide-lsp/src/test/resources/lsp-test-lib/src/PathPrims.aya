@@ -1,4 +1,4 @@
 prim I
 prim coe (r s : I) (A : I -> Type) : A r -> A s
 prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
-prim Partial (r s : I) (A : Type) : Set
+//prim Partial (r s : I) (A : Type) : Set

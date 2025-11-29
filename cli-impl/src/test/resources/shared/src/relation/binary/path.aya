@@ -1,7 +1,7 @@
 prim I : ISet
 prim Path (A : I -> Type) (a : A 0) (b : A 1) : Type
 prim coe (r s : I) (A : I -> Type) : A r -> A s
-prim Partial
+
 variable A B : Type
 def infix = (a b : A) : Type => Path (\i => A) a b
 def refl {a : A} : a = a => \i => a

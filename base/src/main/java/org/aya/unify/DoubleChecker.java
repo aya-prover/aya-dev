@@ -2,15 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.term.DTKind;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
-import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.core.term.xtt.PartialTerm;
-import org.aya.syntax.core.term.xtt.PartialTyTerm;
+import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.DoubleCheckError;
@@ -91,9 +89,23 @@ public record DoubleChecker(
       // Hope we never reach this -- once this becomes a bottleneck in the slightest way we should
       // add `localLet` to this class.
       case LetTerm let -> inherit(let.make(), expected);
-      case PartialTerm(var element) -> whnf(expected) instanceof PartialTyTerm(var r, var s, var A)
-        ? withConnection(whnf(r), whnf(s), () -> inherit(element, A))
-        : failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
+      case PartialTerm(var cls) -> {
+        if (!(whnf(expected) instanceof PartialTyTerm(var A, var cof)))
+          yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
+        // check each element
+        ImmutableSeq<ConjCof> cls_cof = ImmutableSeq.empty();
+        for (@Closed var c : cls) {
+          if (!withConnection(c.cof(),
+                () -> inherit(c.tm(), A),
+                () -> true)
+          ) yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
+          cls_cof = cls_cof.appended(c.cof());
+        }
+        // check cofibration
+        if (!unifier.cofibrationEquiv(cof, new DisjCof(cls_cof)))
+          yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
+        yield true;
+      }
 
       default -> unifier.compare(synthesizer.synthDontNormalize(preterm), expected, null) == Decision.YES;
     };

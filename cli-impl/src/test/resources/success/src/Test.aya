@@ -150,7 +150,16 @@ module Issue243 {
 }
 
 module Issue1293 {
-  def p1 : Partial 0 0 Nat => partial zero
-  def p2 : Partial 1 1 Nat => p1
-  def p3 (i j : I) (p1 : Partial i j Nat) : Partial j i Nat => p1
+  def test1 (i : I) : Partial [ i = 0, i = 1 ] Nat =>
+    partial
+    [ i = 0 => 114
+    , i = 1 => 514
+    ]
+
+  def test2 (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat =>
+    partial
+    [ i = 0 => 114
+    , j = 1 => 114
+    , j = 0 => 114
+    ]
 }

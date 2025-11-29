@@ -1,6 +1,3 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
-// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -50,9 +47,9 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       GOAL_EXPR, HOLE_EXPR, IDIOM_ATOM, LAMBDA_0_EXPR,
       LAMBDA_1_EXPR, LAMBDA_2_EXPR, LAMBDA_HOLE_EXPR, LET_EXPR,
       LITERAL, LIT_INT_EXPR, LIT_STRING_EXPR, MATCH_EXPR,
-      NEW_EXPR, PARTIAL_EXPR, PI_EXPR, PROJ_EXPR,
-      REF_EXPR, SELF_EXPR, SIGMA_EXPR, TUPLE_ATOM,
-      ULIFT_ATOM, UNIV_EXPR),
+      NEW_EXPR, PARTIAL_ATOM, PARTIAL_TY_EXPR, PI_EXPR,
+      PROJ_EXPR, REF_EXPR, SELF_EXPR, SIGMA_EXPR,
+      TUPLE_ATOM, ULIFT_ATOM, UNIV_EXPR),
   };
 
   /* ********************************************************** */
@@ -572,6 +569,31 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
       if (!empty_element_parsed_guard_(b, "clauses_0_0_1", c)) break;
     }
     return true;
+  }
+
+  /* ********************************************************** */
+  // cofOperand "=" cofOperand
+  public static boolean cof(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cof")) return false;
+    if (!nextTokenIs(b, "<cof>", ID, NUMBER)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, COF, "<cof>");
+    r = cofOperand(b, l + 1);
+    r = r && consumeToken(b, "=");
+    r = r && cofOperand(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // refExpr | litIntExpr
+  static boolean cofOperand(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cofOperand")) return false;
+    if (!nextTokenIs(b, "", ID, NUMBER)) return false;
+    boolean r;
+    r = refExpr(b, l + 1);
+    if (!r) r = litIntExpr(b, l + 1);
+    return r;
   }
 
   /* ********************************************************** */
@@ -1575,6 +1597,41 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // KW_PARTIAL LARRAY <<commaSep partialClause>>? RARRAY
+  public static boolean partialAtom(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialAtom")) return false;
+    if (!nextTokenIs(b, KW_PARTIAL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, KW_PARTIAL, LARRAY);
+    r = r && partialAtom_2(b, l + 1);
+    r = r && consumeToken(b, RARRAY);
+    exit_section_(b, m, PARTIAL_ATOM, r);
+    return r;
+  }
+
+  // <<commaSep partialClause>>?
+  private static boolean partialAtom_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialAtom_2")) return false;
+    commaSep(b, l + 1, AyaPsiParser::partialClause);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // cof IMPLIES expr
+  public static boolean partialClause(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialClause")) return false;
+    if (!nextTokenIs(b, "<partial clause>", ID, NUMBER)) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, PARTIAL_CLAUSE, "<partial clause>");
+    r = cof(b, l + 1);
+    r = r && consumeToken(b, IMPLIES);
+    r = r && expr(b, l + 1, -1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // unitPatterns (KW_AS weakId)?
   public static boolean pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pattern")) return false;
@@ -2299,7 +2356,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   // 5: ATOM(lambda1Expr)
   // 6: ATOM(lambda2Expr)
   // 7: ATOM(matchExpr)
-  // 8: PREFIX(partialExpr)
+  // 8: PREFIX(partialTyExpr)
   // 9: PREFIX(letExpr)
   // 10: ATOM(doExpr)
   // 11: ATOM(selfExpr)
@@ -2320,7 +2377,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = lambda1Expr(b, l + 1);
     if (!r) r = lambda2Expr(b, l + 1);
     if (!r) r = matchExpr(b, l + 1);
-    if (!r) r = partialExpr(b, l + 1);
+    if (!r) r = partialTyExpr(b, l + 1);
     if (!r) r = letExpr(b, l + 1);
     if (!r) r = doExpr(b, l + 1);
     if (!r) r = selfExpr(b, l + 1);
@@ -2569,16 +2626,35 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  public static boolean partialExpr(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "partialExpr")) return false;
-    if (!nextTokenIsSmart(b, KW_PARTIAL)) return false;
+  public static boolean partialTyExpr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialTyExpr")) return false;
+    if (!nextTokenIsSmart(b, KW_PARTIAL_TY)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_, null);
-    r = consumeTokenSmart(b, KW_PARTIAL);
+    r = partialTyExpr_0(b, l + 1);
     p = r;
     r = p && expr(b, l, 8);
-    exit_section_(b, l, m, PARTIAL_EXPR, r, p, null);
+    exit_section_(b, l, m, PARTIAL_TY_EXPR, r, p, null);
     return r || p;
+  }
+
+  // KW_PARTIAL_TY LARRAY <<commaSep cof>>? RARRAY
+  private static boolean partialTyExpr_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialTyExpr_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokensSmart(b, 0, KW_PARTIAL_TY, LARRAY);
+    r = r && partialTyExpr_0_2(b, l + 1);
+    r = r && consumeToken(b, RARRAY);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // <<commaSep cof>>?
+  private static boolean partialTyExpr_0_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "partialTyExpr_0_2")) return false;
+    commaSep(b, l + 1, AyaPsiParser::cof);
+    return true;
   }
 
   public static boolean letExpr(PsiBuilder b, int l) {
@@ -2697,6 +2773,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
   //            | tupleAtom
   //            | idiomAtom
   //            | arrayAtom
+  //            | partialAtom
   public static boolean atomExpr(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "atomExpr")) return false;
     boolean r;
@@ -2705,6 +2782,7 @@ public class AyaPsiParser implements PsiParser, LightPsiParser {
     if (!r) r = tupleAtom(b, l + 1);
     if (!r) r = idiomAtom(b, l + 1);
     if (!r) r = arrayAtom(b, l + 1);
+    if (!r) r = partialAtom(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
