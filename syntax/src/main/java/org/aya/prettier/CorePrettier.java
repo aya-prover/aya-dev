@@ -131,7 +131,6 @@ public class CorePrettier extends BasePrettier<Term> {
           optionImplicit()
         );
       }
-      case DimTyTerm _ -> KW_INTERVAL;
       case MemberCall term -> visitCoreApp(null, visitAccessHead(term),
         term.projArgs().view(), outer,
         optionImplicit());

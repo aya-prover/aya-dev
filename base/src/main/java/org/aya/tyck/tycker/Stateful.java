@@ -7,7 +7,6 @@ import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.EqCof;
 import org.aya.syntax.core.term.xtt.ConjCof;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.literate.CodeOptions;
@@ -15,7 +14,6 @@ import org.aya.syntax.ref.MetaVar;
 import org.aya.util.ForLSP;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -38,31 +36,13 @@ public interface Stateful {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 
-  /// Assume ¬(lhs = rhs ⊢ ⊥)
-  default <R> R withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull Supplier<R> action) {
-    state().connect(lhs, rhs);
-    var result = action.get();
-    state().disconnect(lhs, rhs);
-    return  result;
-  }
-
-  default <R> R withConnection(
-    @NotNull EqCof cof, @NotNull Supplier<R> action,
-    @NotNull Supplier<R> ifBottom
-  ) {
-    return this.withConnection(cof.lhs(), cof.rhs(),
-      () -> state().isConnected(DimTerm.I0, DimTerm.I1) ?
-        ifBottom.get() :
-        action.get());
-  }
-
-  default void connectConj(@NotNull ConjCof cof) {
+  private void connectConj(@NotNull ConjCof cof) {
     for (var eqcof : cof.elements()) {
       state().connect(eqcof.lhs(), eqcof.rhs());
     }
   }
 
-  default void disconnectConj(@NotNull ConjCof cof) {
+  private void disconnectConj(@NotNull ConjCof cof) {
     for (var eqcof : cof.elements()) {
       state().disconnect(eqcof.lhs(), eqcof.rhs());
     }
@@ -70,21 +50,8 @@ public interface Stateful {
 
   default <R> R withConnection(@NotNull ConjCof cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
     connectConj(cof);
-    if (state().isConnected(DimTerm.I0, DimTerm.I1)) {
-      var ret = ifBottom.get();
-      disconnectConj(cof);
-      return ret;
-    }
-    var ret = action.get();
+    var ret = state().isConnected(DimTerm.I0, DimTerm.I1) ? ifBottom.get() : action.get();
     disconnectConj(cof);
     return ret;
-  }
-
-  /// Used too often, make a specialized version
-  default boolean withConnection(@NotNull Term lhs, @NotNull Term rhs, @NotNull BooleanSupplier action) {
-    state().connect(lhs, rhs);
-    var result = action.getAsBoolean();
-    state().disconnect(lhs, rhs);
-    return result;
   }
 }

@@ -93,8 +93,8 @@ public final class ExprTycker extends ScopedTycker {
           }
           case EqTerm eq -> {
             @Closed Closure.Locns core;
-            try (var _ = subscope(ref, DimTyTerm.INSTANCE)) {
-              addWithTerm(lam, expr.sourcePos(), DimTyTerm.INSTANCE);
+            try (var _ = subscope(ref, interval())) {
+              addWithTerm(lam, expr.sourcePos(), interval());
               core = inherit(body, eq.appA(new FreeTerm(ref))).wellTyped().bind(ref);
             }
             var isOk = checkBoundaries(eq, core, body.sourcePos(), msg ->
@@ -103,7 +103,7 @@ public final class ExprTycker extends ScopedTycker {
             yield new Jdg.Default(isOk ? term : new ErrorTerm(term), eq);
           }
           case MetaCall metaCall -> {
-            @Closed var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
+            var pi = metaCall.asDt(this::whnf, "_dom", "_cod", DTKind.Pi);
             if (pi == null) yield fail(expr.data(), type, BadTypeError.absOnNonPi(state, expr, type));
             unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, pi, null);
             try (var _ = subscope(ref, pi.param())) {
@@ -127,7 +127,7 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.LitInt(var end) -> {
         var ty = whnf(type);
-        if (ty == DimTyTerm.INSTANCE) {
+        if (isInterval(ty)) {
           if (end == 0 || end == 1) yield new Jdg.Default(end == 0 ? DimTerm.I0 : DimTerm.I1, ty);
           else yield fail(expr.data(), new PrimError.BadInterval(expr.sourcePos(), end));
         }
@@ -200,8 +200,8 @@ public final class ExprTycker extends ScopedTycker {
   }
 
   private @Closed @NotNull EqCof elabCof(@NotNull Expr.EqCof cof) {
-    var lhs = inherit(cof.lhs(), DimTyTerm.INSTANCE);
-    var rhs = inherit(cof.rhs(), DimTyTerm.INSTANCE);
+    var lhs = inherit(cof.lhs(), interval());
+    var rhs = inherit(cof.rhs(), interval());
     return new EqCof(lhs.wellTyped(), rhs.wellTyped());
   }
 
@@ -293,7 +293,7 @@ public final class ExprTycker extends ScopedTycker {
     type = whnf(type);
     var resultType = result.type();
     // Try coercive subtyping for (Path A ...) into (I -> A)
-    if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
+    if (type instanceof DepTypeTerm(var kind, var dom, var cod) && kind == DTKind.Pi && isInterval(dom)) {
       if (whnf(resultType) instanceof EqTerm eq) {
         if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
         var closure = result.wellTyped() instanceof LamTerm(var clos) ? clos
@@ -305,7 +305,7 @@ public final class ExprTycker extends ScopedTycker {
     if (type instanceof EqTerm eq) {
       if (whnf(resultType) instanceof DepTypeTerm(
         var kind, var dom, var cod
-      ) && kind == DTKind.Pi && dom == DimTyTerm.INSTANCE) {
+      ) && kind == DTKind.Pi && isInterval(dom)) {
         if (!isConvertiblePiPath(expr, eq, cod)) return makeErrorResult(type, result);
         @Closed var closure = result.wellTyped() instanceof LamTerm(var clos)
           ? clos    // closed cause [result] is closed
@@ -346,7 +346,7 @@ public final class ExprTycker extends ScopedTycker {
   private boolean isConvertiblePiPath(@NotNull WithPos<Expr> expr, @Closed @NotNull EqTerm eq, @Closed @NotNull Closure cod) {
     var ref = new FreeTerm(new LocalVar("i"));
     var wellTyped = false;
-    try (var _ = subscope(ref.name(), DimTyTerm.INSTANCE)) {
+    try (var _ = subscope(ref.name(), interval())) {
       wellTyped = unifyTyReported(eq.appA(ref), cod.apply(ref), expr);
     }
     if (!wellTyped) return false;
@@ -445,7 +445,7 @@ public final class ExprTycker extends ScopedTycker {
 
           return switch (whnf(result.type())) {
             case MetaCall metaCall -> {
-              @Closed var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
+              var sigma = metaCall.asDt(this::whnf, "_fstTy", "_sndTy", DTKind.Sigma);
               if (sigma == null) yield fail(expr.data(), BadTypeError.sigmaAcc(state, expr, iix, result.type()));
               unifier(metaCall.ref().pos(), Ordering.Eq).compare(metaCall, sigma, null);
               if (iix == ProjTerm.INDEX_FST) {
@@ -651,7 +651,7 @@ public final class ExprTycker extends ScopedTycker {
         localLet().put(bindName, definedAs, false);
       }
 
-      @Closed var result = checker.apply(let.body());
+      var result = checker.apply(let.body());
       var letFree = new LetFreeTerm(bindName, definedAs);
       var wellTypedLet = LetTerm.bind(letFree, result.wellTyped());
       var typeLet = LetTerm.bind(letFree, result.type());

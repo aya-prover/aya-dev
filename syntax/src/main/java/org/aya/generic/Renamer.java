@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic;
 
@@ -6,7 +6,6 @@ import kala.collection.mutable.MutableMap;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.xtt.CoeTerm;
-import org.aya.syntax.core.term.xtt.DimTyTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.LocalCtx;
@@ -30,7 +29,6 @@ public record Renamer(MutableMap<String, LocalVar> scope) {
       case Callable.Tele c -> Character.toString(Character.toLowerCase(
         c.ref().name().codePointAt(0)));
       case DepTypeTerm _ -> "f";
-      case DimTyTerm _ -> "i";
       case ProjTerm p -> nameOf(p.of());
       case AppTerm a -> nameOf(a.fun());
       case PAppTerm a -> nameOf(a.fun());

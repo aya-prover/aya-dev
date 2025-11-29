@@ -66,7 +66,7 @@ public record DoubleChecker(
           }
         }
         case EqTerm eq -> {
-          try (var scope = subscope(DimTyTerm.INSTANCE)) {
+          try (var scope = subscope(unifier.interval())) {
             var param = scope.var();
             if (!inherit(body.apply(param), eq.A().apply(param)))
               yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));

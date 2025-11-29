@@ -7,6 +7,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
+import org.aya.generic.term.DTKind;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitPrim;
@@ -18,18 +19,22 @@ import org.aya.syntax.core.def.PrimDefLike;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.core.term.repr.StringTerm;
-import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.core.term.xtt.CoeTerm;
+import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.QName;
 import org.aya.util.ForLSP;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static org.aya.syntax.core.def.PrimDef.*;
-import static org.aya.syntax.core.term.SortTerm.Set0;
+import static org.aya.syntax.core.def.PrimDef.ID;
+import static org.aya.syntax.core.def.PrimDef.familyI2J;
 import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
@@ -47,8 +52,20 @@ public class PrimFactory {
   }
 
   public void definePrim(PrimDefLike prim) {
+    if (defs.get(prim.id()) == prim) return;
     assert !isForbiddenRedefinition(prim.id(), prim instanceof JitPrim);
     defs.put(prim.id(), prim);
+  }
+
+  public void importFrom(@NotNull PrimFactory primFactory) {
+    for (var prim : primFactory.defs.values()) definePrim(prim);
+  }
+
+  @Contract("-> new")
+  public EnumMap<ID, QName> qnameMap() {
+    var map = new EnumMap<ID, QName>(ID.class);
+    defs.forEach((key, value) -> map.put(key, value.qualifiedName()));
+    return map;
   }
 
   @FunctionalInterface
@@ -72,9 +89,9 @@ public class PrimFactory {
   }, ref -> {
     // coe (r s : I) (A : I -> Type) : A r -> A s
     var telescope = ImmutableSeq.of(
-      DimTyTerm.param("r"),
-      DimTyTerm.param("s"),
-      new Param("A", intervalToType, true));
+      intervalParam("r"),
+      intervalParam("s"),
+      new Param("A", intervalToType(), true));
     var r = LocalVar.generate("r");
     var s = LocalVar.generate("s");
     var A = LocalVar.generate("A");
@@ -92,7 +109,7 @@ public class PrimFactory {
     return new EqTerm(closureParam(args.get(0)), args.get(1), args.get(2));
   }, ref -> {
     // (A : I -> Type) (a : A 0) (b : A 1) : Type
-    var paramA = new Param("A", intervalToType, true);
+    var paramA = new Param("A", intervalToType(), true);
     var paramLeft = new Param("a", new AppTerm(new LocalTerm(0), DimTerm.I0), true);
     var paramRight = new Param("b", new AppTerm(new LocalTerm(1), DimTerm.I1), true);
     return new PrimDef(ref, ImmutableSeq.of(paramA, paramLeft, paramRight), Type0, ID.PATH);
@@ -162,7 +179,7 @@ public class PrimFactory {
   */
 
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
-    ((_, _) -> DimTyTerm.INSTANCE),
+    ((prim, _) -> prim),
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
 
@@ -172,11 +189,22 @@ public class PrimFactory {
     return rst;
   }
 
+  /// `I -> Type`
+  public @NotNull Term intervalToType() {
+    return new DepTypeTerm(DTKind.Pi, getCall(ID.I), Closure.mkConst(Type0));
+  }
+
+  public Param intervalParam(String r) {
+    return new Param(r, getCall(ID.I), true);
+  }
+
   public @NotNull PrimCall getCall(@NotNull ID id, @NotNull ImmutableSeq<Term> args) {
     return new PrimCall(getOption(id).get(), 0, args);
   }
 
   public @NotNull PrimCall getCall(@NotNull ID id) {
+    if (getOption(id).isEmpty())
+      throw new IllegalArgumentException("Unknown primitive: " + id);
     return new PrimCall(getOption(id).get());
   }
 
@@ -188,17 +216,12 @@ public class PrimFactory {
     return defs.containsKey(name);
   }
 
-  /**
-   * Whether this definition is a redefinition that should be treated as error.
-   * There are two cases where a redefinition is allowed:
-   * <ul>
-   *   <li>When we are working in an LSP, and users can reload a file to redefine things.</li>
-   *   <li>When we are serializing a file, which we will deserialize immediately, and this will
-   *     replace the existing PrimDefs with their JIT-compiled version.</li>
-   * </ul>
-   *
-   * @return true if redefinition is forbidden.
-   */
+  /// Whether this definition is a redefinition that should be treated as error.
+  /// There are two cases where a redefinition is allowed:
+  /// - When we are working in an LSP, and users can reload a file to redefine things.
+  /// - When we are serializing a file, which we will deserialize immediately, and this will
+  ///   replace the existing PrimDefs with their JIT-compiled version.
+  /// @return true if redefinition is forbidden.
   @ForLSP public boolean isForbiddenRedefinition(@NotNull PrimDef.ID id, boolean isJit) {
     if (isJit)
       return have(id) && defs.get(id) instanceof JitPrim;

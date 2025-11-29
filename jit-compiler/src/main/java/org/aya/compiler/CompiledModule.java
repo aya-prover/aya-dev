@@ -21,6 +21,7 @@ import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.core.def.AnyDef;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
@@ -34,6 +35,7 @@ import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.EnumMap;
 
 /**
  * The .ayac file representation.
@@ -48,6 +50,7 @@ public record CompiledModule(
   @NotNull ImmutableSet<String> exports,
   @NotNull ImmutableMap<ModulePath, SerUseHide> reExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
+  @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
 ) implements Serializable {
   public record DeState(@NotNull ClassLoader loader) {
@@ -135,8 +138,9 @@ public record CompiledModule(
       })
       .filter(RenameData::reExport) // should not serialize publicly renamed ops from upstreams
       .map(data -> Tuple.of(data.name, data.renamed)));
+    var prims = resolveInfo.primFactory().qnameMap();
 
-    return new CompiledModule(imports, serExport, reExports, serOps, opRename);
+    return new CompiledModule(imports, serExport, reExports, serOps, prims, opRename);
   }
 
   private record Serialization(
@@ -164,6 +168,7 @@ public record CompiledModule(
     var state = new DeState(classLoader);
     return toResolveInfo(loader, context, state, primFactory, new ShapeFactory(), reporter);
   }
+
   public @NotNull ResolveInfo toResolveInfo(
     @NotNull ModuleLoader loader, @NotNull PhysicalModuleContext context, @NotNull CompiledModule.DeState state,
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull Reporter reporter
@@ -171,6 +176,8 @@ public record CompiledModule(
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
     shallowResolve(loader, resolveInfo, reporter);
     loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
+    primDefs.forEach((_, qname) ->
+      primFactory.definePrim((JitPrim) state.resolve(qname)));
     deOp(state, resolveInfo);
     return resolveInfo;
   }
@@ -192,12 +199,12 @@ public record CompiledModule(
           var innerCtx = context.derive(data.name());
           for (var constructor : data.constructors()) {
             var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
-            if (! success) Panic.unreachable();
+            if (!success) Panic.unreachable();
           }
           var success = context.importModuleContext(
             ModuleName.This.resolve(data.name()),
             innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
-          if (! success) Panic.unreachable();
+          if (!success) Panic.unreachable();
           if (metadata.shape() != -1) {
             var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
               ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -234,7 +241,7 @@ public record CompiledModule(
       var mod = loaded.thisModule();
       var success = thisResolve.thisModule()
         .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
-      if (! success) Panic.unreachable();
+      if (!success) Panic.unreachable();
       var useHide = reExports.getOrNull(modName);
       if (useHide != null) {
         success = thisResolve.thisModule().openModule(modRename,
@@ -244,7 +251,7 @@ public record CompiledModule(
           SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
           reporter);
 
-        if (! success) Panic.unreachable();
+        if (!success) Panic.unreachable();
       }
       var acc = reExports.containsKey(modName)
         ? Stmt.Accessibility.Public
@@ -280,12 +287,12 @@ public record CompiledModule(
     bind.loosers().forEach(looser -> {
       var target = resolveOp(resolveInfo, state, looser);
       var success = opSet.bind(opDecl, OpDecl.BindPred.Looser, target, SourcePos.SER);
-      if (! success) Panic.unreachable();
+      if (!success) Panic.unreachable();
     });
     bind.tighters().forEach(tighter -> {
       var target = resolveOp(resolveInfo, state, tighter);
       var success = opSet.bind(opDecl, OpDecl.BindPred.Tighter, target, SourcePos.SER);
-      if (! success) Panic.unreachable();
+      if (!success) Panic.unreachable();
     });
   }
 

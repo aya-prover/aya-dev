@@ -9,8 +9,10 @@ import org.aya.generic.Renamer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.telescope.AbstractTele;
@@ -45,6 +47,14 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   @Override public @NotNull LocalCtx localCtx() { return localCtx; }
   @Override public @NotNull TyckState state() { return state; }
   @Override public @NotNull Reporter reporter() { return reporter; }
+
+  public @NotNull PrimCall interval() {
+    return state.primFactory.getCall(PrimDef.ID.I);
+  }
+
+  public boolean isInterval(Term term) {
+    return term instanceof PrimCall call && call.ref().id() == PrimDef.ID.I;
+  }
 
   public @NotNull Jdg.Lazy lazyJdg(@Closed @NotNull Term wellTyped) {
     return new Jdg.Lazy(wellTyped, LazyValue.of(() ->

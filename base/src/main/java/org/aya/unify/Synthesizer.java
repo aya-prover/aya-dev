@@ -127,8 +127,7 @@ public record Synthesizer(
       }
       case ErrorTerm error -> ErrorTerm.typeOf(error);
       case SortTerm sort -> sort.succ();
-      case DimTerm _ -> DimTyTerm.INSTANCE;
-      case DimTyTerm _ -> SortTerm.ISet;
+      case DimTerm _ -> tycker().interval();
       case MetaLitTerm mlt -> mlt.type();
       case StringTerm _ -> state().primFactory.getCall(PrimDef.ID.STRING);
       case ClassCall classCall -> classCall.ref().members().view()
