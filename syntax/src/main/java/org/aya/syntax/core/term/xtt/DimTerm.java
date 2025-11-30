@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
-import kala.function.IndexedFunction;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.Term;

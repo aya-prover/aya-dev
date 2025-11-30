@@ -3,7 +3,6 @@
 package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.StableWHNF;

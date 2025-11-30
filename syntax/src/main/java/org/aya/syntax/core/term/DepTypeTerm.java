@@ -6,7 +6,6 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.generic.TermVisitor;
 import org.aya.generic.term.DTKind;

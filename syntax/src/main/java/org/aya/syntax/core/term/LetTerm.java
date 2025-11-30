@@ -4,7 +4,6 @@ package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;
@@ -60,7 +59,7 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
         continue;
       }
 
-      @Closed LetFreeTerm bind = new LetFreeTerm(nameGen.bindName(term), Jdg.TypeMissing.of(term));
+      var bind = new LetFreeTerm(nameGen.bindName(term), Jdg.TypeMissing.of(term));
       var freeBody = remain.apply(bind);
 
       definedAs.append(bind);

@@ -3,10 +3,7 @@
 package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.mutable.MutableArrayList;
-import kala.function.IndexedFunction;
 import org.aya.generic.TermVisitor;
-import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 public record ConjCof(@NotNull ImmutableSeq<EqCof> elements) {

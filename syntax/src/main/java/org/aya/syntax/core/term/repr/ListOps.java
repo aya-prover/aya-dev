@@ -3,7 +3,6 @@
 package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
 import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.AnyDef;

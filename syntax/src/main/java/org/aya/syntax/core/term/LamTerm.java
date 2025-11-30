@@ -4,7 +4,6 @@ package org.aya.syntax.core.term;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;

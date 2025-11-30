@@ -5,7 +5,6 @@ package org.aya.syntax.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.call.MetaCall;

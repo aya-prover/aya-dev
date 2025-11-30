@@ -2,7 +2,10 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.marker;
 
-import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.ErrorTerm;
+import org.aya.syntax.core.term.FreeTermLike;
+import org.aya.syntax.core.term.MetaPatTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
 

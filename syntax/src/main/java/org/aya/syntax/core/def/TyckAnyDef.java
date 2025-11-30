@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
-import java.util.Objects;
-
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.ModulePath;
@@ -13,6 +11,8 @@ import org.aya.util.binop.Assoc;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
+
+import java.util.Objects;
 
 public non-sealed class TyckAnyDef<Interface extends TyckDef> implements AnyDef {
   public final @NotNull DefVar<Interface, ?> ref;
