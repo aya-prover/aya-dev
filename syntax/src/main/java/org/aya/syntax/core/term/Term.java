@@ -114,39 +114,14 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
-  /// For example, a {@link LamTerm}:
-  /// ```
-  ///     Γ, a : A ⊢ b : B
-  /// --------------------------
-  /// Γ ⊢ fn (a : A) => (b : B)
-  ///```
-  /// `f` will apply to `b`, but the context of `b`: `Γ, a : A` has a new binding,
-  /// therefore the implementation should be `f.apply(1, b)`.
-  /// In the other hand, a [AppTerm]:
-  ///```
-  /// Γ ⊢ g : A → B   Γ ⊢ a : A
-  /// --------------------------
-  ///        Γ ⊢ g a : B
-  ///```
-  ///`f` will apply to both `g` and `a`, but the context of them have no extra binding,
-  /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
-  ///
-  /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
-  ///          The index indicates how many new bindings are introduced.
-  /// @implNote Implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
-  ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
-  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm] (see [BindingIntro]),
-  ///          therefore your {@param f} should be able to handle them,
-  ///          or don't [#descent] on [Term] that contains [Bound] term if your {@param f} cannot handle them.
-  ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
-  ///
-  /// @see BindingIntro
-  /// @see Closure
   @Deprecated
   default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
     return descent(t -> f.apply(0, t), c -> c.descent((t) -> f.apply(1, t)));
   }
 
+  /// Visit all directly sub nodes of this [Term], it could be either a [Term] or a [Closure].
+  ///
+  /// You may use [TermVisitor#ofTerm] if you make sure that `this` Term doesn't have any [Closure] sub nodes.
   @NotNull Term descent(@NotNull TermVisitor visitor);
 
   default @NotNull Term descent(@NotNull UnaryOperator<Term> onTerm, @NotNull UnaryOperator<Closure> onClosure) {
@@ -163,6 +138,8 @@ public sealed interface Term extends Serializable, AyaDocile
     });
   }
 
+  /// Be careful that this is NOT the same as `descent(TermVisitor.ofTerm)`
+  @Deprecated
   @ApiStatus.NonExtendable
   default @NotNull Term descent(@NotNull UnaryOperator<Term> f) {
     return this.descent((_, t) -> f.apply(t));
