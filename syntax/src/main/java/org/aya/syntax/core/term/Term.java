@@ -47,7 +47,9 @@ public sealed interface Term extends Serializable, AyaDocile
   /// @see #replaceAllFrom
   default @NotNull @Bound Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
     if (vars.isEmpty()) return this;
-    return descent((i, t) -> t.bindAllFrom(vars, fromDepth + i));
+    return descent(
+      t -> t.bindAllFrom(vars, fromDepth),
+      c -> c.descent(t -> t.bindAllFrom(vars, fromDepth + 1)));
   }
 
   /// Corresponds to _abstract_ operator in \[MM 2004\].
@@ -84,7 +86,9 @@ public sealed interface Term extends Serializable, AyaDocile
   @ApiStatus.Internal
   default @NoInherit @NotNull Term replaceAllFrom(int from, @NotNull ImmutableSeq<@Closed Term> list) {
     if (list.isEmpty()) return this;
-    return descent((i, t) -> t.replaceAllFrom(from + i, list));
+    return descent(
+      t -> t.replaceAllFrom(from, list),
+      c -> c.descent(t -> t.replaceAllFrom(from + 1, list)));
   }
 
   /// @see #replaceAllFrom(int, ImmutableSeq)
@@ -114,14 +118,15 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
+  // TODO: no use to this method, remove this
   @Deprecated
   default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return descent(t -> f.apply(0, t), c -> c.descent((t) -> f.apply(1, t)));
+    return descent(TermVisitor.ofLegacy(f));
   }
 
   /// Visit all directly sub nodes of this [Term], it could be either a [Term] or a [Closure].
   ///
-  /// You may use [TermVisitor#ofTerm] if you make sure that `this` Term doesn't have any [Closure] sub nodes.
+  /// You may use [TermVisitor#expectTerm] if you make sure that `this` Term doesn't have any [Closure] sub nodes.
   @NotNull Term descent(@NotNull TermVisitor visitor);
 
   default @NotNull Term descent(@NotNull UnaryOperator<Term> onTerm, @NotNull UnaryOperator<Closure> onClosure) {
@@ -139,10 +144,11 @@ public sealed interface Term extends Serializable, AyaDocile
   }
 
   /// Be careful that this is NOT the same as `descent(TermVisitor.ofTerm)`
+  /// Use `descent(TermVisitor.expectTerm)` or `descent(TermVisitor.of)` instead.
   @Deprecated
   @ApiStatus.NonExtendable
   default @NotNull Term descent(@NotNull UnaryOperator<Term> f) {
-    return this.descent((_, t) -> f.apply(t));
+    return descent(TermVisitor.of(f));
   }
 
   /// Lift the sort level of this term
@@ -157,6 +163,7 @@ public sealed interface Term extends Serializable, AyaDocile
 
   default @NotNull Term doElevate(int level) {
     // Assumption : level > 0
+    // TODO: TermVisitor.of or .expectTerm ?
     return descent(t -> t.doElevate(level));
   }
 
@@ -165,9 +172,10 @@ public sealed interface Term extends Serializable, AyaDocile
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }
 
-    public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
-      return update(f.apply(bindCount, body));
-    }
+    // TODO: remove commented code
+    // public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
+    //   return update(f.apply(bindCount, body));
+    // }
 
     public void forEach(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
       patterns.forEach(g);

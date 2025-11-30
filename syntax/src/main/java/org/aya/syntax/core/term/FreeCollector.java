@@ -4,6 +4,7 @@ package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableSet;
+import org.aya.generic.TermVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
@@ -13,7 +14,7 @@ public record FreeCollector(@NotNull MutableSet<FreeTermLike> frees) implements 
   public FreeCollector() { this(MutableSet.create()); }
   @Override public Term apply(Term term) {
     if (term instanceof FreeTermLike free) frees.add(free);
-    else term.descent(this);
+    else term.descent(TermVisitor.of(this));
     return term;
   }
   public @NotNull ImmutableSeq<FreeTermLike> collected() { return frees.toSeq(); }

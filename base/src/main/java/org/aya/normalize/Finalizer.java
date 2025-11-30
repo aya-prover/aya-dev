@@ -5,6 +5,7 @@ package org.aya.normalize;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
 import org.aya.states.TyckState;
@@ -28,6 +29,7 @@ public interface Finalizer {
   @NotNull TyckState state();
   default @NotNull Term doZonk(@NotNull Term term) {
     return switch (term) {
+      // TODO: fix dblity
       case MetaCall meta -> state().computeSolution(meta, this::zonk);
       case MetaPatTerm meta -> meta.inline(this::zonk);
       case MetaLitTerm meta -> meta.inline(this::zonk);
@@ -38,7 +40,7 @@ public interface Finalizer {
           case JitMatchy jit -> jit;
           case Matchy matchy -> matchy.descent(this::zonk);
         });
-      default -> term.descent(this::zonk);
+      default -> term.descent(TermVisitor.of(this::zonk));
     };
   }
   @NotNull Term zonk(@NotNull Term term);

@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.def.FnDef;
@@ -42,7 +43,7 @@ public interface TailRecChecker {
         default -> { }
       }
 
-      return term.descent(t -> apply(t, false));
+      return term.descent(TermVisitor.of(t -> apply(t, false)));
     }
   }
 

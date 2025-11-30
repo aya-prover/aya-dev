@@ -96,7 +96,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return RelDec.from(ret);
   }
 
-  public @NotNull TyckState.Eqn createEqn(@NotNull MetaCall lhs, @NotNull Term rhs, @Nullable Term type) {
+  public @Closed @NotNull TyckState.Eqn createEqn(
+    @Closed @NotNull MetaCall lhs,
+    @Closed @NotNull Term rhs,
+    @Closed @Nullable Term type
+  ) {
     return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
   }
 
@@ -330,7 +334,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
-          if (withConnection(cl1.cof().add(cl2.cof().descent((_, e) -> whnf(e))),
+          if (withConnection(cl1.cof().add(cl2.cof().descent(whnfVisitor())),
                 () -> doCompareTyped(cl1.tm(), cl2.tm(), A),
                 () -> Decision.YES)
               == Decision.NO)
@@ -628,8 +632,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
       case Pair(PartialTyTerm(var A1, var cof1), PartialTyTerm(var A2, var cof2)) -> {
-        var wl2 = cof1.descent((_, e) -> whnf(e));
-        var wr2 = cof2.descent((_, e) -> whnf(e));
+        var wl2 = cof1.descent(whnfVisitor());
+        var wr2 = cof2.descent(whnfVisitor());
         if (!cofibrationEquiv(wl2, wr2)) yield Decision.NO;
         yield compare(A1, A2, null);
       }

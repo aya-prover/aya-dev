@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableMap;
 import kala.value.Value;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Instance;
+import org.aya.generic.TermVisitor;
 import org.aya.pretty.doc.Doc;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
@@ -197,17 +198,17 @@ public final class TyckState {
     return removingMetas.isNotEmpty();
   }
 
-  public void addEqn(Eqn eqn) {
+  public void addEqn(@Closed Eqn eqn) {
     eqns.append(eqn);
     var currentActiveMetas = activeMetas.size();
     var consumer = new Consumer<Term>() {
       @Override public void accept(Term term) {
         if (term instanceof MetaCall hole && !solutions.containsKey(hole.ref()))
           activeMetas.append(new WithPos<>(eqn.pos, hole.ref()));
-        term.descent(tm -> {
+        term.descent(TermVisitor.of(tm -> {
           accept(tm);
           return tm;
-        });
+        }));
       }
     };
     consumer.accept(eqn.lhs);

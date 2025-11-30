@@ -6,6 +6,7 @@ import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.value.MutableValue;
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
@@ -85,7 +86,7 @@ public record CallResolver(
           var attempt = compareConArgs(conArgs, con);
           // Reduce arguments and compare again. This may cause performance issues (but not observed yet [2022-11-07]),
           // see https://github.com/agda/agda/issues/2403 for more information.
-          if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(this::whnf)), con);
+          if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(whnfVisitor())), con);
 
           yield attempt;
         }
@@ -97,7 +98,7 @@ public record CallResolver(
           // This is related to the predicativity issue mentioned in #907
           case PAppTerm papp -> {
             // closed by [papp]
-            @Closed var head = papp.fun();
+            var head = papp.fun();
             while (head instanceof PAppTerm papp2) head = papp2.fun();
             yield compare(head, con);
           }
@@ -163,14 +164,14 @@ public record CallResolver(
     term = normalizer.apply(term);
     if (stopOnBinders(term)) return;
     if (term instanceof Callable.Tele call) resolveCall(call);
-    term.descent((_, child) -> {
+    term.descent(TermVisitor.expectTerm((child) -> {
       // child here is never Bound, cause we already handle
       // all binding structures in [stopOnBinders],
       // thus [child] must be a direct sub-[Term] of [term], which is [Closed]
       @Closed var assertedChild = child;
       visitTerm(assertedChild);
       return child;
-    });
+    }));
   }
 
   /// Special handling of all binding structures

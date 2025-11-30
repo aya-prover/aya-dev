@@ -20,7 +20,7 @@ public sealed interface Callable extends Term permits MatchCall, Callable.Tele, 
   @NotNull ImmutableSeq<@NotNull Term> args();
 
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, UnaryOperator<Term> f) {
-    return descent(args, TermVisitor.ofTerm(f));
+    return descent(args, TermVisitor.expectTerm(f));
   }
 
   @Deprecated

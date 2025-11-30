@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck.tycker;
 
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.Finalizer;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
@@ -28,6 +29,10 @@ import java.util.function.Supplier;
 public interface Stateful {
   @NotNull TyckState state();
   default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
+  default @NotNull TermVisitor whnfVisitor() {
+    return TermVisitor.expectTerm(this::whnf);
+  }
+
   /// Does not validate solution.
   default void solve(MetaVar meta, Term solution) { state().solve(meta, solution); }
   default @Closed @NotNull Term freezeHoles(@Closed @NotNull Term term) { return new Finalizer.Freeze(this).zonk(term); }

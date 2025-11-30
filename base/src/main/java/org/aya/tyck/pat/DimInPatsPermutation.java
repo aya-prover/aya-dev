@@ -7,6 +7,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableArray;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.pat.PatToTerm;
 import org.aya.syntax.core.term.FreeTerm;
@@ -21,8 +22,8 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 public interface DimInPatsPermutation {
-  record Replacer(@NotNull Map<LocalVar, DimTerm> let) implements UnaryOperator<Term> {
-    @Override public Term apply(Term term) {
+  record Replacer(@NotNull Map<LocalVar, DimTerm> let) implements TermVisitor.Traverse {
+    @Override public @NotNull Term term(Term term) {
       return switch (term) {
         case FreeTerm(var name) when let.containsKey(name) -> let.get(name);
         default -> term.descent(this);
@@ -79,7 +80,7 @@ public interface DimInPatsPermutation {
     // Written like this so breakpoint debugging is easy
     substs.forEach(sub -> {
       var replacer = new Replacer(sub);
-      callback.accept(args.map(replacer));
+      callback.accept(args.map(replacer::term));
     });
   }
 

@@ -4,6 +4,8 @@ package org.aya.syntax.core.def;
 
 import kala.collection.Seq;
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.TermVisitor;
+import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.QName;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +26,9 @@ public record Matchy(
     return new Matchy(returnTypeBound, qualifiedName, clauses);
   }
 
-  public @NotNull Matchy descent(@NotNull UnaryOperator<Term> f) {
+  public @NotNull Matchy descent(@NotNull UnaryOperator<@Bound Term> f) {
     return update(
-      returnTypeBound.descent(f),
+      returnTypeBound.descent(TermVisitor.of(f)),
       clauses.map(x -> x.update(f.apply(x.body()))));
   }
 }

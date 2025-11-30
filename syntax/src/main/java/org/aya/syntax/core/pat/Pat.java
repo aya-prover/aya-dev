@@ -8,6 +8,7 @@ import kala.collection.mutable.MutableList;
 import kala.control.Option;
 import kala.value.MutableValue;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.RichParam;
 import org.aya.syntax.core.annotation.Bound;
@@ -166,7 +167,7 @@ public sealed interface Pat {
     @Override public @NotNull Pat descentTerm(@NotNull UnaryOperator<Term> op) {
       return update(
         args.map(arg -> arg.descentTerm(op)),
-        head.descent((_, term) -> op.apply(term)));
+        head.descent(TermVisitor.of(op)));    // TODO: i am not sure if we can use .expectTerm
     }
     @Override public void consumeBindings(@NotNull BiConsumer<LocalVar, Term> consumer) {
       args.forEach(e -> e.consumeBindings(consumer));

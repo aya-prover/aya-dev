@@ -16,6 +16,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public interface TermVisitor {
+  interface ExpectTerm extends TermVisitor {
+    @Override
+    default @NotNull Closure closure(@NotNull Closure closure) {
+      return Panic.unreachable();
+    }
+  }
+
+  interface Traverse extends TermVisitor {
+    @Override
+    default @NotNull Closure closure(@NotNull Closure closure) {
+      return closure.descent(this::term);
+    }
+  }
+
   /// Called when [Term#descent] a sub-[Term].
   /// This method must keep type former (in Java level) unless {@param term} is [org.aya.syntax.core.term.marker.BetaRedex].
   /// @return dblity inherits from {@param term}
@@ -25,18 +39,13 @@ public interface TermVisitor {
   @NotNull Closure closure(@NotNull Closure closure);
 
   /// Construct a [TermVisitor] from {@param onTerm}, and panic when a [Closure] is met.
-  static @NotNull TermVisitor ofTerm(@NotNull UnaryOperator<Term> onTerm) {
-    return new TermVisitor() {
-      @Override
-      public @NotNull Term term(@NotNull Term term) {
-        return onTerm.apply(term);
-      }
+  static @NotNull TermVisitor expectTerm(@NotNull UnaryOperator<Term> onTerm) {
+    return (ExpectTerm) onTerm::apply;
+  }
 
-      @Override
-      public @NotNull Closure closure(@NotNull Closure closure) {
-        return Panic.unreachable();
-      }
-    };
+  /// Just traverse, make sure you will keep the dbi-level of [Term], see [Bound]
+  static @NotNull TermVisitor of(@NotNull UnaryOperator<@Bound Term> f) {
+    return (Traverse) f::apply;
   }
 
   /// > This function is kept for commemorating. You should **NOT** use this factory function.
@@ -59,7 +68,7 @@ public interface TermVisitor {
   /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
   ///
   /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
-  ///                   The index indicates how many new bindings are introduced.
+  ///          The index indicates how many new bindings are introduced.
   /// @implNote Implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
   ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
   /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm] (see [BindingIntro]),
@@ -68,7 +77,7 @@ public interface TermVisitor {
   ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
   /// @see BindingIntro
   /// @see Closure
-  @Deprecated(forRemoval = true)
+  @Deprecated   // forRemoval = true after we remove all use to `Term#descent(IndexedFunction)`
   static @NotNull TermVisitor ofLegacy(@NotNull IndexedFunction<Term, Term> f) {
     return new TermVisitor() {
       @Override

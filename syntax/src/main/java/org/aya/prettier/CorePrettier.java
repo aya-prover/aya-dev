@@ -250,7 +250,7 @@ public class CorePrettier extends BasePrettier<Term> {
     if (!(arg instanceof FreeTerm(var var))) return false;
     if (var != param) return false;
     var counter = new FindUsage(new Usage.Ref.Free(param));
-    return args.dropLast(1).allMatch(a -> counter.apply(0, a) == 0);
+    return args.dropLast(1).allMatch(a -> counter.apply(a) == 0);
   }
 
   private ImmutableSeq<Term> visibleArgsOf(Callable call) {
