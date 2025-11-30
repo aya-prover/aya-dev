@@ -164,6 +164,7 @@ public record CallResolver(
     term = normalizer.apply(term);
     if (stopOnBinders(term)) return;
     if (term instanceof Callable.Tele call) resolveCall(call);
+    // TODO: this will panic, since stopOnBinders doesn't handle all [BindingIntro]
     term.descent(TermVisitor.expectTerm((child) -> {
       // child here is never Bound, cause we already handle
       // all binding structures in [stopOnBinders],
