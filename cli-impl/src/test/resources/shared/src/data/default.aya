@@ -1,0 +1,7 @@
+open inductive Default (A : Type) (a : A)
+| default
+| with A
+
+def unwrap {A : Type} {a : A} (Default A a) : A
+| default => a
+| with value => value

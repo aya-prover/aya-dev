@@ -163,8 +163,7 @@ public sealed interface Term extends Serializable, AyaDocile
 
   default @NotNull Term doElevate(int level) {
     // Assumption : level > 0
-    // TODO: TermVisitor.of or .expectTerm ?
-    return descent(t -> t.doElevate(level));
+    return descent(TermVisitor.of(t -> t.doElevate(level)));
   }
 
   record Matching(@NotNull ImmutableSeq<@Bound Pat> patterns, int bindCount, @NotNull @Bound Term body) {

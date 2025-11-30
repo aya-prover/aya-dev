@@ -189,8 +189,8 @@ public final class ExprTycker extends ScopedTycker {
           for (@Closed var c2 : cls) {
           if (c1 == c2) continue;
             if (!(withConnection(c1.cof().add(c2.cof().descent(whnfVisitor())),
-                () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
-                () -> true)))
+              () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
+              () -> true)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
         }
         yield new Jdg.Default(new PartialTerm(cls), type);
