@@ -7,12 +7,11 @@ import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.UnaryOperator;
 
 public record MapLocalCtx(
   @NotNull MutableLinkedHashMap<LocalVar, Term> binds,
@@ -44,9 +43,9 @@ public record MapLocalCtx(
   }
 
   @Override @Contract(value = "_ -> new", pure = true)
-  public @NotNull LocalCtx map(UnaryOperator<Term> mapper) {
+  public @NotNull LocalCtx map(TermVisitor mapper) {
     var newBinds = binds.view()
-      .mapValues((_, t) -> mapper.apply(t));
+      .mapValues((_, t) -> mapper.term(t));
 
     return new MapLocalCtx(MutableLinkedHashMap.from(newBinds), vars, parent == null ? null : parent.map(mapper));
   }
@@ -73,7 +72,7 @@ public record MapLocalCtx(
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
-  @Override public @NotNull MapLocalCtx clone() {
-    return new MapLocalCtx(binds.clone(), vars.clone(), parent != null ? parent.clone() : null);
+  @Override public @NotNull MapLocalCtx copy() {
+    return new MapLocalCtx(binds.clone(), vars.clone(), parent != null ? parent.copy() : null);
   }
 }

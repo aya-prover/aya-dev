@@ -101,7 +101,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     @Closed @NotNull Term rhs,
     @Closed @Nullable Term type
   ) {
-    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().clone());
+    return new TyckState.Eqn(lhs, rhs, type, cmp, pos, localCtx().copy());
   }
 
   protected @Closed @NotNull RelDec<Term>

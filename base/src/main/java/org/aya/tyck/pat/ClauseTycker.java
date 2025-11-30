@@ -49,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
@@ -274,7 +273,7 @@ public final class ClauseTycker implements Problematic, Stateful {
       // It is safe to replace ctx:
       // * telescope are well-typed and no Meta
       // * PatternTycker doesn't introduce any Meta term
-      ctx = ctx.map(new TermInline()::term);
+      ctx = ctx.map(new TermInline());
 
       // fill missing patterns
       // This is not a typo of "repl"

@@ -6,12 +6,11 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
 import kala.control.Option;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.UnaryOperator;
 
 public record SeqLocalCtx(
   @NotNull ImmutableSeq<Term> type,
@@ -22,14 +21,14 @@ public record SeqLocalCtx(
   @Override public int size() {
     return 1 + (parent == null ? 0 : parent.size());
   }
-  @Override public @NotNull LocalCtx map(UnaryOperator<Term> mapper) {
-    return new SeqLocalCtx(ImmutableTreeSeq.from(type.view().map(mapper)), var,
-      parent == null ? null : parent.map(mapper));
+  @Override public @NotNull LocalCtx map(TermVisitor mapper) {
+    var seq = ImmutableTreeSeq.from(type.view().map(it -> it.descent(mapper)));
+    return new SeqLocalCtx(seq, var, parent == null ? null : parent.map(mapper));
   }
   @Override public @NotNull SeqView<LocalVar> extractLocal() { return var.view(); }
-  @Override public @NotNull LocalCtx clone() {
+  @Override public @NotNull LocalCtx copy() {
     if (parent == null) return this;
-    return new SeqLocalCtx(type, var, parent.clone());
+    return new SeqLocalCtx(type, var, parent.copy());
   }
   @Override public @NotNull Option<Term> getLocal(@NotNull LocalVar key) {
     var index = var.indexOf(key);
