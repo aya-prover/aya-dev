@@ -6,6 +6,7 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.TermVisitor;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
@@ -141,7 +142,26 @@ public sealed interface Term extends Serializable, AyaDocile
   ///
   /// @see BindingIntro
   /// @see Closure
-  @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
+  @Deprecated
+  default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
+    return descent(t -> f.apply(0, t), c -> c.descent(f));
+  }
+
+  @NotNull Term descent(@NotNull TermVisitor visitor);
+
+  default @NotNull Term descent(@NotNull UnaryOperator<Term> onTerm, @NotNull UnaryOperator<Closure> onClosure) {
+    return descent(new TermVisitor() {
+      @Override
+      public @NotNull Term term(@NotNull Term term) {
+        return onTerm.apply(term);
+      }
+
+      @Override
+      public @NotNull Closure closure(@NotNull Closure closure) {
+        return onClosure.apply(closure);
+      }
+    });
+  }
 
   @ApiStatus.NonExtendable
   default @NotNull Term descent(@NotNull UnaryOperator<Term> f) {

@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.DataDefLike;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
@@ -20,8 +21,8 @@ public record DataCall(
     return args.sameElements(args(), true) ? this : new DataCall(ref, ulift, args);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(Callable.descent(args, f));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(Callable.descent(args, visitor));
   }
 
   @Override public @NotNull Tele doElevate(int level) {

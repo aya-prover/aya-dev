@@ -3,6 +3,7 @@
 package org.aya.syntax.core.term;
 
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.Formation;
@@ -40,5 +41,5 @@ public record SortTerm(@NotNull SortKind kind, int lift) implements StableWHNF, 
     };
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) { return this; }
 }

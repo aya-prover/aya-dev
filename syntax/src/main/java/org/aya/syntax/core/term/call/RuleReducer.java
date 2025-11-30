@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDefLike;
@@ -36,8 +36,8 @@ public sealed interface RuleReducer extends Callable.Tele {
         ? this : new Fn(rule, ulift, args).make();
     }
 
-    @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-      return update(rule.descent(f), Callable.descent(args, f));
+    @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+      return update(rule.descent(visitor), Callable.descent(args, visitor));
     }
     public @NotNull FnCall toFnCall() { return new FnCall(rule.ref(), ulift, args); }
   }
@@ -68,9 +68,9 @@ public sealed interface RuleReducer extends Callable.Tele {
         ? this : new Con(rule, ulift, ownerArgs, conArgs).make();
     }
 
-    @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-      return update(rule.descent(f),
-        Callable.descent(ownerArgs, f), Callable.descent(conArgs, f));
+    @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+      return update(rule.descent(visitor),
+        Callable.descent(ownerArgs, visitor), Callable.descent(conArgs, visitor));
     }
   }
 }

@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Bound;
@@ -23,8 +24,8 @@ public record LetTerm(@NotNull Term definedAs, @NotNull Closure body) implements
       : new LetTerm(definedAs, body);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, definedAs), body.descent(f));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(definedAs), visitor.closure(body));
   }
 
   /// @apiNote this [LetTerm] must be [Closed]

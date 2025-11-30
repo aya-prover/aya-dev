@@ -4,6 +4,7 @@ package org.aya.syntax.core.term;
 
 import kala.function.IndexedFunction;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.TermVisitor;
 import org.aya.prettier.BasePrettier;
 import org.aya.pretty.doc.Doc;
 import org.aya.syntax.core.term.marker.StableWHNF;
@@ -32,5 +33,5 @@ public record ErrorTerm(AyaDocile description, boolean isReallyError) implements
       Doc.code(origin.toDoc(options))), true);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) { return this; }
 }

@@ -4,6 +4,7 @@ package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.FnDefLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +24,8 @@ public record FnCall(
     return args.sameElements(args(), true) ? this : new FnCall(ref, ulift, args, tailCall);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(Callable.descent(args, f));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(Callable.descent(args, visitor));
   }
 
   @Override public @NotNull Tele doElevate(int level) {

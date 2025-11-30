@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDefLike;
@@ -31,8 +32,8 @@ public interface ListOps<Def extends AnyDef> extends Shaped.Applicable<Def> {
     public ConRule update(@NotNull ListTerm empty) {
       return empty == this.empty ? this : new ConRule(ref, empty);
     }
-    @Override public @NotNull ConRule descent(@NotNull IndexedFunction<Term, Term> f) {
-      return update((ListTerm) f.apply(0, empty));
+    @Override public @NotNull ConRule descent(@NotNull TermVisitor visitor) {
+      return update((ListTerm) visitor.term(empty));
     }
   }
 }

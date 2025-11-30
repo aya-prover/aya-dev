@@ -5,6 +5,7 @@ package org.aya.syntax.core.term.call;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.BetaRedex;
@@ -19,9 +20,10 @@ public sealed interface Callable extends Term permits MatchCall, Callable.Tele, 
   @NotNull ImmutableSeq<@NotNull Term> args();
 
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, UnaryOperator<Term> f) {
-    return descent(args, (_, t) -> f.apply(t));
+    return descent(args, TermVisitor.ofTerm(f));
   }
 
+  @Deprecated
   static @NotNull ImmutableSeq<Term> descent(ImmutableSeq<Term> args, IndexedFunction<Term, Term> f) {
     // return args.map(arg -> f.apply(0, arg));
     if (args.isEmpty()) return args;
@@ -30,6 +32,10 @@ public sealed interface Callable extends Term permits MatchCall, Callable.Tele, 
       ret.set(i, f.apply(0, ret.get(i)));
     }
     return ret.toImmutableArray();
+  }
+
+  static @NotNull ImmutableSeq<Term> descent(@NotNull ImmutableSeq<Term> args, @NotNull TermVisitor visitor) {
+    return args.map(visitor::term);
   }
 
   /**
