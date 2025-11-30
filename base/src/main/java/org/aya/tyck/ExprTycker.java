@@ -122,7 +122,7 @@ public final class ExprTycker extends ScopedTycker {
         Jdg filling = null;
         if (hole.filling() != null) filling = synthesize(hole.filling());
         userHoles.append(new WithPos<>(expr.sourcePos(), hole));
-        if (hole.explicit()) fail(new Goal(state, freshHole, filling, localCtx().clone(), hole.accessibleLocal()));
+        if (hole.explicit()) fail(new Goal(state, freshHole, filling, localCtx().copy(), hole.accessibleLocal()));
         yield new Jdg.Default(freshHole, type);
       }
       case Expr.LitInt(var end) -> {
@@ -188,9 +188,9 @@ public final class ExprTycker extends ScopedTycker {
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
           if (c1 == c2) continue;
-          if (!(withConnection(c1.cof().add(c2.cof().descent((_, e) -> whnf(e))),
-                () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
-                () -> true)))
+          if (!(withConnection(c1.cof().add(c2.cof().descent(whnfVisitor())),
+              () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
+              () -> true)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
         }
         yield new Jdg.Default(new PartialTerm(cls), type);
@@ -361,7 +361,7 @@ public final class ExprTycker extends ScopedTycker {
         var meta = freshMeta(Constants.randomName(hole), expr.sourcePos(), MetaVar.Misc.IsType, hole.explicit());
         Jdg filling = null;
         if (hole.filling() != null) filling = synthesize(hole.filling());
-        if (hole.explicit()) fail(new Goal(state, meta, filling, localCtx().clone(), hole.accessibleLocal()));
+        if (hole.explicit()) fail(new Goal(state, meta, filling, localCtx().copy(), hole.accessibleLocal()));
         yield meta;
       }
       case Expr.Sort(var kind, var lift) -> new SortTerm(kind, lift);

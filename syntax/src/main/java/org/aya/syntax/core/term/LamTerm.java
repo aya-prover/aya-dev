@@ -4,8 +4,8 @@ package org.aya.syntax.core.term;
 
 import kala.collection.Seq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.term.marker.BindingIntro;
 import org.aya.syntax.core.term.marker.StableWHNF;
@@ -17,8 +17,9 @@ public record LamTerm(Closure body) implements StableWHNF, BindingIntro {
   public LamTerm(Term indexedBody) {
     this(new Closure.Locns(indexedBody));
   }
-  @Override public @NotNull LamTerm descent(@NotNull IndexedFunction<Term, Term> f) {
-    var result = body.descent(f);
+  @Override
+  public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    var result = visitor.closure(body);
     if (result == body) return this;
     return new LamTerm(result);
   }

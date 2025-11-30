@@ -10,11 +10,13 @@ import kala.collection.immutable.primitive.ImmutableIntSeq;
 import kala.collection.mutable.MutableSeq;
 import kala.value.primitive.MutableBooleanValue;
 import org.aya.generic.Renamer;
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.Finalizer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.states.TyckState;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.Pattern;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
@@ -47,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 public final class ClauseTycker implements Problematic, Stateful {
   private final @NotNull ExprTycker exprTycker;
@@ -239,7 +240,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     // inline terms in rhsResult
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
       preclause.sourcePos(),
-      preclause.pats().map(p -> p.descentTerm(zonker::zonk)),
+      preclause.pats().map(p -> p.descentTerm(term -> zonker.term(term))),
       preclause.bindCount(), preclause.expr()
     ));
 
@@ -321,7 +322,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         // now exprTycker has all substitutions that PatternTycker introduced.
         var rawCheckedBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
-        var zonkBody = zonker.zonk(rawCheckedBody);
+        var zonkBody = zonker.term(rawCheckedBody);
 
         // eta body with inserted patterns
         // make before [Pat.collectVariables], as we need [pats] are [Closed].
@@ -367,16 +368,22 @@ public final class ClauseTycker implements Problematic, Stateful {
 
   // region post tycking
 
-  private static final class TermInline implements UnaryOperator<Term> {
-    @Override public @NotNull Term apply(@NotNull Term term) {
+  // monomorphism to avoid `TermVisitor.of()` repeatly
+  private static final class TermInline implements TermVisitor {
+    @Override public @NotNull Term term(@NotNull Term term) {
       if (term instanceof MetaPatTerm metaPat) {
         var isEmpty = metaPat.meta().solution().isEmpty();
         if (isEmpty) throw new Panic("Unable to inline " + metaPat.toDoc(AyaPrettierOptions.debug()));
         // the solution may contain other MetaPatTerm
-        return metaPat.inline(this);
+        return metaPat.inline(this::term);
       } else {
         return term.descent(this);
       }
+    }
+
+    @Override
+    public @NotNull Closure closure(@NotNull Closure closure) {
+      return closure.descent(this::term);
     }
   }
 
@@ -414,7 +421,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   }
 
   private static @NotNull Jdg inlineTerm(@NotNull Jdg r) {
-    return r.map(new TermInline());
+    return r.map(new TermInline()::term);
   }
 
   /**
@@ -423,7 +430,7 @@ public final class ClauseTycker implements Problematic, Stateful {
   private static @NotNull PatternTycker.TyckResult inline(@NotNull PatternTycker.TyckResult result, @NotNull LocalCtx ctx) {
     // inline {Pat.Meta} before inline {MetaPatTerm}s
     var wellTyped = result.wellTyped().map(x ->
-      x.inline(ctx::put).descentTerm(new TermInline()));
+      x.inline(ctx::put).descentTerm(new TermInline()::term));
     // so that {MetaPatTerm}s can be inlined safely
     var paramSubst = result.paramSubst().map(ClauseTycker::inlineTerm);
 

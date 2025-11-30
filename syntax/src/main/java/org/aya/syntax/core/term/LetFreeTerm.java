@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Jdg;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.LocalVar;
@@ -17,7 +17,8 @@ public record LetFreeTerm(@Override @NotNull LocalVar name, @Closed @NotNull Jdg
       : new LetFreeTerm(name, definedAs);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(definedAs.map(t -> f.apply(0, t)));
+  @Override
+  public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(definedAs.map(visitor::term));
   }
 }

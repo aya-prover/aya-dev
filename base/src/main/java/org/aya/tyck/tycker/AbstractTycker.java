@@ -48,7 +48,7 @@ public sealed abstract class AbstractTycker implements Stateful, Contextful, Pro
   @Override public @NotNull TyckState state() { return state; }
   @Override public @NotNull Reporter reporter() { return reporter; }
 
-  public @NotNull PrimCall interval() {
+  public @Closed @NotNull PrimCall interval() {
     return state.primFactory.getCall(PrimDef.ID.I);
   }
 

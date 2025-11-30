@@ -6,8 +6,8 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
 import org.aya.generic.Renamer;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.syntax.core.Closure;
@@ -33,8 +33,9 @@ public record DepTypeTerm(
     return param == this.param && body == this.body ? this : new DepTypeTerm(kind, param, body);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, param), body.descent(f));
+  @Override
+  public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(param), visitor.closure(body));
   }
 
   /// ```

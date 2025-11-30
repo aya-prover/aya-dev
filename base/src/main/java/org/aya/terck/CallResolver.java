@@ -6,19 +6,23 @@ import kala.collection.Set;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
 import kala.value.MutableValue;
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.pat.Pat;
-import org.aya.syntax.core.term.*;
+import org.aya.syntax.core.term.AppTerm;
+import org.aya.syntax.core.term.FreeTerm;
+import org.aya.syntax.core.term.ProjTerm;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.call.ConCall;
 import org.aya.syntax.core.term.call.ConCallLike;
 import org.aya.syntax.core.term.repr.IntegerTerm;
-import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.PAppTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.tycker.Stateful;
@@ -85,7 +89,7 @@ public record CallResolver(
           var attempt = compareConArgs(conArgs, con);
           // Reduce arguments and compare again. This may cause performance issues (but not observed yet [2022-11-07]),
           // see https://github.com/agda/agda/issues/2403 for more information.
-          if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(this::whnf)), con);
+          if (attempt == Relation.unk()) attempt = compareConArgs(conArgs.map(a -> a.descent(whnfVisitor())), con);
 
           yield attempt;
         }
@@ -97,7 +101,7 @@ public record CallResolver(
           // This is related to the predicativity issue mentioned in #907
           case PAppTerm papp -> {
             // closed by [papp]
-            @Closed var head = papp.fun();
+            var head = papp.fun();
             while (head instanceof PAppTerm papp2) head = papp2.fun();
             yield compare(head, con);
           }
@@ -150,50 +154,26 @@ public record CallResolver(
     // all binding of body is insted.
     @Closed var instedBody = matching.body().instTeleVar(vars.view());
 
-    visitTerm(instedBody);
+    new CallVisitor().term(instedBody);
     this.currentClause.set(null);
   }
 
-  private void visitTerm(@Closed @NotNull Term term) {
-    if (stopOnBinders(term)) return;
-
-    // TODO: Improve error reporting to include the original call
-    var normalizer = new Normalizer(state);
-    normalizer.opaque = ImmutableSet.from(targets.map(TyckDef::ref));
-    term = normalizer.apply(term);
-    if (stopOnBinders(term)) return;
-    if (term instanceof Callable.Tele call) resolveCall(call);
-    term.descent((_, child) -> {
-      // child here is never Bound, cause we already handle
-      // all binding structures in [stopOnBinders],
-      // thus [child] must be a direct sub-[Term] of [term], which is [Closed]
-      @Closed var assertedChild = child;
-      visitTerm(assertedChild);
-      return child;
-    });
-  }
-
-  /// Special handling of all binding structures
-  private boolean stopOnBinders(@Closed @NotNull Term term) {
-    switch (term) {
-      case LamTerm(var body) -> {
-        visitTerm(body.apply(new LocalVar("_")));
-        return true;
-      }
-      case DepTypeTerm(_, var param, var body) -> {
-        visitTerm(param);
-        visitTerm(body.apply(new LocalVar("_")));
-        return true;
-      }
-      case CoeTerm(var type, var r, var s) -> {
-        visitTerm(r);
-        visitTerm(s);
-        visitTerm(type.apply(new LocalVar("_")));
-        return true;
-      }
-      // TODO: impl more?
-      default -> { }
+  private class CallVisitor implements TermVisitor {
+    @Override public @NotNull Term term(@Closed @NotNull Term term) {
+      // TODO: Improve error reporting to include the original call
+      var normalizer = new Normalizer(state);
+      normalizer.opaque = ImmutableSet.from(targets.map(TyckDef::ref));
+      var whnf = normalizer.apply(term);
+      if (whnf instanceof Callable.Tele call)
+        resolveCall(call);
+      whnf.descent(this);
+      return term;
     }
-    return false;
+
+    @Override public @NotNull Closure closure(@NotNull Closure closure) {
+      @Closed var applied = closure.apply(new LocalVar("_"));
+      term(applied);
+      return closure;
+    }
   }
 }

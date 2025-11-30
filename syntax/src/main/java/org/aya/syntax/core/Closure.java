@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core;
 
-import kala.function.IndexedFunction;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.FreeTerm;
@@ -29,7 +28,7 @@ public sealed interface Closure extends UnaryOperator<Term> {
   static @NotNull Closure mkConst(@NotNull Term term) { return new Const(term); }
 
   /// Make sure you can handle [Bound] term, or use [#reapply(UnaryOperator)] instead.
-  Closure descent(IndexedFunction<@Bound Term, Term> f);
+  Closure descent(UnaryOperator<@Bound Term> f);
 
   /// Corresponds to _instantiate_ operator in \[MM 2004\],
   /// _instantiate_ the body with given {@param term}.
@@ -62,8 +61,8 @@ public sealed interface Closure extends UnaryOperator<Term> {
   }
 
   record Const(@NotNull Term term) implements Closure {
-    @Override public Closure descent(IndexedFunction<Term, Term> f) {
-      var result = f.apply(1, term);
+    @Override public Closure descent(UnaryOperator<@Bound Term> f) {
+      var result = f.apply(term);
       if (result == term) return this;
       return new Const(result);
     }
@@ -77,13 +76,13 @@ public sealed interface Closure extends UnaryOperator<Term> {
   /// So it is important to immediately descent into the body, which we do so using [#toLocns()].
   /// I believe it is at least `Function<@Closed Term, Term>``
   record Jit(@NotNull UnaryOperator<@Closed Term> lam) implements Closure {
-    @Override public Closure descent(IndexedFunction<Term, Term> f) { return toLocns().descent(f); }
+    @Override public Closure descent(UnaryOperator<@Bound Term> f) { return toLocns().descent(f); }
     @Override public Term apply(@Closed Term term) { return lam.apply(term); }
   }
 
   record Locns(@Bound Term body) implements Closure {
-    @Override public Closure descent(IndexedFunction<Term, Term> f) {
-      var result = f.apply(1, body);
+    @Override public Closure descent(UnaryOperator<@Bound Term> f) {
+      var result = f.apply(body);
       if (result == body) return this;
       return new Locns(result);
     }

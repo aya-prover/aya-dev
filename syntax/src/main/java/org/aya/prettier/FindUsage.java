@@ -1,8 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.prettier;
 
 import kala.collection.Seq;
+import org.aya.generic.TermVisitor;
 import org.aya.prettier.BasePrettier.Usage.Ref;
 import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
@@ -39,7 +40,7 @@ public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
     public int homomorphism() { return metaUsage + termUsage; }
   }
 
-  public void find(int index, @NotNull Term term) {
+  public void find(@NotNull Term term) {
     switch (new Pair<>(term, ref)) {
       case Pair(FreeTerm(var var), Ref.Unfree(var list)) when !list.contains(var) -> accumulator.found();
       case Pair(FreeTerm(var var), Ref.Free(var fvar)) when var == fvar -> accumulator.found();
@@ -47,29 +48,29 @@ public record FindUsage(@NotNull Ref ref, @NotNull Accumulator accumulator) {
       default -> {
         var before = accumulator.inMeta;
         if (term instanceof MetaCall) accumulator.inMeta = true;
-        term.descent((l, t) -> {
-          find(index + l, t);
+        term.descent(TermVisitor.of(t -> {
+          find(t);
           return t;
-        });
+        }));
         accumulator.inMeta = before;
       }
     }
   }
 
-  public int apply(int index, @NotNull Term term) {
-    find(index, term);
+  public int apply(@NotNull Term term) {
+    find(term);
     return accumulator.homomorphism();
   }
 
   public static int free(Term t, LocalVar l) {
-    return new FindUsage(new Ref.Free(l)).apply(0, t);
+    return new FindUsage(new Ref.Free(l)).apply(t);
   }
   public static int meta(Term t, MetaVar l) {
-    return new FindUsage(new Ref.Meta(l)).apply(0, t);
+    return new FindUsage(new Ref.Meta(l)).apply(t);
   }
   public static @NotNull Accumulator unfree(Term t, Seq<LocalVar> frees) {
     var findUsage = new FindUsage(new Ref.Unfree(frees));
-    findUsage.find(0, t);
+    findUsage.find(t);
     return findUsage.accumulator;
   }
 }

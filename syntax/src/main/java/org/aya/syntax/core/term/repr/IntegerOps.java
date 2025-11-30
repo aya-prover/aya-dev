@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDefLike;
@@ -29,7 +29,7 @@ public sealed interface IntegerOps<Def extends AnyDef> extends Shaped.Applicable
       if (arg instanceof IntegerTerm intTerm) return intTerm.map(x -> x + 1);
       return null;
     }
-    @Override public @NotNull ConRule descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+    @Override public @NotNull ConRule descent(@NotNull TermVisitor visitor) { return this; }
   }
 
   record FnRule(@Override @NotNull FnDefLike ref, @NotNull Kind kind) implements IntegerOps<FnDefLike> {
@@ -57,6 +57,6 @@ public sealed interface IntegerOps<Def extends AnyDef> extends Shaped.Applicable
         }
       };
     }
-    @Override public @NotNull FnRule descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+    @Override public @NotNull FnRule descent(@NotNull TermVisitor visitor) { return this; }
   }
 }

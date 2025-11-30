@@ -70,7 +70,7 @@ public final class Unifier extends TermComparator {
       }
     }
 
-    Term returnType;
+    @Closed @Nullable Term returnType;
     switch (computeReturnType(meta, rhs, type)) {
       case RelDec.Claim<Term> c -> {
         switch (c.downgrade()) {

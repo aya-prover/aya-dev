@@ -2,8 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
-import java.util.EnumSet;
-
 import kala.control.Either;
 import org.aya.generic.Modifier;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
@@ -11,6 +9,8 @@ import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.EnumSet;
 
 public record FnDef(
   @NotNull DefVar<FnDef, FnDecl> ref,

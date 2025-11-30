@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.Formation;
 import org.aya.syntax.core.term.marker.StableWHNF;
@@ -14,7 +14,7 @@ public record PartialTyTerm(@NotNull Term ty, @NotNull DisjCof cof) implements S
     return cof == cof() && ty == ty() ? this : new PartialTyTerm(ty, cof);
   }
 
-  @Override public @NotNull PartialTyTerm descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(cof().descent(f), f.apply(0,ty));
+  @Override public @NotNull PartialTyTerm descent(@NotNull TermVisitor visitor) {
+    return update(cof().descent(visitor), visitor.term(ty));
   }
 }

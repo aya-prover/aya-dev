@@ -1,10 +1,11 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.generic.stmt;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.function.IndexedFunction;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.term.Term;
@@ -106,7 +107,7 @@ public interface Shaped<T> {
      * @return null if failed
      */
     @Nullable Term apply(@NotNull ImmutableSeq<Term> args);
-    @NotNull Applicable<Def> descent(@NotNull IndexedFunction<Term, Term> f);
+    @NotNull Applicable<Def> descent(@NotNull TermVisitor visitor);
   }
 
 }

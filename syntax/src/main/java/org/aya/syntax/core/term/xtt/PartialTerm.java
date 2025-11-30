@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +15,9 @@ public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements Stab
       return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
     }
 
-    public @NotNull Clause descent(@NotNull IndexedFunction<Term, Term> f) {
-      return new Clause(cof().descent(f), tm.descent(f));
+    public @NotNull Clause descent(@NotNull TermVisitor visitor) {
+      // TODO: really? tm.descent(visitor) instead of visitor.term(tm) ?
+      return new Clause(cof().descent(visitor), tm.descent(visitor));
     }
   }
 
@@ -24,7 +25,7 @@ public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements Stab
     return clauses.sameElements(clauses(), true) ? this : new PartialTerm(clauses);
   }
 
-  @Override public @NotNull PartialTerm descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(clauses().map(e -> e.descent(f)));
+  @Override public @NotNull PartialTerm descent(@NotNull TermVisitor visitor) {
+    return update(clauses().map(e -> e.descent(visitor)));
   }
 }

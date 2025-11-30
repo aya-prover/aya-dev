@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term;
 
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,8 @@ public record ProjTerm(@NotNull Term of, boolean fst) implements BetaRedex {
     return this.of == of && this.fst == fst ? this : new ProjTerm(of, fst).make();
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, of), fst);
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(of), fst);
   }
 
   public static @Closed @NotNull Term fst(@Closed @NotNull Term of) {

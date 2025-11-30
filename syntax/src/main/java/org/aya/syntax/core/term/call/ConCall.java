@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.ConDef;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.term.Term;
@@ -23,8 +23,8 @@ public record ConCall(
     return head == head() && conArgs.sameElements(conArgs(), true) ? this : new ConCall(head, conArgs);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(head.descent(f), Callable.descent(conArgs, f));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(head.descent(visitor), Callable.descent(conArgs, visitor));
   }
 
   public ConCall(

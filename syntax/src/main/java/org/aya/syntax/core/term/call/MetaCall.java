@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.term.DTKind;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.annotation.Closed;
@@ -53,7 +53,7 @@ public record MetaCall(
     return args.sameElements(args(), true) ? this : new MetaCall(ref, args);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(Callable.descent(args, f));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(Callable.descent(args, visitor));
   }
 }

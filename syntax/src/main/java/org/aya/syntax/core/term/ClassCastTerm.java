@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.def.ClassDefLike;
 import org.aya.syntax.core.def.MemberDefLike;
@@ -60,8 +60,9 @@ public record ClassCastTerm(
     };
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, subterm), remember.map(x -> x.descent(f)), forget.map(x -> x.descent(f)));
+  @Override
+  public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(subterm), remember.map(visitor::closure), forget.map(visitor::closure));
   }
 
   public @Nullable Closure get(@NotNull MemberDefLike member) {

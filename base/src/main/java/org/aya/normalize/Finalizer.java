@@ -5,10 +5,13 @@ package org.aya.normalize;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableSinglyLinkedList;
+import org.aya.generic.TermVisitor;
 import org.aya.normalize.error.UnsolvedLit;
 import org.aya.normalize.error.UnsolvedMeta;
 import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitMatchy;
+import org.aya.syntax.core.Closure;
+import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.Matchy;
 import org.aya.syntax.core.term.MetaPatTerm;
 import org.aya.syntax.core.term.Param;
@@ -24,28 +27,31 @@ import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
-public interface Finalizer {
+public interface Finalizer extends TermVisitor {
   @NotNull TyckState state();
-  default @NotNull Term doZonk(@NotNull Term term) {
+
+  @Override @NotNull default Term term(@Closed @NotNull Term term) {
     return switch (term) {
-      case MetaCall meta -> state().computeSolution(meta, this::zonk);
-      case MetaPatTerm meta -> meta.inline(this::zonk);
-      case MetaLitTerm meta -> meta.inline(this::zonk);
+      case MetaCall meta -> state().computeSolution(meta, this::term);
+      case MetaPatTerm meta -> meta.inline(this::term);
+      case MetaLitTerm meta -> meta.inline(this::term);
       case MatchCall match -> match.update(
-        match.args().map(this::zonk),
-        match.captures().map(this::zonk),
+        match.args().map(this::term),
+        match.captures().map(this::term),
         switch (match.ref()) {
           case JitMatchy jit -> jit;
-          case Matchy matchy -> matchy.descent(this::zonk);
+          case Matchy matchy -> matchy.descent(this::term);
         });
-      default -> term.descent(this::zonk);
+      default -> term.descent(TermVisitor.of(this::term));
     };
   }
-  @NotNull Term zonk(@NotNull Term term);
+  @Override default @NotNull Closure closure(@NotNull Closure closure) {
+    return closure.reapply(this::term);
+  }
 
   record Freeze(@NotNull Stateful delegate) implements Finalizer {
     @Override public @NotNull TyckState state() { return delegate.state(); }
-    @Override public @NotNull Term zonk(@NotNull Term term) { return doZonk(term); }
+    public @NotNull Term zonk(@Closed @NotNull Term term) { return term(term); }
   }
 
   /**
@@ -62,13 +68,13 @@ public interface Finalizer {
     @Override public @NotNull TyckState state() { return delegate.state(); }
     @Override public @NotNull Reporter reporter() { return delegate.reporter(); }
 
-    public ImmutableSeq<Param> zonk(ImmutableSeq<Param> tele) {
-      return tele.map(wp -> wp.descent(this::zonk));
+    public ImmutableSeq<Param> tele(ImmutableSeq<Param> tele) {
+      return tele.map(wp -> wp.descent(this::term));
     }
 
-    public @NotNull Term zonk(@NotNull Term term) {
+    public @NotNull Term term(@Closed @NotNull Term term) {
       stack.push(term);
-      var result = doZonk(term);
+      var result = Finalizer.super.term(term);
       // result shall not be MetaPatTerm
       switch (result) {
         case MetaCall(var ref, _) when !ref.isUser() && !alreadyReported.contains(ref) -> {

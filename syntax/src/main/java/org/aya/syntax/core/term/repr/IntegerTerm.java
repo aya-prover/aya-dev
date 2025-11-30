@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.repr.CodeShape;
@@ -45,7 +45,7 @@ public record IntegerTerm(
     return ImmutableSeq.of(new IntegerTerm(repr - 1, zero, suc, type));
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) { return this; }
   @Override public @NotNull Term constructorForm() {
     // I AM the constructor form.
     return this;

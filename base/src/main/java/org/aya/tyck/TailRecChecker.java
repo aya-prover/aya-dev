@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.tyck;
 
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.concrete.stmt.decl.FnDecl;
 import org.aya.syntax.core.annotation.Bound;
 import org.aya.syntax.core.def.FnDef;
@@ -35,14 +36,14 @@ public interface TailRecChecker {
           var body = l.body();
 
           definedAs = apply(definedAs, false);
-          body = body.descent((_, t) -> apply(t, true));
+          body = body.descent((t) -> apply(t, true));
 
           return l.update(definedAs, body);
         }
         default -> { }
       }
 
-      return term.descent(t -> apply(t, false));
+      return term.descent(TermVisitor.of(t -> apply(t, false)));
     }
   }
 

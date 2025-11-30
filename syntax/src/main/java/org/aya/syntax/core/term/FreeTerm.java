@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.LocalVar;
 import org.jetbrains.annotations.NotNull;
@@ -20,5 +20,5 @@ public record FreeTerm(@NotNull LocalVar name) implements FreeTermLike {
 
   public FreeTerm(@NotNull String name) { this(LocalVar.generate(name)); }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) { return this; }
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) { return this; }
 }

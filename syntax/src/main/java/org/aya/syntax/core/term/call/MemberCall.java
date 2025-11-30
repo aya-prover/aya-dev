@@ -3,7 +3,7 @@
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.MemberDefLike;
 import org.aya.syntax.core.term.AppTerm;
@@ -29,8 +29,8 @@ public record MemberCall(
   @Override public @NotNull ImmutableSeq<@NotNull Term> args() {
     return projArgs.prepended(of);
   }
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, of), Callable.descent(projArgs, f), term -> f.apply(0, term));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(of), Callable.descent(projArgs, visitor), visitor::term);
   }
 
   public static @NotNull Term make(

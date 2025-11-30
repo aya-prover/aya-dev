@@ -4,7 +4,7 @@ package org.aya.syntax.core.term.repr;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableTreeSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.generic.stmt.Shaped;
 import org.aya.syntax.core.def.ConDefLike;
 import org.aya.syntax.core.repr.CodeShape;
@@ -58,8 +58,8 @@ public record ListTerm(
       ? this : new ListTerm(repr, nil, cons, type);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(repr.map(term -> f.apply(0, term)), (DataCall) f.apply(0, type));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(repr.map(visitor::term), (DataCall) visitor.term(type));
   }
 
   @Override public @NotNull ConCallLike.Head head() {

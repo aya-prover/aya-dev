@@ -5,7 +5,7 @@ package org.aya.syntax.core.term;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.marker.BetaRedex;
@@ -18,8 +18,9 @@ public record AppTerm(@NotNull Term fun, @NotNull Term arg) implements BetaRedex
     return fun == this.fun && arg == this.arg ? this : new AppTerm(fun, arg).make(f);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, fun), f.apply(0, arg), term -> f.apply(0, term));
+  @Override
+  public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(fun), visitor.term(arg), visitor::term);
   }
 
   public static @Closed @NotNull Term make(@Closed @NotNull Term f, @Closed @NotNull Term a) { return new AppTerm(f, a).make(); }

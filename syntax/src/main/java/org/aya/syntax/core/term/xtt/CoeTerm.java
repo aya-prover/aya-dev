@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.Closure;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
@@ -18,8 +18,8 @@ public record CoeTerm(@NotNull Closure type, @NotNull Term r, @NotNull Term s) i
     return type == type() && r == r() && s == s() ? this : new CoeTerm(type, r, s);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(type.descent(f), f.apply(0, r), f.apply(0, s));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.closure(type), visitor.term(r), visitor.term(s));
   }
 
   public @NotNull CoeTerm inverse(Closure newTy) { return new CoeTerm(newTy, s, r); }

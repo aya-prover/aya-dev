@@ -4,8 +4,8 @@ package org.aya.syntax.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
 import org.aya.generic.AyaDocile;
+import org.aya.generic.TermVisitor;
 import org.aya.prettier.BasePrettier;
 import org.aya.prettier.CorePrettier;
 import org.aya.pretty.doc.Doc;
@@ -46,7 +46,9 @@ public sealed interface Term extends Serializable, AyaDocile
   /// @see #replaceAllFrom
   default @NotNull @Bound Term bindAllFrom(@NotNull ImmutableSeq<LocalVar> vars, int fromDepth) {
     if (vars.isEmpty()) return this;
-    return descent((i, t) -> t.bindAllFrom(vars, fromDepth + i));
+    return descent(
+      t -> t.bindAllFrom(vars, fromDepth),
+      c -> c.descent(t -> t.bindAllFrom(vars, fromDepth + 1)));
   }
 
   /// Corresponds to _abstract_ operator in \[MM 2004\].
@@ -83,7 +85,9 @@ public sealed interface Term extends Serializable, AyaDocile
   @ApiStatus.Internal
   default @NoInherit @NotNull Term replaceAllFrom(int from, @NotNull ImmutableSeq<@Closed Term> list) {
     if (list.isEmpty()) return this;
-    return descent((i, t) -> t.replaceAllFrom(from + i, list));
+    return descent(
+      t -> t.replaceAllFrom(from, list),
+      c -> c.descent(t -> t.replaceAllFrom(from + 1, list)));
   }
 
   /// @see #replaceAllFrom(int, ImmutableSeq)
@@ -113,39 +117,18 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
-  /// For example, a {@link LamTerm}:
-  /// ```
-  ///     Γ, a : A ⊢ b : B
-  /// --------------------------
-  /// Γ ⊢ fn (a : A) => (b : B)
-  ///```
-  /// `f` will apply to `b`, but the context of `b`: `Γ, a : A` has a new binding,
-  /// therefore the implementation should be `f.apply(1, b)`.
-  /// In the other hand, a [AppTerm]:
-  ///```
-  /// Γ ⊢ g : A → B   Γ ⊢ a : A
-  /// --------------------------
-  ///        Γ ⊢ g a : B
-  ///```
-  ///`f` will apply to both `g` and `a`, but the context of them have no extra binding,
-  /// so the implementation should be `f.apply(0, g)` and `f.apply(0, a)`
+  /// Visit all directly sub nodes of this [Term], it could be either a [Term] or a [Closure].
   ///
-  /// @param f a "mapper" which will apply to all (directly) sub nodes of [Term].
-  ///          The index indicates how many new bindings are introduced.
-  /// @implNote Implements [Term#bindAt] and [Term#replaceAllFrom] if this term is a leaf node.
-  ///           Also, {@param f} should preserve [Closure] (with possible change of the implementation).
-  /// @apiNote Note that [Term]s provided by `f` might contain [LocalTerm] (see [BindingIntro]),
-  ///          therefore your {@param f} should be able to handle them,
-  ///          or don't [#descent] on [Term] that contains [Bound] term if your {@param f} cannot handle them.
-  ///          Also, [#descent] on a JIT Term may be restricted, only bindings are accessible.
-  ///
-  /// @see BindingIntro
-  /// @see Closure
-  @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f);
+  /// You may use [TermVisitor#expectTerm] if you make sure that `this` Term doesn't have any [Closure] sub nodes.
+  @NotNull Term descent(@NotNull TermVisitor visitor);
 
-  @ApiStatus.NonExtendable
-  default @NotNull Term descent(@NotNull UnaryOperator<Term> f) {
-    return this.descent((_, t) -> f.apply(t));
+  default @NotNull Term descent(@NotNull UnaryOperator<Term> onTerm, @NotNull UnaryOperator<Closure> onClosure) {
+    return descent(new TermVisitor() {
+      @Override public @NotNull Term term(@NotNull Term term) { return onTerm.apply(term); }
+      @Override public @NotNull Closure closure(@NotNull Closure closure) {
+        return onClosure.apply(closure);
+      }
+    });
   }
 
   /// Lift the sort level of this term
@@ -160,7 +143,7 @@ public sealed interface Term extends Serializable, AyaDocile
 
   default @NotNull Term doElevate(int level) {
     // Assumption : level > 0
-    return descent(t -> t.doElevate(level));
+    return descent(TermVisitor.of(t -> t.doElevate(level)));
   }
 
   record Matching(@NotNull ImmutableSeq<@Bound Pat> patterns, int bindCount, @NotNull @Bound Term body) {
@@ -168,9 +151,10 @@ public sealed interface Term extends Serializable, AyaDocile
       return body == body() ? this : new Matching(patterns, bindCount, body);
     }
 
-    public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
-      return update(f.apply(bindCount, body));
-    }
+    // TODO: remove commented code
+    // public @NotNull Matching descent(@NotNull IndexedFunction<Term, Term> f) {
+    //   return update(f.apply(bindCount, body));
+    // }
 
     public void forEach(@NotNull Consumer<Term> f, @NotNull Consumer<Pat> g) {
       patterns.forEach(g);

@@ -8,6 +8,7 @@ import kala.collection.immutable.ImmutableSet;
 import kala.control.Either;
 import kala.control.Result;
 import org.aya.generic.Modifier;
+import org.aya.generic.TermVisitor;
 import org.aya.states.TyckState;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitMatchy;
@@ -89,11 +90,11 @@ public final class Normalizer implements UnaryOperator<Term> {
         // Already full NF mode
         // Make sure you handle all [Term]s that contains [Closure] before, such as [LamTerm]
         case StableWHNF _ -> {
-          return term.descent(this);
+          return term.descent(TermVisitor.expectTerm(this));
         }
         case LocalTerm _ -> throw new IllegalStateException("Local term escapes: " + term);
         case BetaRedex app -> {
-          var result = app.descent(this);
+          var result = app.descent(TermVisitor.expectTerm(this));
           if (result == app) return app;
           if (!(result instanceof BetaRedex newApp)) {
             term = result;
@@ -171,7 +172,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             continue;
           }
           // Already in fullNormalize mode
-          return call.descent(this);
+          return call.descent(TermVisitor.expectTerm(this));
         }
         case PrimCall prim -> {
           var newArgs = Callable.descent(prim.args(), this);

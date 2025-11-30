@@ -1,9 +1,9 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.call;
 
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.def.MatchyLike;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +34,9 @@ public record MatchCall(
       ? this : new MatchCall(newClauses, newArgs, newCaptures);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    var newArgs = args.map(x -> f.apply(0, x));
-    var newCaptures = captures.map(x -> f.apply(0, x));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    var newArgs = Callable.descent(args, visitor);
+    var newCaptures = Callable.descent(captures, visitor);
     return update(newArgs, newCaptures, ref);
   }
 }
