@@ -5,6 +5,7 @@ package org.aya.syntax.core.term.xtt;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableArrayList;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,13 +14,10 @@ public record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
     return new DisjCof(elements().appended(c));
   }
 
-  public @NotNull DisjCof descent(@NotNull IndexedFunction<Term, Term> f) {
+  public @NotNull DisjCof descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
-    var ret = MutableArrayList.from(elements());
-    for (int i = 0; i < ret.size(); i++) {
-      ret.set(i, ret.get(i).descent(f));
-    }
-    return new DisjCof(ret.toImmutableArray());
+    // TODO: see ConjCof
+    return new DisjCof(elements.map(t -> t.descent(visitor)));
   }
 
   public boolean empty() {

@@ -144,7 +144,7 @@ public sealed interface Term extends Serializable, AyaDocile
   /// @see Closure
   @Deprecated
   default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return descent(t -> f.apply(0, t), c -> c.descent(f));
+    return descent(t -> f.apply(0, t), c -> c.descent((t) -> f.apply(1, t)));
   }
 
   @NotNull Term descent(@NotNull TermVisitor visitor);

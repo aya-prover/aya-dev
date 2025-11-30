@@ -35,7 +35,7 @@ public interface TailRecChecker {
           var body = l.body();
 
           definedAs = apply(definedAs, false);
-          body = body.descent((_, t) -> apply(t, true));
+          body = body.descent((t) -> apply(t, true));
 
           return l.update(definedAs, body);
         }
