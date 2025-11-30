@@ -122,7 +122,7 @@ public sealed interface TeleTycker {
       checkSignature(params, expr);
       tycker.solveMetas();
       var zonker = new Finalizer.Zonk<>(tycker);
-      return result.map(zonker::zonk);
+      return result.map(term -> zonker.term(term));
     }
     @Override public @NotNull Term checkType(@NotNull WithPos<Expr> typeExpr, boolean isResult) {
       if (!isResult) return tycker.ty(typeExpr);

@@ -116,8 +116,8 @@ public record StmtTycker(
             @Closed var result = tycker.inherit(expr, expectedType).wellTyped();
             tycker.solveMetas();
             var zonker = new Finalizer.Zonk<>(tycker);
-            @Bound var resultTerm = zonker.zonk(result).bindTele(teleVars.view());
-            fnRef.signature = fnRef.signature.descent(zonker::zonk);
+            @Bound var resultTerm = zonker.term(result).bindTele(teleVars.view());
+            fnRef.signature = fnRef.signature.descent(term -> zonker.term(term));
             yield new FnDef(fnRef, fnDecl.modifiers, Either.left(resultTerm));
           }
           case FnBody.BlockBody body -> {
@@ -216,7 +216,7 @@ public record StmtTycker(
         var signature = teleTycker.checkSignature(data.telescope, result);
         tycker.solveMetas();
         var zonker = new Finalizer.Zonk<>(tycker);
-        signature = signature.descent(zonker::zonk);
+        signature = signature.descent(term -> zonker.term(term));
         var sort = SortTerm.Type0;
         if (signature.result() instanceof SortTerm userSort) sort = userSort;
         else fail(BadTypeError.doNotLike(tycker.state, result, signature.result(),
@@ -238,7 +238,7 @@ public record StmtTycker(
           var zonker = new Finalizer.Zonk<>(tycker);
           // Pusheen must be in the header, because once we have the header,
           // there will be defcalls to it,
-          fnRef.signature = fnRef.signature.descent(zonker::zonk).pusheen(tycker::whnf);
+          fnRef.signature = fnRef.signature.descent(term -> zonker.term(term)).pusheen(tycker::whnf);
           if (fnRef.signature.params().isEmpty() && body.clauses().isEmpty())
             fail(new NobodyError(decl.nameSourcePos(), fn.ref));
         }
@@ -261,7 +261,7 @@ public record StmtTycker(
     tycker.solveMetas();
     var zonker = new Finalizer.Zonk<>(tycker);
     signature = signature.pusheen(tycker::whnf)
-      .descent(zonker::zonk)
+      .descent(term -> zonker.term(term))
       .bindTele(
         tycker.popThis(),
         new Param("self", classCall, false),
@@ -368,12 +368,12 @@ public record StmtTycker(
     // the path result may also refer to it, so we need to bind both
     var zonker = new Finalizer.Zonk<>(tycker);
     // lives in `Gamma = [tycker.localCtx()]` and `Delta = [selfBinds]`
-    var boundDataCall = (DataCall) zonker.zonk(freeDataCall).bindTele(selfBinds);
-    if (boundaries != null) boundaries = (EqTerm) zonker.zonk(boundaries).bindTele(selfBinds);
+    var boundDataCall = (DataCall) zonker.term(freeDataCall).bindTele(selfBinds);
+    if (boundaries != null) boundaries = (EqTerm) zonker.term(boundaries).bindTele(selfBinds);
     var boundariesWithDummy = boundaries != null ? boundaries : ErrorTerm.DUMMY;
 
     // this lives in top-level after bind
-    var hackyWholeSig = new AbstractTele.Locns(zonker.zonk(selfTele), new TupTerm(
+    var hackyWholeSig = new AbstractTele.Locns(zonker.tele(selfTele), new TupTerm(
       // This is a silly hack that allows two terms to appear in the result of a Signature
       // I considered using `AppTerm` but that is more disgraceful
       boundDataCall, boundariesWithDummy))
@@ -424,7 +424,7 @@ public record StmtTycker(
       null, prim.entireSourcePos(),
       msg -> new PrimError.BadSignature(prim, msg, new UnifyInfo(tycker.state)));
     var zonker = new Finalizer.Zonk<>(tycker);
-    primRef.signature = tele.descent(zonker::zonk);
+    primRef.signature = tele.descent(term -> zonker.term(term));
     tycker.solveMetas();
     tycker.setLocalCtx(new MapLocalCtx());
   }

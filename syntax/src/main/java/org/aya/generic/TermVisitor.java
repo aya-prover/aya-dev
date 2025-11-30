@@ -17,17 +17,11 @@ import java.util.function.UnaryOperator;
 
 public interface TermVisitor {
   interface ExpectTerm extends TermVisitor {
-    @Override
-    default @NotNull Closure closure(@NotNull Closure closure) {
-      return Panic.unreachable();
-    }
+    @Override default @NotNull Closure closure(@NotNull Closure closure) { return Panic.unreachable(); }
   }
 
   interface Traverse extends TermVisitor {
-    @Override
-    default @NotNull Closure closure(@NotNull Closure closure) {
-      return closure.descent(this::term);
-    }
+    @Override default @NotNull Closure closure(@NotNull Closure closure) { return closure.descent(this::term); }
   }
 
   /// Called when [Term#descent] a sub-[Term].

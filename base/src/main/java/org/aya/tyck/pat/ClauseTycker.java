@@ -240,7 +240,7 @@ public final class ClauseTycker implements Problematic, Stateful {
     // inline terms in rhsResult
     rhsResult = rhsResult.map(preclause -> new Pat.Preclause<>(
       preclause.sourcePos(),
-      preclause.pats().map(p -> p.descentTerm(zonker::zonk)),
+      preclause.pats().map(p -> p.descentTerm(term -> zonker.term(term))),
       preclause.bindCount(), preclause.expr()
     ));
 
@@ -322,7 +322,7 @@ public final class ClauseTycker implements Problematic, Stateful {
         // now exprTycker has all substitutions that PatternTycker introduced.
         var rawCheckedBody = exprTycker.inherit(bodyExpr, result.result()).wellTyped();
         exprTycker.solveMetas();
-        var zonkBody = zonker.zonk(rawCheckedBody);
+        var zonkBody = zonker.term(rawCheckedBody);
 
         // eta body with inserted patterns
         // make before [Pat.collectVariables], as we need [pats] are [Closed].
