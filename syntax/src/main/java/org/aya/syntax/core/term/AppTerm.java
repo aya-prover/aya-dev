@@ -19,10 +19,6 @@ public record AppTerm(@NotNull Term fun, @NotNull Term arg) implements BetaRedex
     return fun == this.fun && arg == this.arg ? this : new AppTerm(fun, arg).make(f);
   }
 
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, fun), f.apply(0, arg), term -> f.apply(0, term));
-  }
-
   @Override
   public @NotNull Term descent(@NotNull TermVisitor visitor) {
     return update(visitor.term(fun), visitor.term(arg), visitor::term);

@@ -5,6 +5,7 @@ package org.aya.syntax.core.term.repr;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.function.IndexedFunction;
+import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.CodeShape;
 import org.aya.syntax.core.term.Term;
@@ -24,8 +25,8 @@ public record MetaLitTerm(
   public @NotNull MetaLitTerm update(@NotNull Term type) {
     return type == type() ? this : new MetaLitTerm(sourcePos, repr, candidates, type);
   }
-  @Override public @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return update(f.apply(0, type));
+  @Override public @NotNull Term descent(@NotNull TermVisitor visitor) {
+    return update(visitor.term(type));
   }
 
   @SuppressWarnings("unchecked") public @NotNull Term inline(UnaryOperator<Term> pre) {
