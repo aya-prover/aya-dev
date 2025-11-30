@@ -19,11 +19,10 @@ import org.aya.util.Panic;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
-import java.util.function.UnaryOperator;
 
 public interface DimInPatsPermutation {
   record Replacer(@NotNull Map<LocalVar, DimTerm> let) implements TermVisitor.Traverse {
-    @Override public @NotNull Term term(Term term) {
+    @Override public @NotNull Term term(@NotNull Term term) {
       return switch (term) {
         case FreeTerm(var name) when let.containsKey(name) -> let.get(name);
         default -> term.descent(this);

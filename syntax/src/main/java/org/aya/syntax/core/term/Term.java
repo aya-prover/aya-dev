@@ -4,7 +4,6 @@ package org.aya.syntax.core.term;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import kala.function.IndexedFunction;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.TermVisitor;
 import org.aya.prettier.BasePrettier;
@@ -118,12 +117,6 @@ public sealed interface Term extends Serializable, AyaDocile
     return instTele(teleVars.map(FreeTerm::new));
   }
 
-  // TODO: no use to this method, remove this
-  @Deprecated
-  default @NotNull Term descent(@NotNull IndexedFunction<Term, Term> f) {
-    return descent(TermVisitor.ofLegacy(f));
-  }
-
   /// Visit all directly sub nodes of this [Term], it could be either a [Term] or a [Closure].
   ///
   /// You may use [TermVisitor#expectTerm] if you make sure that `this` Term doesn't have any [Closure] sub nodes.
@@ -131,24 +124,11 @@ public sealed interface Term extends Serializable, AyaDocile
 
   default @NotNull Term descent(@NotNull UnaryOperator<Term> onTerm, @NotNull UnaryOperator<Closure> onClosure) {
     return descent(new TermVisitor() {
-      @Override
-      public @NotNull Term term(@NotNull Term term) {
-        return onTerm.apply(term);
-      }
-
-      @Override
-      public @NotNull Closure closure(@NotNull Closure closure) {
+      @Override public @NotNull Term term(@NotNull Term term) { return onTerm.apply(term); }
+      @Override public @NotNull Closure closure(@NotNull Closure closure) {
         return onClosure.apply(closure);
       }
     });
-  }
-
-  /// Be careful that this is NOT the same as `descent(TermVisitor.ofTerm)`
-  /// Use `descent(TermVisitor.expectTerm)` or `descent(TermVisitor.of)` instead.
-  @Deprecated
-  @ApiStatus.NonExtendable
-  default @NotNull Term descent(@NotNull UnaryOperator<Term> f) {
-    return descent(TermVisitor.of(f));
   }
 
   /// Lift the sort level of this term
