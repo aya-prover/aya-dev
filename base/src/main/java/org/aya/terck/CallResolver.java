@@ -154,7 +154,7 @@ public record CallResolver(
     // all binding of body is insted.
     @Closed var instedBody = matching.body().instTeleVar(vars.view());
 
-    instedBody.descent(new CallVisitor());
+    new CallVisitor().term(instedBody);
     this.currentClause.set(null);
   }
 
@@ -163,9 +163,10 @@ public record CallResolver(
       // TODO: Improve error reporting to include the original call
       var normalizer = new Normalizer(state);
       normalizer.opaque = ImmutableSet.from(targets.map(TyckDef::ref));
-      term = normalizer.apply(term);
-      if (term instanceof Callable.Tele call) resolveCall(call);
-      term.descent(this);
+      var whnf = normalizer.apply(term);
+      if (whnf instanceof Callable.Tele call)
+        resolveCall(call);
+      whnf.descent(this);
       return term;
     }
 
