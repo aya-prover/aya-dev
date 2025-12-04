@@ -93,7 +93,7 @@ public record DoubleChecker(
         if (!(whnf(expected) instanceof PartialTyTerm(var A, var cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         // check each element
-        ImmutableSeq<ConjCof> cls_cof = ImmutableSeq.empty();
+        ImmutableSeq<ConjCofNF> cls_cof = ImmutableSeq.empty();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
                 () -> inherit(c.tm(), A),
@@ -102,7 +102,7 @@ public record DoubleChecker(
           cls_cof = cls_cof.appended(c.cof());
         }
         // check cofibration
-        if (!unifier.cofibrationEquiv(cof, new DisjCof(cls_cof)))
+        if (!unifier.cofibrationEquiv(cof, new DisjCofNF(cls_cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

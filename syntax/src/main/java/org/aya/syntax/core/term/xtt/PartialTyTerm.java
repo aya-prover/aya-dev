@@ -9,8 +9,8 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
 ///
-public record PartialTyTerm(@NotNull Term ty, @NotNull DisjCof cof) implements StableWHNF, Formation {
-  public @NotNull PartialTyTerm update(@NotNull DisjCof cof, @NotNull Term ty) {
+public record PartialTyTerm(@NotNull Term ty, @NotNull Term cof) implements StableWHNF, Formation {
+  public @NotNull PartialTyTerm update(@NotNull Term cof, @NotNull Term ty) {
     return cof == cof() && ty == ty() ? this : new PartialTyTerm(ty, cof);
   }
 

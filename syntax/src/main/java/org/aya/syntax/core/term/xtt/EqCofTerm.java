@@ -7,8 +7,8 @@ import org.aya.syntax.core.term.Term;
 import org.jetbrains.annotations.NotNull;
 
 /// lhs = rhs
-public record EqCof(@NotNull Term lhs, @NotNull Term rhs) {
-  public @NotNull EqCof descent(@NotNull TermVisitor visitor) {
-    return new EqCof(visitor.term(lhs()), visitor.term(rhs));
+public record EqCofTerm(@NotNull Term lhs, @NotNull Term rhs) implements Term {
+  public @NotNull EqCofTerm descent(@NotNull TermVisitor visitor) {
+    return new EqCofTerm(visitor.term(lhs()), visitor.term(rhs));
   }
 }
