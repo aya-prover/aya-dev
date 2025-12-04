@@ -463,16 +463,16 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  private @NotNull Doc visitCof(@NotNull EqCof cof) {
+  private @NotNull Doc visitCof(@NotNull EqCofTerm cof) {
     return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
   }
 
-  private @NotNull Doc visitCof(@NotNull ConjCof cof) {
+  private @NotNull Doc visitCof(@NotNull ConjCofNF cof) {
     return Doc.join(COF_AND, cof.elements().map(this::visitCof));
   }
 
-  private @NotNull Doc visitCof(@NotNull DisjCof cof) {
-    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
+  private @NotNull Doc visitCof(@NotNull DisjCofNF cof) {
+    return Doc.braced(Doc.join(COF_OR, cof .elements().map(this::visitCof)));
   }
 
   // region Name Generation

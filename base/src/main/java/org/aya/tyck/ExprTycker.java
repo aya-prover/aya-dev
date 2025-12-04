@@ -174,7 +174,7 @@ public final class ExprTycker extends ScopedTycker {
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         // check each clause
         ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
-        ImmutableSeq<@Closed ConjCof> all_cof = ImmutableSeq.empty();
+        ImmutableSeq<@Closed ConjCofNF> all_cof = ImmutableSeq.empty();
         for (var rcls : clause) {
           var cls_cof = elabCof(rcls.cof());
           var cls_rhs = inherit(rcls.tm(), A).wellTyped();
@@ -182,8 +182,8 @@ public final class ExprTycker extends ScopedTycker {
           all_cof = all_cof.appended(cls_cof);
         }
         // coverage. cof <=> all_cof
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjCof(all_cof))))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjCof(all_cof), expr.sourcePos(), state()));
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjCofNF(all_cof))))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjCofNF(all_cof), expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
@@ -199,24 +199,24 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull EqCof elabCof(@NotNull Expr.EqCof cof) {
+  private @Closed @NotNull EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
     var lhs = inherit(cof.lhs(), interval());
     var rhs = inherit(cof.rhs(), interval());
-    return new EqCof(lhs.wellTyped(), rhs.wellTyped());
+    return new EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
   }
 
-  private @Closed @NotNull ConjCof elabCof(@NotNull Expr.ConjCof conj) {
-    ImmutableSeq<@Closed EqCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull ConjCofNF elabCof(@NotNull Expr.ConjCof conj) {
+    ImmutableSeq<@Closed EqCofTerm> ret = ImmutableSeq.empty();
     for (var c : conj.elements())
       ret = ret.appended(elabCof(c));
-    return new ConjCof(ret);
+    return new ConjCofNF(ret);
   }
 
-  private @Closed @NotNull DisjCof elabCof(@NotNull Expr.DisjCof disj) {
-    ImmutableSeq<@Closed ConjCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull DisjCofNF elabCof(@NotNull Expr.DisjCof disj) {
+    ImmutableSeq<@Closed ConjCofNF> ret = ImmutableSeq.empty();
     for (var c : disj.elements())
       ret = ret.appended(elabCof(c));
-    return new DisjCof(ret);
+    return new DisjCofNF(ret);
   }
 
   /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level

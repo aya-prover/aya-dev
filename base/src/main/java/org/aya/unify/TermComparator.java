@@ -641,7 +641,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private boolean cofibrationImply(@NotNull ConjCof c1, EqCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, EqCofTerm c2) {
     return withConnection(c1,
       () -> state.isConnected(c2.lhs(), c2.rhs()),
       () -> true // exfalso
@@ -649,7 +649,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a => c ∩ d?
-  private boolean cofibrationImply(@NotNull ConjCof c1, @NotNull ConjCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull ConjCofNF c2) {
     // a => c ∩ d
     // iff. (a => c) and (a => d)
     if (c2.empty())
@@ -661,7 +661,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a => c ∪ d?
-  private boolean cofibrationImply(@NotNull ConjCof c1, @NotNull DisjCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull DisjCofNF c2) {
     // a => c ∪ d
     // iff. (a => c) or (a => d)
     if (c2.empty())
@@ -673,7 +673,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a ∪ b => c ∪ d?
-  private boolean cofibrationImply(@NotNull DisjCof c1, @NotNull DisjCof c2) {
+  private boolean cofibrationImply(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
     if (c1.empty())
@@ -681,7 +681,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
   }
 
-  public boolean cofibrationEquiv(@NotNull DisjCof c1, @NotNull DisjCof c2) {
+  public boolean cofibrationEquiv(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
   }
 
