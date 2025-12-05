@@ -54,7 +54,7 @@ public record PrimDef(
     COE("coe"),
     HCOMP("hcom"),
     COF("Cof"),
-    COF_ADN("and"),
+    COF_AND("and"),
     COF_OR("or"),
     COF_EQ("eq");
     public final @NotNull @NonNls String id;
