@@ -4,7 +4,6 @@ package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.TermVisitor;
-import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,8 +12,7 @@ public record DisjCofNF(@NotNull ImmutableSeq<ConjCofNF> elements) implements St
     return new DisjCofNF(elements().appended(c));
   }
 
-  @Override
-  public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
+  @Override public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
     // TODO: see ConjCof
     return new DisjCofNF(elements.map(t -> t.descent(visitor)));

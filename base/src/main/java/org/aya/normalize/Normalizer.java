@@ -55,7 +55,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   public @Nullable DisjCofNF expand(@Closed @NotNull Term cof) {
     if (!(apply(cof) instanceof PrimCall(var ref, _, var args))) return null;
     return switch (ref.id()) {
-      case COF_ADN -> {
+      case COF_AND -> {
         var anf = expand(args.get(0));
         var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
