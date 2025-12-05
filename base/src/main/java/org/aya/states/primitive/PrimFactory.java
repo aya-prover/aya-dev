@@ -46,6 +46,9 @@ public class PrimFactory {
       stringType,
       stringConcat,
       intervalType,
+      cofType,
+      cofAnd,
+      cofOr,
       pathType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
@@ -179,9 +182,27 @@ public class PrimFactory {
   */
 
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
-    ((prim, _) -> prim),
+    (prim, _) -> prim,
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
+
+  public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
+    (prim, _) -> prim,
+    ref -> new PrimDef(ref, SortTerm.Set0, ID.COF),
+    ImmutableSeq.empty());
+
+  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND);
+  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR);
+
+  private @NotNull PrimSeed makeCofAndOr(ID id) {
+    return new PrimSeed(id, (prim, _) -> prim, ref -> {
+      var F = getCall(ID.COF);
+      return new PrimDef(ref, ImmutableSeq.of(
+        new Param("φ", F, true),
+        new Param("ψ", F, true)
+      ), F, id);
+    }, ImmutableSeq.of(ID.COF));
+  }
 
   public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
     var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref());
@@ -221,6 +242,7 @@ public class PrimFactory {
   /// - When we are working in an LSP, and users can reload a file to redefine things.
   /// - When we are serializing a file, which we will deserialize immediately, and this will
   ///   replace the existing PrimDefs with their JIT-compiled version.
+  ///
   /// @return true if redefinition is forbidden.
   @ForLSP public boolean isForbiddenRedefinition(@NotNull PrimDef.ID id, boolean isJit) {
     if (isJit)

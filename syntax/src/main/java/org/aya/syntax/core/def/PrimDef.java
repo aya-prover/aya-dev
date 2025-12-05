@@ -53,7 +53,7 @@ public record PrimDef(
     PARTIAL("Partial"),
     COE("coe"),
     HCOMP("hcom"),
-    COF("Cof"),
+    COF("F"),
     COF_AND("and"),
     COF_OR("or"),
     COF_EQ("eq");
