@@ -5,8 +5,6 @@ package org.aya.normalize;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
-import kala.collection.mutable.MutableArray;
-import kala.collection.mutable.MutableQueue;
 import kala.collection.mutable.MutableSeq;
 import kala.control.Either;
 import kala.control.Result;
@@ -54,33 +52,35 @@ public final class Normalizer implements UnaryOperator<Term> {
    * The function expand of the given cofibration,
    * and returns null when cof is not ready to evaluate.
    */
-  public @Nullable DisjCofNF expand(@NotNull Term cof) {
-    return switch (apply(cof)) {
-      case AndCofTerm(var a, var b) -> {
-        var anf = expand(a);
-        var bnf = expand(b);
+  public @Nullable DisjCofNF expand(@Closed @NotNull Term cof) {
+    if (!(apply(cof) instanceof PrimCall(var ref, _, var args))) return null;
+    return switch (ref.id()) {
+      case COF_ADN -> {
+        var anf = expand(args.get(0));
+        var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
         yield expandAnd(anf, bnf);
       }
-      case OrCofTerm(var a, var b) -> {
-        var anf = expand(a);
-        var bnf = expand(b);
+      case COF_OR -> {
+        var anf = expand(args.get(0));
+        var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
         yield new DisjCofNF(anf.elements().appendedAll(bnf.elements()));
       }
-      case EqCofTerm e -> new DisjCofNF(ImmutableSeq.of(new ConjCofNF(ImmutableSeq.of(e))));
+      case COF_EQ -> new DisjCofNF(ImmutableSeq.of(new ConjCofNF(ImmutableSeq.of(
+        new EqCofTerm(args.get(0), args.get(1))))));
       default -> null;
     };
   }
 
   // compute a and b
-  private @Nullable DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
+  private @NotNull DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
     MutableSeq<ConjCofNF> ret = MutableSeq.create(a.elements().size() * b.elements().size());
     var i = 0;
     for (var ae : a.elements())
       for (var be : b.elements()) {
         ret.set(i, new ConjCofNF(ae.elements().appendedAll(be.elements())));
-        i ++;
+        i++;
       }
     return new DisjCofNF(ret.toImmutableArray());
   }

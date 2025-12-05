@@ -16,7 +16,8 @@ import org.aya.syntax.core.annotation.NoInherit;
 import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.marker.*;
-import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.core.term.xtt.CoeTerm;
+import org.aya.syntax.core.term.xtt.EqCofTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,7 +30,7 @@ import java.util.function.UnaryOperator;
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
 /// together with their overrides in [LocalTerm] and [FreeTermLike].
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, BindingIntro, Formation, StableWHNF, TyckInternal, AndCofTerm, CoeTerm, DisjCofNF, EqCofTerm, OrCofTerm {
+  permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, BindingIntro, Formation, StableWHNF, TyckInternal, CoeTerm, EqCofTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);
