@@ -631,11 +631,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
-      case Pair(PartialTyTerm(var A1, var cof1), PartialTyTerm(var A2, var cof2)) -> {
-        var wl2 = cof1.descent(whnfVisitor());
-        var wr2 = cof2.descent(whnfVisitor());
-        if (!cofibrationEquiv(wl2, wr2)) yield Decision.NO;
-        yield compare(A1, A2, null);
+      case Pair(PartialTyTerm(var Al, var cofl), PartialTyTerm(var Ar, var cofr)) -> {
+        var disjl = expand(cofl);
+        var disjr = expand(cofr);
+        if (!cofibrationEquiv(disjl, disjr)) yield Decision.NO;
+        yield compare(Al, Ar, null);
       }
       default -> throw noRules(preLhs);
     };
