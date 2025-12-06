@@ -53,7 +53,9 @@ public final class Normalizer implements UnaryOperator<Term> {
    * and returns null when cof is not ready to evaluate.
    */
   public @Nullable DisjCofNF expand(@Closed @NotNull Term cof) {
-    if (!(apply(cof) instanceof PrimCall(var ref, _, var args))) return null;
+    var wcof = apply(cof);
+    if (wcof instanceof DisjCofNF nf) return nf;
+    if (!(wcof instanceof PrimCall(var ref, _, var args))) return null;
     return switch (ref.id()) {
       case COF_AND -> {
         var anf = expand(args.get(0));

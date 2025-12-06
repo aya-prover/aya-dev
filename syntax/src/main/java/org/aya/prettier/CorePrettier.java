@@ -212,7 +212,7 @@ public class CorePrettier extends BasePrettier<Term> {
         var prefix = Doc.sep(KW_MATCH, Doc.commaList(deltaDoc));
         yield Doc.sep(prefix, Doc.braced(Doc.spaced(Doc.styled(COMMENT, "compiled code"))));
       }
-      case PartialTyTerm(var A, var cof) -> Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, A), visitCof(cof));
+      case PartialTyTerm(var A, var cof) -> Doc.sep(KW_PARTIAL_TYPE, term(Outer.AppSpine, A), term(Outer.AppSpine, cof));
       case PartialTerm(var clause) -> Doc.sep(KW_PARTIAL, Doc.wrap("[", "]",
         Doc.vcommaList(clause.map(cls ->
           Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
@@ -231,6 +231,8 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield letDoc;
       }
+      case DisjCofNF disjCofNF -> visitCof(disjCofNF);
+      case EqCofTerm eqCofTerm -> visitCof(eqCofTerm);
     };
   }
 

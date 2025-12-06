@@ -552,8 +552,8 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.PartialTy(var A, var cof) -> {
         var wellA = synthesize(A);
-        var wellCof = elabCof(cof);
-        var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof);
+        var wellCof = synthesize(cof);
+        var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof.wellTyped());
         yield new Jdg.Default(wellTyped, wellA.type());
       }
       case Expr.Unresolved _ -> Panic.unreachable();
