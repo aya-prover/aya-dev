@@ -30,7 +30,7 @@ import java.util.function.UnaryOperator;
 /// The core syntax of Aya. To understand how locally nameless works, see [#bindAllFrom] and [#replaceAllFrom],
 /// together with their overrides in [LocalTerm] and [FreeTermLike].
 public sealed interface Term extends Serializable, AyaDocile
-  permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, BindingIntro, Formation, StableWHNF, TyckInternal, CoeTerm, EqCofTerm {
+  permits ClassCastTerm, LetTerm, LocalTerm, Callable, BetaRedex, BindingIntro, Formation, StableWHNF, TyckInternal, CoeTerm {
 
   @Override default @NotNull Doc toDoc(@NotNull PrettierOptions options) {
     return new CorePrettier(options).term(BasePrettier.Outer.Free, this);

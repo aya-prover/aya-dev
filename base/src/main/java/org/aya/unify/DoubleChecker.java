@@ -102,7 +102,8 @@ public record DoubleChecker(
           cls_cof = cls_cof.appended(c.cof());
         }
         // check cofibration
-        if (!unifier.cofibrationEquiv(cof, new DisjCofNF(cls_cof)))
+        var disj = expand(cof);
+        if (!unifier.cofibrationEquiv(disj, new DisjCofNF(cls_cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

@@ -182,8 +182,9 @@ public final class ExprTycker extends ScopedTycker {
           all_cof = all_cof.appended(cls_cof);
         }
         // coverage. cof <=> all_cof
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjCofNF(all_cof))))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjCofNF(all_cof), expr.sourcePos(), state()));
+        var disj = expand(cof);
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, new DisjCofNF(all_cof))))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, new DisjCofNF(all_cof), expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {

@@ -15,5 +15,5 @@ import org.aya.syntax.core.term.xtt.*;
  * after a substitution (this usually happens under face restrictions (aka cofibrations)).
  */
 public sealed interface StableWHNF extends Term
-  permits ClassCastTerm, DepTypeTerm, ErrorTerm, LamTerm, NewTerm, SortTerm, TupTerm, ClassCall, DataCall, IntegerTerm, ListTerm, StringTerm, DimTerm, EqTerm, PartialTerm, PartialTyTerm, DisjCofNF {
+  permits ClassCastTerm, DepTypeTerm, ErrorTerm, LamTerm, NewTerm, SortTerm, TupTerm, ClassCall, DataCall, IntegerTerm, ListTerm, StringTerm, DimTerm, EqTerm, PartialTerm, PartialTyTerm, DisjCofNF, EqCofTerm {
 }

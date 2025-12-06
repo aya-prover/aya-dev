@@ -4,10 +4,11 @@ package org.aya.syntax.core.term.xtt;
 
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.term.Term;
+import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
 /// lhs = rhs
-public record EqCofTerm(@NotNull Term lhs, @NotNull Term rhs) implements Term {
+public record EqCofTerm(@NotNull Term lhs, @NotNull Term rhs) implements StableWHNF {
   public @NotNull EqCofTerm descent(@NotNull TermVisitor visitor) {
     return new EqCofTerm(visitor.term(lhs()), visitor.term(rhs));
   }
