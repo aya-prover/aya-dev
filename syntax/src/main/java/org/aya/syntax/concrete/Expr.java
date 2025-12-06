@@ -371,9 +371,9 @@ public sealed interface Expr extends AyaDocile {
     }
   }
 
-  record PartialTy(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) implements Expr {
+  record PartialTy(@NotNull WithPos<Expr> ty, @NotNull WithPos<Expr> cof) implements Expr {
 
-    public @NotNull PartialTy update(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) {
+    public @NotNull PartialTy update(@NotNull WithPos<Expr> ty, @NotNull WithPos<Expr> cof) {
       return ty == ty() && cof == cof() ? this : new PartialTy(ty, cof);
     }
 

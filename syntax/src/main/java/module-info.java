@@ -8,7 +8,6 @@ module aya.syntax {
   requires org.jetbrains.annotations;
   requires kala.collection;
   requires kala.base;
-  requires aya.syntax;
 
   exports org.aya.generic;
   exports org.aya.prettier;
