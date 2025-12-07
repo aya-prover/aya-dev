@@ -726,13 +726,13 @@ public record AyaProducer(
       var tele = unitPattern(node.child(UNIT_PATTERN));
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
     }
-    if (node.is(PARTIAL_TY_EXPR)) {
-      var cof = new Expr.DisjCof(node.child(COMMA_SEP).childrenOfType(COF)
-        .map(c -> new Expr.ConjCof(ImmutableSeq.of(cof(c))))
-        .toSeq());
-      var ty = expr(node.child(EXPR));
-      return new WithPos<>(pos, new Expr.PartialTy(ty, cof));
-    }
+    // if (node.is(PARTIAL_TY_EXPR)) {
+    //   var cof = new Expr.DisjCof(node.child(COMMA_SEP).childrenOfType(COF)
+    //     .map(c -> new Expr.ConjCof(ImmutableSeq.of(cof(c))))
+    //     .toSeq());
+    //   var ty = expr(node.child(EXPR));
+    //   return new WithPos<>(pos, new Expr.PartialTy(ty, cof));
+    // }
     if (node.is(PARTIAL_ATOM)) {
       var clauses = node.child(COMMA_SEP).childrenOfType(PARTIAL_CLAUSE)
         .map(this::partialClause)

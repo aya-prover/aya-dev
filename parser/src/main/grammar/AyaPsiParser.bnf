@@ -267,7 +267,6 @@ expr ::= newExpr
        | lambda1Expr
        | lambda2Expr
        | matchExpr
-       | partialTyExpr
        | letExpr
        | doExpr
        | selfExpr
@@ -301,7 +300,6 @@ sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 selfExpr ::= KW_SELF (AT qualifiedId)?
 
 partialAtom ::= KW_PARTIAL LARRAY <<commaSep partialClause>>? RARRAY
-partialTyExpr ::= KW_PARTIAL_TY LARRAY <<commaSep cof>>? RARRAY expr
 
 cof ::= cofOperand "=" cofOperand
 private cofOperand ::= refExpr | litIntExpr

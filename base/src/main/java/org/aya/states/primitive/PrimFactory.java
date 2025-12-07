@@ -46,6 +46,7 @@ public class PrimFactory {
       stringType,
       stringConcat,
       intervalType,
+      partialType,
       cofType,
       cofAnd,
       cofOr,
@@ -74,7 +75,7 @@ public class PrimFactory {
   @FunctionalInterface
   public interface Unfolder extends BiFunction<@Closed @NotNull PrimCall, @NotNull TyckState, @Closed @NotNull Term> { }
 
-  public record PrimSeed(
+  public record  PrimSeed(
     @NotNull ID name,
     @NotNull Unfolder unfold,
     @NotNull Function<@NotNull DefVar<PrimDef, PrimDecl>, @NotNull PrimDef> supplier,
@@ -185,6 +186,16 @@ public class PrimFactory {
     (prim, _) -> prim,
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
+
+  public final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL,
+    (prim, _) -> prim,
+    ref -> {
+      var F = getCall(ID.COF);
+      return new PrimDef(ref, ImmutableSeq.of(
+        new Param("φ", F, true),
+        new Param("A", Type0, true)), Type0, ID.COF);
+    },
+    ImmutableSeq.of(ID.COF));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
     (prim, _) -> prim,
