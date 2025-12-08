@@ -75,7 +75,7 @@ public class PrimFactory {
   @FunctionalInterface
   public interface Unfolder extends BiFunction<@Closed @NotNull PrimCall, @NotNull TyckState, @Closed @NotNull Term> { }
 
-  public record  PrimSeed(
+  public record PrimSeed(
     @NotNull ID name,
     @NotNull Unfolder unfold,
     @NotNull Function<@NotNull DefVar<PrimDef, PrimDecl>, @NotNull PrimDef> supplier,

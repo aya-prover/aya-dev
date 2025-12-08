@@ -1,3 +1,6 @@
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+
 // This is a generated file. Not intended for manual editing.
 package org.aya.parser;
 
@@ -76,7 +79,6 @@ public interface AyaPsiElementTypes {
   IElementType OPEN_CMD = new AyaPsiElementType("OPEN_CMD");
   IElementType PARTIAL_ATOM = new AyaPsiElementType("PARTIAL_ATOM");
   IElementType PARTIAL_CLAUSE = new AyaPsiElementType("PARTIAL_CLAUSE");
-  IElementType PARTIAL_TY_EXPR = new AyaPsiElementType("PARTIAL_TY_EXPR");
   IElementType PATTERN = new AyaPsiElementType("PATTERN");
   IElementType PATTERNS = new AyaPsiElementType("PATTERNS");
   IElementType PI_EXPR = new AyaPsiElementType("PI_EXPR");

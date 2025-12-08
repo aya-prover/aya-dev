@@ -140,7 +140,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self|partialTy)Expr") = expr
+  extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self)Expr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr|lambdaHoleExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
