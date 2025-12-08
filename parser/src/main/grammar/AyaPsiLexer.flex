@@ -108,7 +108,6 @@ BLOCK_COMMENT_END   = "*/"
   "example"             { return KW_EXAMPLE; }
   "nonterminating"      { return KW_NONTERMINATING; }
   "partial"             { return KW_PARTIAL; }
-  "Partial"             { return KW_PARTIAL_TY; }
   "coerce"              { return KW_COERCE; }
   "opaque"              { return KW_OPAQUE; }
   "inline"              { return KW_INLINE; }

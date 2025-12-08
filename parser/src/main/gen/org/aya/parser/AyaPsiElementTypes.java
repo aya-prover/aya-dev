@@ -162,7 +162,6 @@ public interface AyaPsiElementTypes {
   IElementType KW_OVERLAP = new AyaPsiTokenType("overlap");
   IElementType KW_OVERRIDE = new AyaPsiTokenType("override");
   IElementType KW_PARTIAL = new AyaPsiTokenType("partial");
-  IElementType KW_PARTIAL_TY = new AyaPsiTokenType("Partial");
   IElementType KW_PI = new AyaPsiTokenType("Fn");
   IElementType KW_PRIM = new AyaPsiTokenType("prim");
   IElementType KW_PRIVATE = new AyaPsiTokenType("private");
