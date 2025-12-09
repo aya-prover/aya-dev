@@ -42,13 +42,14 @@ import java.util.EnumMap;
  *
  * @param imports   The modules that this ayac imports. Absolute path.
  * @param exports   Whether certain definition is exported. Re-exported symbols will not be here.
- * @param reExports key: an imported module that is in {@param imports}
+ * @param importReExports key: an imported module that is in {@param imports}
  * @author kiva
  */
 public record CompiledModule(
   @NotNull ImmutableSeq<SerImport> imports,
   @NotNull ImmutableSet<String> exports,
-  @NotNull ImmutableMap<ModulePath, SerUseHide> reExports,
+  @NotNull ImmutableMap<ModulePath, SerUseHide> importReExports,
+  @NotNull ImmutableMap<ModulePath, SerUseHide> localReExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -122,7 +123,7 @@ public record CompiledModule(
       new SerImport(v.resolveInfo().modulePath(),
         k.ids(), v.reExport())).toSeq();
     var serExport = ImmutableSet.from(exports);
-    var reExports = ImmutableMap.from(resolveInfo.reExports().view()
+    var importReExports = ImmutableMap.from(resolveInfo.reExports().view()
       .map((k, v) -> Tuple.of(
         resolveInfo.imports()
           .get(k)   // should not fail
@@ -140,7 +141,7 @@ public record CompiledModule(
       .map(data -> Tuple.of(data.name, data.renamed)));
     var prims = resolveInfo.primFactory().qnameMap();
 
-    return new CompiledModule(imports, serExport, reExports, serOps, prims, opRename);
+    return new CompiledModule(imports, serExport, importReExports, ImmutableMap.empty(), serOps, prims, opRename);
   }
 
   private record Serialization(
@@ -175,7 +176,8 @@ public record CompiledModule(
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
     shallowResolve(loader, resolveInfo, reporter);
-    loadModule(primFactory, shapeFactory, context, state.topLevelClass(context.modulePath()), reporter);
+    var rootClass = state.topLevelClass(context.modulePath());
+    loadModule(primFactory, shapeFactory, context, rootClass, reporter);
     primDefs.forEach((_, qname) ->
       primFactory.definePrim((JitPrim) state.resolve(qname)));
     deOp(state, resolveInfo);
@@ -225,9 +227,7 @@ public record CompiledModule(
     }
   }
 
-  /**
-   * like {@link org.aya.resolve.visitor.StmtPreResolver} but only resolve import
-   */
+  /// like [org.aya.resolve.visitor.StmtPreResolver] but only resolve import
   private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
     for (var anImport : imports) {
       var modName = anImport.path;
@@ -242,7 +242,7 @@ public record CompiledModule(
       var success = thisResolve.thisModule()
         .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
       if (!success) Panic.unreachable();
-      var useHide = reExports.getOrNull(modName);
+      var useHide = importReExports.getOrNull(modName);
       if (useHide != null) {
         success = thisResolve.thisModule().openModule(modRename,
           Stmt.Accessibility.Public,
@@ -253,7 +253,7 @@ public record CompiledModule(
 
         if (!success) Panic.unreachable();
       }
-      var acc = reExports.containsKey(modName)
+      var acc = importReExports.containsKey(modName)
         ? Stmt.Accessibility.Public
         : Stmt.Accessibility.Private;
       thisResolve.open(loaded, SourcePos.SER, acc);
