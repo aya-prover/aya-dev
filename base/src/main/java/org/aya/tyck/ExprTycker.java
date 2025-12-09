@@ -170,8 +170,10 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       case Expr.Partial(var clause) -> {
-        if (!(whnf(type) instanceof PartialTyTerm(var A, var cof)))
+        if (!(whnf(type) instanceof PrimCall(var ref, _, var arg) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
+        var cof = arg.get(0);
+        var A = arg.get(1);
         // check each clause
         ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
         ImmutableSeq<@Closed ConjCofNF> all_cof = ImmutableSeq.empty();

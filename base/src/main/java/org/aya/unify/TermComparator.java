@@ -10,7 +10,9 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.states.TyckState;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -327,7 +329,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(lProj, rProj, lTy).lub(() ->
           compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj)));
       }
-      case PartialTyTerm(var A, var cof) -> {
+      case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2) -> {
+        var A = arg.get(1);
+        // var cof = arg.get(0);
         if (!(lhs instanceof PartialTerm(var clauses1)) || !(rhs instanceof PartialTerm(var clauses2)))
           yield Decision.NO;
         // {phi_1 => u_1 ... phi_n => u_n} = {psi_1 => v_1 ... psi_m => v_m}
@@ -335,12 +339,18 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
           if (withConnection(cl1.cof().add(cl2.cof().descent(whnfVisitor())),
-                () -> doCompareTyped(cl1.tm(), cl2.tm(), A),
+                () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A),
                 () -> Decision.YES)
               == Decision.NO)
             yield Decision.NO;
         }
         yield Decision.YES;
+      }
+      case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.COF && arg.isEmpty() -> {
+        var nl = expand(lhs); if (nl == null) yield Decision.NO;
+        var nr = expand(rhs); if (nr == null) yield Decision.NO;
+        if (cofibrationEquiv(nl, nr)) yield Decision.YES;
+        yield Decision.NO;
       }
       default -> compareUntyped(lhs, rhs).downgrade();
     };
@@ -478,6 +488,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         } else {
           yield RelDec.no();
         }
+      }
+      case DisjCofNF ld -> {
+        if (expand(rhs) instanceof DisjCofNF rd && cofibrationEquiv(ld, rd)) {
+          yield RelDec.of(state().primFactory.getCall(PrimDef.ID.COE));
+        }
+        yield RelDec.no();
       }
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the refs match),
@@ -630,12 +646,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (tyResult == Decision.NO) yield Decision.NO;
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
-      }
-      case Pair(PartialTyTerm(var Al, var cofl), PartialTyTerm(var Ar, var cofr)) -> {
-        var disjl = expand(cofl);
-        var disjr = expand(cofr);
-        if (!cofibrationEquiv(disjl, disjr)) yield Decision.NO;
-        yield compare(Al, Ar, null);
       }
       default -> throw noRules(preLhs);
     };
