@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import static org.aya.syntax.core.def.PrimDef.ID;
 import static org.aya.syntax.core.def.PrimDef.familyI2J;
+import static org.aya.syntax.core.term.SortTerm.Set0;
 import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
@@ -194,12 +195,12 @@ public class PrimFactory {
       var F = getCall(ID.COF);
       return new PrimDef(ref, ImmutableSeq.of(
         new Param("φ", F, true),
-        new Param("A", Type0, true)), Type0, ID.PARTIAL);
+        new Param("A", Set0, true)), Set0, ID.PARTIAL);
     }, ImmutableSeq.of(ID.COF));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
     (prim, _) -> prim,
-    ref -> new PrimDef(ref, SortTerm.Set0, ID.COF),
+    ref -> new PrimDef(ref, Set0, ID.COF),
     ImmutableSeq.empty());
 
   public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND, ID.COF);
