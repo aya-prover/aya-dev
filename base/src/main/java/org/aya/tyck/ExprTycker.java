@@ -550,12 +550,6 @@ public final class ExprTycker extends ScopedTycker {
         var type = matchReturnTy(discriminant, wellArgs, returns);
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
       }
-      case Expr.PartialTy(var A, var cof) -> {
-        var wellA = synthesize(A);
-        var wellCof = synthesize(cof);
-        var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof.wellTyped());
-        yield new Jdg.Default(wellTyped, wellA.type());
-      }
       case Expr.Unresolved _ -> Panic.unreachable();
       default -> fail(expr.data(), new NoRuleError(expr, null));
     };
