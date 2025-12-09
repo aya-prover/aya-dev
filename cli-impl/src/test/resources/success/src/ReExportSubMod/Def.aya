@@ -1,0 +1,7 @@
+open import prelude
+
+module submod {
+  def foo : Nat => 114514
+}
+
+public open submod using (foo as bar)

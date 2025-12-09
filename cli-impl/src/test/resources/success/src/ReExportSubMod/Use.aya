@@ -1,0 +1,4 @@
+open import prelude
+open import ReExportSubMod::Def
+
+def test => bar
