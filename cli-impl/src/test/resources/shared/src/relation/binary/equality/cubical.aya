@@ -1,6 +1,6 @@
 prim I : ISet
 prim Cof : Set
-prim Partial (φ : Cof) (A : Type) : Type
+prim Partial (φ : Cof) (A : Type) : Set
 module cof-operators {
   prim cofAnd (φ ψ : Cof) : Cof
   prim cofOr (φ ψ : Cof) : Cof

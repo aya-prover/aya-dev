@@ -195,7 +195,7 @@ public class PrimFactory {
       var F = getCall(ID.COF);
       return new PrimDef(ref, ImmutableSeq.of(
         new Param("φ", F, true),
-        new Param("A", Set0, true)), Set0, ID.PARTIAL);
+        new Param("A", Type0, true)), Set0, ID.PARTIAL);
     }, ImmutableSeq.of(ID.COF));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,

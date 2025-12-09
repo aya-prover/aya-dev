@@ -87,8 +87,8 @@ public interface ExprTyckError {
 
   @Language("Aya") String testPartialDiffIntersection = """
     open import arith::nat::base
-    open import relation::binary::equality
-    def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
+    open import relation::binary::equality::cubical
+    def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
       partial
       [ i = 0 => 3
       , j = 0 => 3

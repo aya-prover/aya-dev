@@ -291,14 +291,22 @@ Error: The name `Partial` is not defined in the current scope
 Let's learn from that.
 
 PartialDiffIntersection:
-In file $FILE:3:21 ->
+In file $FILE:4:2 ->
 
-  1 │   open import arith::nat::base
-  2 │   open import relation::binary::equality
-  3 │   def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
-    │                        ╰─────╯
+  2 │   open import relation::binary::equality::cubical
+  3 │   def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
+  4 │     partial
+    │ ╭───╯
+  5 │ │    [ i = 0 => 3
+    │ │  
+  6 │ │    , j = 0 => 3
+    │ │  
+  7 │ │    , j = 1 => 1
+    │ │  
+  8 │ │   ]
+    │ ╰───╯
 
-Error: The name `Partial` is not defined in the current scope
+Error: Two partial clauses are different in their intersection
 
 1 error(s), 0 warning(s).
 Let's learn from that.
