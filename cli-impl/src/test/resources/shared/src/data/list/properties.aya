@@ -2,7 +2,7 @@ open import arith::nat::base
 open import arith::bool using (Bool, true, false)
 open import data::list::base
 open import data::maybe using (just, nothing, nothing≠just)
-open import relation::binary::path
+open import relation::binary::equality
 open import relation::binary::nat_cmp
 open import relation::nullary::empty
 open import relation::nullary::decidable hiding (map)

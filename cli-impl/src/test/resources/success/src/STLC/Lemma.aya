@@ -1,6 +1,6 @@
 open import data::list::base
 open import data::list::properties using (!!→length, length-++, ++-!!-l)
-open import relation::binary::path
+open import relation::binary::equality
 open import relation::nullary::empty
 open import relation::unary::negation
 open import relation::binary::nat_cmp

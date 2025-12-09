@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -64,20 +64,20 @@ public interface ExprTyckError {
     """;
 
   @Language("Aya") String testIssue1238 = """
-    open import relation::binary::path
+    open import relation::binary::equality
     open inductive Wrap (A : Type) | wrap A
     def what (A : Type) (w : Wrap) : w = w => refl
     """;
 
   @Language("Aya") String testBadPartial = """
     open import arith::nat::base
-    open import relation::binary::path
+    open import relation::binary::equality
     def test (i : I) : Nat => partial [ i = 1 => 3 ]
     """;
 
   @Language("Aya") String testPartialMissingClause = """
     open import arith::nat::base
-    open import relation::binary::path
+    open import relation::binary::equality
     def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
       partial
       [ i = 0 => 3
@@ -87,7 +87,7 @@ public interface ExprTyckError {
 
   @Language("Aya") String testPartialDiffIntersection = """
     open import arith::nat::base
-    open import relation::binary::path
+    open import relation::binary::equality
     def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
       partial
       [ i = 0 => 3

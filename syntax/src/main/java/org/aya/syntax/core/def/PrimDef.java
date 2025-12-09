@@ -53,10 +53,10 @@ public record PrimDef(
     PARTIAL("Partial"),
     COE("coe"),
     HCOMP("hcom"),
-    COF("F"),
-    COF_AND("and"),
-    COF_OR("or"),
-    COF_EQ("eq");
+    COF("Cof"),
+    COF_AND("cofAnd"),
+    COF_OR("cofOr"),
+    COF_EQ("cofEq");
     public final @NotNull @NonNls String id;
     @Override public String toString() { return id; }
 

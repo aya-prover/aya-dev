@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -57,7 +57,7 @@ public interface ScopeError {
     """;
   // This should pass
   @Language("Aya") String testLetOpen = """
-    open import relation::binary::path using (=, refl)
+    open import relation::binary::equality using (=, refl)
     inductive Nat | O | S Nat
     def zero : Nat => let open Nat using (O) in O
     def suc (n : Nat) : Nat => let open Nat hiding (O) in S n

@@ -1,4 +1,4 @@
-open import relation::binary::path
+open import relation::binary::equality
 open import arith::bool
 
 open inductive Nat | zero | suc Nat

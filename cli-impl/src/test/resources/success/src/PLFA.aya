@@ -1,4 +1,4 @@
-open import relation::binary::path using (= , refl)
+open import relation::binary::equality using (= , refl)
 open import relation::unary::negation
 open import relation::nullary::empty
 open import data::sum

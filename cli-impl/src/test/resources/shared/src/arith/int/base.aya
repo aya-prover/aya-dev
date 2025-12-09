@@ -1,6 +1,6 @@
 open import arith::nat::base
 open import arith::bool::base
-open import relation::binary::path
+open import relation::binary::equality
 
 open inductive Int
 | signed Bool Nat

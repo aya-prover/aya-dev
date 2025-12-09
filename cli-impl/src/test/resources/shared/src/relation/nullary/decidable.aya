@@ -1,7 +1,7 @@
 open import data::sum using (Sum, inl, inr)
 open import arith::bool using (Bool, true, false)
 open import relation::unary::negation using (neg)
-open import relation::binary::path using (=, refl)
+open import relation::binary::equality using (=, refl)
 
 open inductive Reflect (P : Type) (b : Bool)
 | _, true  => reflect_true P

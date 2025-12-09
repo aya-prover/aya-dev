@@ -1,7 +1,7 @@
 open import arith::nat::base
 open import relation::nullary::empty
 open import relation::nullary::decidable using (Decidable, yes, no, map as dec_map)
-open import relation::binary::path
+open import relation::binary::equality
 
 private def diag Nat : Type
 | 0 => Nat

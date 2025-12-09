@@ -1,5 +1,5 @@
 open import arith::nat::base
-open import relation::binary::path
+open import relation::binary::equality
 open import data::maybe using (Maybe, just, nothing)
 
 open inductive List (A : Type)

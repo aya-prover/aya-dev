@@ -50,6 +50,7 @@ public class PrimFactory {
       cofType,
       cofAnd,
       cofOr,
+      cofEq,
       pathType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
@@ -193,25 +194,25 @@ public class PrimFactory {
       var F = getCall(ID.COF);
       return new PrimDef(ref, ImmutableSeq.of(
         new Param("φ", F, true),
-        new Param("A", Type0, true)), Type0, ID.COF);
-    },
-    ImmutableSeq.of(ID.COF));
+        new Param("A", Type0, true)), Type0, ID.PARTIAL);
+    }, ImmutableSeq.of(ID.COF));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
     (prim, _) -> prim,
     ref -> new PrimDef(ref, SortTerm.Set0, ID.COF),
     ImmutableSeq.empty());
 
-  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND);
-  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR);
+  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND, ID.COF);
+  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR, ID.COF);
+  public final @NotNull PrimSeed cofEq = makeCofAndOr(ID.COF_EQ, ID.I);
 
-  private @NotNull PrimSeed makeCofAndOr(ID id) {
+  private @NotNull PrimSeed makeCofAndOr(ID id, ID paramTy) {
     return new PrimSeed(id, (prim, _) -> prim, ref -> {
-      var F = getCall(ID.COF);
+      var param = getCall(paramTy);
       return new PrimDef(ref, ImmutableSeq.of(
-        new Param("φ", F, true),
-        new Param("ψ", F, true)
-      ), F, id);
+        new Param("φ", param, true),
+        new Param("ψ", param, true)
+      ), getCall(ID.COF), id);
     }, ImmutableSeq.of(ID.COF));
   }
 
