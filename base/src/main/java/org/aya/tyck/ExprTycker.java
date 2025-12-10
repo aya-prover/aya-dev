@@ -175,18 +175,19 @@ public final class ExprTycker extends ScopedTycker {
         var cof = arg.get(0);
         var A = arg.get(1);
         // check each clause
-        ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
-        ImmutableSeq<@Closed ConjCofNF> all_cof = ImmutableSeq.empty();
+        MutableList<PartialTerm.Clause> cls = MutableList.create();
+        MutableList<ConjCofNF> allCof = MutableList.create();
         for (var rcls : clause) {
-          var cls_cof = elabCof(rcls.cof());
-          var cls_rhs = inherit(rcls.tm(), A).wellTyped();
-          cls = cls.appended(new PartialTerm.Clause(cls_cof, cls_rhs));
-          all_cof = all_cof.appended(cls_cof);
+          var clsCof = elabCof(rcls.cof());
+          var clsRhs = inherit(rcls.tm(), A).wellTyped();
+          cls.append(new PartialTerm.Clause(clsCof, clsRhs));
+          allCof.append(clsCof);
         }
-        // coverage. cof <=> all_cof
+        // coverage. cof <=> allCof
         var disj = expand(cof);
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, new DisjCofNF(all_cof))))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, new DisjCofNF(all_cof), expr.sourcePos(), state()));
+        var cnf = new DisjCofNF(allCof.toSeq());
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, cnf)))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
@@ -196,7 +197,7 @@ public final class ExprTycker extends ScopedTycker {
               () -> true)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
         }
-        yield new Jdg.Default(new PartialTerm(cls), type);
+        yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);
       }
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
@@ -209,17 +210,17 @@ public final class ExprTycker extends ScopedTycker {
   }
 
   private @Closed @NotNull ConjCofNF elabCof(@NotNull Expr.ConjCof conj) {
-    ImmutableSeq<@Closed EqCofTerm> ret = ImmutableSeq.empty();
+    MutableList<@Closed EqCofTerm> ret = MutableList.create();
     for (var c : conj.elements())
-      ret = ret.appended(elabCof(c));
-    return new ConjCofNF(ret);
+      ret.append(elabCof(c));
+    return new ConjCofNF(ret.toSeq());
   }
 
   private @Closed @NotNull DisjCofNF elabCof(@NotNull Expr.DisjCof disj) {
-    ImmutableSeq<@Closed ConjCofNF> ret = ImmutableSeq.empty();
+    MutableList<@Closed ConjCofNF> ret = MutableList.create();
     for (var c : disj.elements())
-      ret = ret.appended(elabCof(c));
-    return new DisjCofNF(ret);
+      ret.append(elabCof(c));
+    return new DisjCofNF(ret.toSeq());
   }
 
   /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level
