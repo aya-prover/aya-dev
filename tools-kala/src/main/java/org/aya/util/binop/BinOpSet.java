@@ -98,7 +98,8 @@ public abstract class BinOpSet {
   ) {
     private static @NotNull OpDecl.OpInfo ensureOperator(@NotNull OpDecl opDecl) {
       var op = opDecl.opInfo();
-      if (op == null) throw new Panic("Not an operator" + opDecl);
+      if (op == null)
+        throw new Panic("Not an operator: " + opDecl.getClass());
       return op;
     }
 

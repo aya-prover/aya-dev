@@ -7,8 +7,8 @@ module cof-operators {
   prim cofEq (i j : I) : Cof
 }
 public open cof-operators using
-  ( cofAnd as infix ∧f
-//  , cofOr as infix ∨f looser ∧f
+  ( cofAnd as infixl ∧f
+//  , cofOr as infixl ∨f looser ∧f
 //  , cofEq as infix =f tighter ∧f)
-  , cofOr as infix ∨f
+  , cofOr as infixl ∨f
   , cofEq as infix =f)
