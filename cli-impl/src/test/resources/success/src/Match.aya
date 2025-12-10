@@ -1,6 +1,6 @@
 open import arith::nat
 open import arith::bool
-open import relation::binary::path
+open import relation::binary::equality
 
 def test (n : Nat) : Nat => match n {
   | zero => 0

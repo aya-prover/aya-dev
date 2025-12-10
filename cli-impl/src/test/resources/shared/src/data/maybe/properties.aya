@@ -1,7 +1,7 @@
 open import data::unit
 open import data::maybe::base
 open import relation::nullary::empty
-open import relation::binary::path
+open import relation::binary::equality
 
 variable A : Type
 

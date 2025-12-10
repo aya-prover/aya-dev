@@ -1,0 +1,14 @@
+prim I : ISet
+prim Cof : Set
+prim Partial (φ : Cof) (A : Type) : Set
+module cof-operators {
+  prim cofAnd (φ ψ : Cof) : Cof
+  prim cofOr (φ ψ : Cof) : Cof
+  prim cofEq (i j : I) : Cof
+}
+public open cof-operators using
+  ( cofAnd as infixl ∧f
+//  , cofOr as infixl ∨f looser ∧f
+//  , cofEq as infix =f tighter ∧f)
+  , cofOr as infixl ∨f
+  , cofEq as infix =f)

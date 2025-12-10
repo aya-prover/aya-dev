@@ -287,8 +287,9 @@ public class TermSerializer extends AbstractExprSerializer<Term> {
       }
       case NewTerm(var classCall) -> builder.mkNew(NewTerm.class, ImmutableSeq.of(doSerialize(classCall)));
       // TODO: maybe reimplement these two using prim
-      case PartialTyTerm(var A, var cof) -> builder.refField(TYPE0_FIELD);
       case PartialTerm(var clauses) -> builder.refField(TYPE0_FIELD);
+      case DisjCofNF disjCofNF -> builder.refField(TYPE0_FIELD);
+      case EqCofTerm eqCofTerm -> builder.refField(TYPE0_FIELD);
       case LetTerm(var definedAs, var body) -> {
         var defVar = new LocalVar("<let>");
         var letDef = doSerialize(definedAs);

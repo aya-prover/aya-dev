@@ -1,4 +1,4 @@
-open import relation::binary::path
+open import relation::binary::equality
 
 open inductive Unit | tt
 

@@ -1,4 +1,4 @@
-open import relation::binary::path
+open import relation::binary::equality
 
 def coePi (r s : I)
   (A : I -> Type) (B : Fn (i : I) -> A i -> Type)

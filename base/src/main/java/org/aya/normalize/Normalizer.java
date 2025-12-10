@@ -5,6 +5,7 @@ package org.aya.normalize;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
+import kala.collection.mutable.MutableSeq;
 import kala.control.Either;
 import kala.control.Result;
 import org.aya.generic.Modifier;
@@ -21,9 +22,7 @@ import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.BetaRedex;
 import org.aya.syntax.core.term.marker.StableWHNF;
 import org.aya.syntax.core.term.repr.MetaLitTerm;
-import org.aya.syntax.core.term.xtt.CoeTerm;
-import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.literate.CodeOptions.NormalizeMode;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
@@ -48,6 +47,45 @@ public final class Normalizer implements UnaryOperator<Term> {
   public @NotNull ImmutableSet<AnyVar> opaque = ImmutableSet.empty();
   private boolean fullNormalize = false;
   public Normalizer(@NotNull TyckState state) { this.state = state; }
+
+  /**
+   * The function expand of the given cofibration,
+   * and returns null when cof is not ready to evaluate.
+   */
+  public @Nullable DisjCofNF expand(@Closed @NotNull Term cof) {
+    var wcof = apply(cof);
+    if (wcof instanceof DisjCofNF nf) return nf;
+    if (!(wcof instanceof PrimCall(var ref, _, var args))) return null;
+    return switch (ref.id()) {
+      case COF_AND -> {
+        var anf = expand(args.get(0));
+        var bnf = expand(args.get(1));
+        if (anf == null || bnf == null) yield null;
+        yield expandAnd(anf, bnf);
+      }
+      case COF_OR -> {
+        var anf = expand(args.get(0));
+        var bnf = expand(args.get(1));
+        if (anf == null || bnf == null) yield null;
+        yield new DisjCofNF(anf.elements().appendedAll(bnf.elements()));
+      }
+      case COF_EQ -> new DisjCofNF(ImmutableSeq.of(new ConjCofNF(ImmutableSeq.of(
+        new EqCofTerm(args.get(0), args.get(1))))));
+      default -> null;
+    };
+  }
+
+  // compute a and b
+  private @NotNull DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
+    MutableSeq<ConjCofNF> ret = MutableSeq.create(a.elements().size() * b.elements().size());
+    var i = 0;
+    for (var ae : a.elements())
+      for (var be : b.elements()) {
+        ret.set(i, new ConjCofNF(ae.elements().appendedAll(be.elements())));
+        i++;
+      }
+    return new DisjCofNF(ret.toImmutableArray());
+  }
 
   /**
    * This function is tail-recursion optimized.
@@ -110,6 +148,7 @@ public final class Normalizer implements UnaryOperator<Term> {
             }
           }
         }
+
         case FnCall(JitFn instance, int ulift, var args, var tc) -> {
           args = Callable.descent(args, this);
           var result = instance.invoke(this, args);

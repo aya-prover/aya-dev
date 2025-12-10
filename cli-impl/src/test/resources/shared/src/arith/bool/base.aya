@@ -1,4 +1,4 @@
-open import relation::binary::path using (=)
+open import relation::binary::equality using (=)
 
 open inductive Bool | true | false
 

@@ -10,7 +10,9 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.states.TyckState;
+import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.*;
 import org.aya.syntax.core.term.marker.Formation;
@@ -327,7 +329,9 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield compare(lProj, rProj, lTy).lub(() ->
           compare(ProjTerm.snd(lhs), ProjTerm.snd(rhs), rTy.apply(lProj)));
       }
-      case PartialTyTerm(var A, var cof) -> {
+      case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2) -> {
+        var A = arg.get(1);
+        // var cof = arg.get(0);
         if (!(lhs instanceof PartialTerm(var clauses1)) || !(rhs instanceof PartialTerm(var clauses2)))
           yield Decision.NO;
         // {phi_1 => u_1 ... phi_n => u_n} = {psi_1 => v_1 ... psi_m => v_m}
@@ -335,12 +339,18 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
           if (withConnection(cl1.cof().add(cl2.cof().descent(whnfVisitor())),
-                () -> doCompareTyped(cl1.tm(), cl2.tm(), A),
+                () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A),
                 () -> Decision.YES)
               == Decision.NO)
             yield Decision.NO;
         }
         yield Decision.YES;
+      }
+      case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.COF && arg.isEmpty() -> {
+        var nl = expand(lhs); if (nl == null) yield Decision.NO;
+        var nr = expand(rhs); if (nr == null) yield Decision.NO;
+        if (cofibrationEquiv(nl, nr)) yield Decision.YES;
+        yield Decision.NO;
       }
       default -> compareUntyped(lhs, rhs).downgrade();
     };
@@ -478,6 +488,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         } else {
           yield RelDec.no();
         }
+      }
+      case DisjCofNF ld -> {
+        if (expand(rhs) instanceof DisjCofNF rd && cofibrationEquiv(ld, rd)) {
+          yield RelDec.of(state().primFactory.getCall(PrimDef.ID.COE));
+        }
+        yield RelDec.no();
       }
       // We already compare arguments in compareApprox, if we arrive here,
       // it means their arguments don't match (even the refs match),
@@ -631,17 +647,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // the behavior is not exact the same as before, `&&` is shortcut but `min` isn't
         yield Decision.min(compare(a0, b0, A.apply(DimTerm.I0)), compare(a1, b1, A.apply(DimTerm.I1)));
       }
-      case Pair(PartialTyTerm(var A1, var cof1), PartialTyTerm(var A2, var cof2)) -> {
-        var wl2 = cof1.descent(whnfVisitor());
-        var wr2 = cof2.descent(whnfVisitor());
-        if (!cofibrationEquiv(wl2, wr2)) yield Decision.NO;
-        yield compare(A1, A2, null);
-      }
       default -> throw noRules(preLhs);
     };
   }
 
-  private boolean cofibrationImply(@NotNull ConjCof c1, EqCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, EqCofTerm c2) {
     return withConnection(c1,
       () -> state.isConnected(c2.lhs(), c2.rhs()),
       () -> true // exfalso
@@ -649,7 +659,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a => c ∩ d?
-  private boolean cofibrationImply(@NotNull ConjCof c1, @NotNull ConjCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull ConjCofNF c2) {
     // a => c ∩ d
     // iff. (a => c) and (a => d)
     if (c2.empty())
@@ -661,7 +671,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a => c ∪ d?
-  private boolean cofibrationImply(@NotNull ConjCof c1, @NotNull DisjCof c2) {
+  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull DisjCofNF c2) {
     // a => c ∪ d
     // iff. (a => c) or (a => d)
     if (c2.empty())
@@ -673,7 +683,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a ∪ b => c ∪ d?
-  private boolean cofibrationImply(@NotNull DisjCof c1, @NotNull DisjCof c2) {
+  private boolean cofibrationImply(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
     if (c1.empty())
@@ -681,7 +691,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
   }
 
-  public boolean cofibrationEquiv(@NotNull DisjCof c1, @NotNull DisjCof c2) {
+  public boolean cofibrationEquiv(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
   }
 

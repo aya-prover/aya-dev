@@ -4,28 +4,29 @@ package org.aya.syntax.core.term.xtt;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.TermVisitor;
+import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
-public record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
-  public @NotNull DisjCof add(ConjCof c) {
-    return new DisjCof(elements().appended(c));
+public record DisjCofNF(@NotNull ImmutableSeq<ConjCofNF> elements) implements StableWHNF {
+  public @NotNull DisjCofNF add(ConjCofNF c) {
+    return new DisjCofNF(elements().appended(c));
   }
 
-  public @NotNull DisjCof descent(@NotNull TermVisitor visitor) {
+  @Override public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
     // TODO: see ConjCof
-    return new DisjCof(elements.map(t -> t.descent(visitor)));
+    return new DisjCofNF(elements.map(t -> t.descent(visitor)));
   }
 
   public boolean empty() {
     return elements().isEmpty();
   }
 
-  public ConjCof head() {
+  public ConjCofNF head() {
     return elements().get(0);
   }
 
-  public DisjCof tail() {
-    return new DisjCof(elements().drop(1));
+  public DisjCofNF tail() {
+    return new DisjCofNF(elements().drop(1));
   }
 }

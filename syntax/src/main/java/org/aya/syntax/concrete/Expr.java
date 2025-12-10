@@ -315,18 +315,6 @@ public sealed interface Expr extends AyaDocile {
     public @NotNull ConjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(elements.map(x -> x.descent(f)));
     }
-
-    public boolean empty() {
-      return elements().isEmpty();
-    }
-
-    public EqCof head() {
-      return elements().get(0);
-    }
-
-    public ConjCof tail() {
-      return new ConjCof(elements().drop(1));
-    }
   }
   record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
     public @NotNull DisjCof update(@NotNull ImmutableSeq<ConjCof> elements) {
@@ -335,17 +323,6 @@ public sealed interface Expr extends AyaDocile {
 
     public @NotNull DisjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
       return update(elements.map(x -> x.descent(f)));
-    }
-    public boolean empty() {
-      return elements().isEmpty();
-    }
-
-    public ConjCof head() {
-      return elements().get(0);
-    }
-
-    public DisjCof tail() {
-      return new DisjCof(elements().drop(1));
     }
   }
 
@@ -368,22 +345,6 @@ public sealed interface Expr extends AyaDocile {
     }
     @Override public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
       clauses.forEach(clause -> f.accept(clause.tm));
-    }
-  }
-
-  record PartialTy(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) implements Expr {
-
-    public @NotNull PartialTy update(@NotNull WithPos<Expr> ty, @NotNull DisjCof cof) {
-      return ty == ty() && cof == cof() ? this : new PartialTy(ty, cof);
-    }
-
-    @Override
-    public @NotNull Expr descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(ty.descent(f), cof.descent(f));
-    }
-    @Override
-    public void forEach(@NotNull PosedConsumer<@NotNull Expr> f) {
-      f.accept(ty());
     }
   }
 

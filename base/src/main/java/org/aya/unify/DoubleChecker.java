@@ -6,8 +6,10 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.term.DTKind;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
+import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.call.PrimCall;
 import org.aya.syntax.core.term.xtt.*;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
@@ -90,10 +92,12 @@ public record DoubleChecker(
       // add `localLet` to this class.
       case LetTerm let -> inherit(let.make(), expected);
       case PartialTerm(var cls) -> {
-        if (!(whnf(expected) instanceof PartialTyTerm(var A, var cof)))
+        if (!(whnf(expected) instanceof PrimCall(var ref, _, var arg) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
+        var cof = arg.get(0);
+        var A = arg.get(1);
         // check each element
-        ImmutableSeq<ConjCof> cls_cof = ImmutableSeq.empty();
+        ImmutableSeq<ConjCofNF> cls_cof = ImmutableSeq.empty();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
                 () -> inherit(c.tm(), A),
@@ -102,7 +106,8 @@ public record DoubleChecker(
           cls_cof = cls_cof.appended(c.cof());
         }
         // check cofibration
-        if (!unifier.cofibrationEquiv(cof, new DisjCof(cls_cof)))
+        var disj = expand(cof);
+        if (!unifier.cofibrationEquiv(disj, new DisjCofNF(cls_cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

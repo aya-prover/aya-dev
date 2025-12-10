@@ -17,6 +17,7 @@ import org.aya.syntax.core.pat.Pat;
 import org.aya.syntax.core.term.call.Callable;
 import org.aya.syntax.core.term.marker.*;
 import org.aya.syntax.core.term.xtt.CoeTerm;
+import org.aya.syntax.core.term.xtt.EqCofTerm;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.ApiStatus;

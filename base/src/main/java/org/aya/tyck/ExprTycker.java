@@ -170,20 +170,24 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       case Expr.Partial(var clause) -> {
-        if (!(whnf(type) instanceof PartialTyTerm(var A, var cof)))
+        if (!(whnf(type) instanceof PrimCall(var ref, _, var arg) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
+        var cof = arg.get(0);
+        var A = arg.get(1);
         // check each clause
-        ImmutableSeq<PartialTerm.@Closed Clause> cls = ImmutableSeq.empty();
-        ImmutableSeq<@Closed ConjCof> all_cof = ImmutableSeq.empty();
+        MutableList<PartialTerm.Clause> cls = MutableList.create();
+        MutableList<ConjCofNF> allCof = MutableList.create();
         for (var rcls : clause) {
-          var cls_cof = elabCof(rcls.cof());
-          var cls_rhs = inherit(rcls.tm(), A).wellTyped();
-          cls = cls.appended(new PartialTerm.Clause(cls_cof, cls_rhs));
-          all_cof = all_cof.appended(cls_cof);
+          var clsCof = elabCof(rcls.cof());
+          var clsRhs = inherit(rcls.tm(), A).wellTyped();
+          cls.append(new PartialTerm.Clause(clsCof, clsRhs));
+          allCof.append(clsCof);
         }
-        // coverage. cof <=> all_cof
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(cof, new DisjCof(all_cof))))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(cof, new DisjCof(all_cof), expr.sourcePos(), state()));
+        // coverage. cof <=> allCof
+        var disj = expand(cof);
+        var cnf = new DisjCofNF(allCof.toSeq());
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, cnf)))
+          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
@@ -193,30 +197,30 @@ public final class ExprTycker extends ScopedTycker {
               () -> true)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
         }
-        yield new Jdg.Default(new PartialTerm(cls), type);
+        yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);
       }
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
   }
 
-  private @Closed @NotNull EqCof elabCof(@NotNull Expr.EqCof cof) {
+  private @Closed @NotNull EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
     var lhs = inherit(cof.lhs(), interval());
     var rhs = inherit(cof.rhs(), interval());
-    return new EqCof(lhs.wellTyped(), rhs.wellTyped());
+    return new EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
   }
 
-  private @Closed @NotNull ConjCof elabCof(@NotNull Expr.ConjCof conj) {
-    ImmutableSeq<@Closed EqCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull ConjCofNF elabCof(@NotNull Expr.ConjCof conj) {
+    MutableList<@Closed EqCofTerm> ret = MutableList.create();
     for (var c : conj.elements())
-      ret = ret.appended(elabCof(c));
-    return new ConjCof(ret);
+      ret.append(elabCof(c));
+    return new ConjCofNF(ret.toSeq());
   }
 
-  private @Closed @NotNull DisjCof elabCof(@NotNull Expr.DisjCof disj) {
-    ImmutableSeq<@Closed ConjCof> ret = ImmutableSeq.empty();
+  private @Closed @NotNull DisjCofNF elabCof(@NotNull Expr.DisjCof disj) {
+    MutableList<@Closed ConjCofNF> ret = MutableList.create();
     for (var c : disj.elements())
-      ret = ret.appended(elabCof(c));
-    return new DisjCof(ret);
+      ret.append(elabCof(c));
+    return new DisjCofNF(ret.toSeq());
   }
 
   /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level
@@ -548,12 +552,6 @@ public final class ExprTycker extends ScopedTycker {
         // Type check the type annotation
         var type = matchReturnTy(discriminant, wellArgs, returns);
         yield new Jdg.Default(match(discriminant, expr.sourcePos(), clauses, wellArgs, type), type);
-      }
-      case Expr.PartialTy(var A, var cof) -> {
-        var wellA = synthesize(A);
-        var wellCof = elabCof(cof);
-        var wellTyped = new PartialTyTerm(wellA.wellTyped(), wellCof);
-        yield new Jdg.Default(wellTyped, wellA.type());
       }
       case Expr.Unresolved _ -> Panic.unreachable();
       default -> fail(expr.data(), new NoRuleError(expr, null));

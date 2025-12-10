@@ -52,8 +52,11 @@ public record PrimDef(
     PATH("Path"),
     PARTIAL("Partial"),
     COE("coe"),
-    HCOMP("hcom");
-
+    HCOMP("hcom"),
+    COF("Cof"),
+    COF_AND("cofAnd"),
+    COF_OR("cofOr"),
+    COF_EQ("cofEq");
     public final @NotNull @NonNls String id;
     @Override public String toString() { return id; }
 

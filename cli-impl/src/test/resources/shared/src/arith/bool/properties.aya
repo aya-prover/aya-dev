@@ -1,5 +1,5 @@
 open import arith::bool::base
-open import relation::binary::path
+open import relation::binary::equality
 
 def not-not (b : Bool) : not (not b) = b
 | true => refl

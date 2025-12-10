@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.fixtures;
 
@@ -85,7 +85,7 @@ public interface PatTyckError {
     """;
 
   @Language("Aya") String testNoPattern = """
-    open import relation::binary::path hiding (funExt)
+    open import relation::binary::equality hiding (funExt)
     
     variable A B : Type
     def funExt (f g : A -> B) (p : forall a -> f a = g a) : f = g

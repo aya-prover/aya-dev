@@ -1,5 +1,5 @@
 open import relation::nullary::empty
-open import relation::binary::path using (=, pinv)
+open import relation::binary::equality using (=, pinv)
 
 def neg (A : Type) : Type => A -> Empty
 

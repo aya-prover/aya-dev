@@ -62,7 +62,6 @@
     // exprs
     KW_MATCH = 'match'
     KW_PARTIAL = 'partial'
-    KW_PARTIAL_TY = 'Partial'
     KW_RETURNS = 'returns'
     KW_NEW = 'new'
     KW_DO = 'do'
@@ -140,7 +139,7 @@
   ]
 
   // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
-  extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self|partialTy)Expr") = expr
+  extends("(new|pi|forall|sigma|lambda.|match|let|do|idiom|array|atom|app|arrow|proj|self)Expr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|lit.+Expr|univExpr|lambdaHoleExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -267,7 +266,6 @@ expr ::= newExpr
        | lambda1Expr
        | lambda2Expr
        | matchExpr
-       | partialTyExpr
        | letExpr
        | doExpr
        | selfExpr
@@ -301,7 +299,6 @@ sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 selfExpr ::= KW_SELF (AT qualifiedId)?
 
 partialAtom ::= KW_PARTIAL LARRAY <<commaSep partialClause>>? RARRAY
-partialTyExpr ::= KW_PARTIAL_TY LARRAY <<commaSep cof>>? RARRAY expr
 
 cof ::= cofOperand "=" cofOperand
 private cofOperand ::= refExpr | litIntExpr

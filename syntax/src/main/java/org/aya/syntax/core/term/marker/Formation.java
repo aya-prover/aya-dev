@@ -8,12 +8,11 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.ClassCall;
 import org.aya.syntax.core.term.call.DataCall;
 import org.aya.syntax.core.term.xtt.EqTerm;
-import org.aya.syntax.core.term.xtt.PartialTyTerm;
 
 /**
  * Term formers, definitely.
  * Note that {@link org.aya.syntax.core.term.call.PrimCall} may also be term formers, but not necessarily.
  */
 public sealed interface Formation extends Term
-  permits DepTypeTerm, SortTerm, ClassCall, DataCall, EqTerm, PartialTyTerm {
+  permits DepTypeTerm, SortTerm, ClassCall, DataCall, EqTerm {
 }

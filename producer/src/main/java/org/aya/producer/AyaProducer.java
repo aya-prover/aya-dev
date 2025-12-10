@@ -54,30 +54,23 @@ import java.util.stream.Collectors;
 
 import static org.aya.parser.AyaPsiElementTypes.*;
 
-/**
- * Working with GK parser:
- * <ul>
- *   <li>Use {@link GenericNode#peekChild(IElementType)} if you want to check if the node has a child with desired type.</li>
- *   <li>Use {@link GenericNode#child(IElementType)} if you are sure the node has a child with desired type.</li>
- *   <li>
- *     For psi nodes with <code>extends</code> attribute in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
- *     <ul>
- *       <li>Use {@link GenericNode#peekChild(TokenSet)}, {@link GenericNode#child(TokenSet)} if you want to obtain
- *       the node itself from its parent. Available {@link TokenSet}s are {@link AyaProducer#EXPR}, {@link AyaProducer#STMT},
- *       {@link AyaProducer#ARGUMENT} and something alike.</li>
- *       <li>Use {@link GenericNode#is(IElementType)} to pattern-matching on the node.</li>
- *       <li>Note that extends nodes are flattened so producing concrete tree from parse tree is different from
- *       other nodes, compare {@link AyaProducer#expr(GenericNode)} and its bnf rule for more details.</li>
- *       <li>You may inspect the produced node tree by the <code>toDebugString</code> method.</li>
- *       <li>If you edited extends attribute in the bnf file, do not forgot to update them here. We don't have any compile-time error
- *       thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!</li>
- *     </ul>
- *   </li>
- * </ul>
- *
- * @author kiva
- * @see AyaPsiElementTypes
- */
+/// Working with GK parser:
+///
+/// - Use [GenericNode#peekChild(IElementType)] if you want to check if the node has a child with desired type.
+/// - Use [GenericNode#child(IElementType)] if you are sure the node has a child with desired type.
+/// - For psi nodes with <code>extends</code> attribute in `AyaPsiParser.bnf` (like expr, decl, stmt, etc.):
+/// - Use [GenericNode#peekChild(TokenSet)], [GenericNode#child(TokenSet)] if you want to obtain
+///   the node itself from its parent. Available [TokenSet]s are [AyaProducer#EXPR], [AyaProducer#STMT],
+///   [AyaProducer#ARGUMENT] and something alike.
+///   - Use [GenericNode#is(IElementType)] to pattern-matching on the node.
+///   - Note that extends nodes are flattened so producing concrete tree from parse tree is different from
+///     other nodes, compare [AyaProducer#expr(GenericNode)] and its bnf rule for more details.
+///   - You may inspect the produced node tree by the <code>toDebugString</code> method.
+///   - If you edited extends attribute in the bnf file, do not forgot to update them here. We don't have any compile-time error
+///     thanks to the parse node being dynamically typed (we may improve it in the future) -- so be careful and patient!
+///
+/// @author kiva
+/// @see AyaPsiElementTypes
 public record AyaProducer(
   @NotNull Either<SourceFile, SourcePos> source,
   @NotNull Reporter reporter
@@ -725,13 +718,6 @@ public record AyaProducer(
       Option<WithPos<Expr>> result = bodyExpr == null ? Option.none() : Option.some(expr(bodyExpr));
       var tele = unitPattern(node.child(UNIT_PATTERN));
       return new WithPos<>(pos, new Expr.ClauseLam(new Pattern.Clause(pos, ImmutableSeq.of(tele), result)));
-    }
-    if (node.is(PARTIAL_TY_EXPR)) {
-      var cof = new Expr.DisjCof(node.child(COMMA_SEP).childrenOfType(COF)
-        .map(c -> new Expr.ConjCof(ImmutableSeq.of(cof(c))))
-        .toSeq());
-      var ty = expr(node.child(EXPR));
-      return new WithPos<>(pos, new Expr.PartialTy(ty, cof));
     }
     if (node.is(PARTIAL_ATOM)) {
       var clauses = node.child(COMMA_SEP).childrenOfType(PARTIAL_CLAUSE)

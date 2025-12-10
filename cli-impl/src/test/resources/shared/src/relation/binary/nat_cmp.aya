@@ -2,7 +2,7 @@ open import arith::nat using (Nat, zero, suc, z≠s, subTrunc, =?, +)
 open import arith::bool using (Bool, true, false)
 open import relation::unary::negation using (neg)
 open import relation::nullary::empty using (⊥, exfalso)
-open import relation::binary::path
+open import relation::binary::equality
 open import relation::nullary::decidable using (Decidable, yes, no, because, reflect_true, reflect_false, map as dec_map)
 open import data::sum using (Sum, inl, inr)
 

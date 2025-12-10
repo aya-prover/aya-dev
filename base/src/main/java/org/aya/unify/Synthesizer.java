@@ -121,10 +121,6 @@ public record Synthesizer(
         if (!(trySynth(papp.fun()) instanceof EqTerm eq)) yield null;
         yield eq.appA(papp.arg());
       }
-      case PartialTyTerm ty -> {
-        if (!(trySynth(ty.ty()) instanceof SortTerm sort)) yield null;
-        yield new SortTerm(SortKind.Set, sort.lift());
-      }
       case ErrorTerm error -> ErrorTerm.typeOf(error);
       case SortTerm sort -> sort.succ();
       case DimTerm _ -> tycker().interval();
@@ -136,6 +132,22 @@ public record Synthesizer(
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
       case MatchCall(var ref, var args, var captures) -> ref.type(captures, args);
+      case DisjCofNF disj -> {
+        for (var conj : disj.elements()) for (var eq : conj.elements()) {
+          if (!(trySynth(eq) instanceof PrimCall call &&
+              call.ref().id() == PrimDef.ID.COF)) {
+            yield null;
+          }
+        }
+        yield state().primFactory.getCall(PrimDef.ID.COF);
+      }
+      case EqCofTerm(var lhs, var rhs) ->
+        trySynth(lhs) instanceof PrimCall call &&
+        call.ref().id() == PrimDef.ID.I &&
+        trySynth(rhs) instanceof PrimCall carr &&
+        carr.ref().id() == PrimDef.ID.I
+          ? state().primFactory.getCall(PrimDef.ID.COF)
+          : null;
     };
   }
 

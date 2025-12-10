@@ -1,7 +1,7 @@
 open import arith::nat using (Nat, =?)
 open import data::maybe
 open import relation::nullary::decidable
-open import relation::binary::path
+open import relation::binary::equality
 open import relation::unary::negation
 open import relation::nullary::empty
 open Nat

@@ -35,6 +35,7 @@ import java.util.function.Function;
 
 import static org.aya.syntax.core.def.PrimDef.ID;
 import static org.aya.syntax.core.def.PrimDef.familyI2J;
+import static org.aya.syntax.core.term.SortTerm.Set0;
 import static org.aya.syntax.core.term.SortTerm.Type0;
 
 public class PrimFactory {
@@ -46,6 +47,11 @@ public class PrimFactory {
       stringType,
       stringConcat,
       intervalType,
+      partialType,
+      cofType,
+      cofAnd,
+      cofOr,
+      cofEq,
       pathType,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
@@ -179,9 +185,37 @@ public class PrimFactory {
   */
 
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
-    ((prim, _) -> prim),
+    (prim, _) -> prim,
     ref -> new PrimDef(ref, SortTerm.ISet, ID.I),
     ImmutableSeq.empty());
+
+  public final @NotNull PrimSeed partialType = new PrimSeed(ID.PARTIAL,
+    (prim, _) -> prim,
+    ref -> {
+      var F = getCall(ID.COF);
+      return new PrimDef(ref, ImmutableSeq.of(
+        new Param("φ", F, true),
+        new Param("A", Type0, true)), Set0, ID.PARTIAL);
+    }, ImmutableSeq.of(ID.COF));
+
+  public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
+    (prim, _) -> prim,
+    ref -> new PrimDef(ref, Set0, ID.COF),
+    ImmutableSeq.empty());
+
+  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND, ID.COF);
+  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR, ID.COF);
+  public final @NotNull PrimSeed cofEq = makeCofAndOr(ID.COF_EQ, ID.I);
+
+  private @NotNull PrimSeed makeCofAndOr(ID id, ID paramTy) {
+    return new PrimSeed(id, (prim, _) -> prim, ref -> {
+      var param = getCall(paramTy);
+      return new PrimDef(ref, ImmutableSeq.of(
+        new Param("φ", param, true),
+        new Param("ψ", param, true)
+      ), getCall(ID.COF), id);
+    }, ImmutableSeq.of(ID.COF));
+  }
 
   public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
     var rst = new PrimDef.Delegate(seeds.get(name).supply(ref).ref());
@@ -221,6 +255,7 @@ public class PrimFactory {
   /// - When we are working in an LSP, and users can reload a file to redefine things.
   /// - When we are serializing a file, which we will deserialize immediately, and this will
   ///   replace the existing PrimDefs with their JIT-compiled version.
+  ///
   /// @return true if redefinition is forbidden.
   @ForLSP public boolean isForbiddenRedefinition(@NotNull PrimDef.ID id, boolean isJit) {
     if (isJit)
