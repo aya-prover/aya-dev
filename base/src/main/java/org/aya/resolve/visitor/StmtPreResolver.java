@@ -100,14 +100,14 @@ public final class StmtPreResolver {
         var useHide = cmd.useHide();
         var ctx = cmd.openExample() ? exampleContext(context) : context;
 
-        ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
+        var success = ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
+        if (!success) yield null;
 
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
-        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
-          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc);
-        });
+        if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
+        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo ->
+          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc));
 
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {

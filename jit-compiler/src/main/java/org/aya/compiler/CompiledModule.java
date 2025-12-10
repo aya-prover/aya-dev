@@ -37,19 +37,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.EnumMap;
 
-/**
- * The .ayac file representation.
- *
- * @param imports   The modules that this ayac imports. Absolute path.
- * @param exports   Whether certain definition is exported. Re-exported symbols will not be here.
- * @param importReExports key: an imported module that is in {@param imports}
- * @author kiva
- */
+/// The .ayac file representation.
+///
+/// @param imports         The modules that this ayac imports. Absolute path.
+/// @param exports         Whether certain definition is exported. Re-exported symbols will not be here.
+/// @param importReExports key: an imported module that is in {@param imports}
+/// @param localReExports  key: a module defined in this module
+/// @author kiva
 public record CompiledModule(
   @NotNull ImmutableSeq<SerImport> imports,
   @NotNull ImmutableSet<String> exports,
   @NotNull ImmutableMap<ModulePath, SerUseHide> importReExports,
-  @NotNull ImmutableMap<ModulePath, SerUseHide> localReExports,
+  @NotNull ImmutableMap<ModuleName.Qualified, SerUseHide> localReExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -123,12 +122,13 @@ public record CompiledModule(
       new SerImport(v.resolveInfo().modulePath(),
         k.ids(), v.reExport())).toSeq();
     var serExport = ImmutableSet.from(exports);
-    var importReExports = ImmutableMap.from(resolveInfo.reExports().view()
-      .map((k, v) -> Tuple.of(
-        resolveInfo.imports()
-          .get(k)   // should not fail
-          .resolveInfo().modulePath(),
-        SerUseHide.from(v))));
+    var importReExports = MutableMap.<ModulePath, SerUseHide>create();
+    var localReExports = MutableMap.<ModuleName.Qualified, SerUseHide>create();
+    resolveInfo.reExports().forEach((qualified, useHide) -> {
+      var imported = resolveInfo.imports().getOrNull(qualified);
+      if (imported != null) importReExports.put(imported.resolveInfo().modulePath(), SerUseHide.from(useHide));
+      else localReExports.put(qualified, SerUseHide.from(useHide));
+    });
     var serOps = ImmutableMap.from(serialization.serOps);
     record RenameData(boolean reExport, QName name, SerRenamedOp renamed) { }
     var opRename = ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
@@ -141,7 +141,10 @@ public record CompiledModule(
       .map(data -> Tuple.of(data.name, data.renamed)));
     var prims = resolveInfo.primFactory().qnameMap();
 
-    return new CompiledModule(imports, serExport, importReExports, ImmutableMap.empty(), serOps, prims, opRename);
+    return new CompiledModule(imports, serExport,
+      ImmutableMap.from(importReExports),
+      ImmutableMap.from(localReExports),
+      serOps, prims, opRename);
   }
 
   private record Serialization(
@@ -177,7 +180,9 @@ public record CompiledModule(
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
     shallowResolve(loader, resolveInfo, reporter);
     var rootClass = state.topLevelClass(context.modulePath());
-    loadModule(primFactory, shapeFactory, context, rootClass, reporter);
+    for (var jitClass : rootClass.getDeclaredClasses()) {
+      loadModule(primFactory, shapeFactory, context, jitClass, reporter);
+    }
     primDefs.forEach((_, qname) ->
       primFactory.definePrim((JitPrim) state.resolve(qname)));
     deOp(state, resolveInfo);
@@ -186,44 +191,43 @@ public record CompiledModule(
 
   private void loadModule(
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
-    @NotNull PhysicalModuleContext context, @NotNull Class<?> rootClass, @NotNull Reporter reporter
+    @NotNull PhysicalModuleContext context, @NotNull Class<?> jitClass, @NotNull Reporter reporter
   ) {
-    for (var jitClass : rootClass.getDeclaredClasses()) {
-      var object = DeState.getJitDef(jitClass);
-      // Not all JitUnit are JitDef, see JitMatchy
-      if (!(object instanceof JitDef jitDef)) continue;
-      var metadata = jitDef.metadata();
-      if (jitDef instanceof JitPrim || isExported(jitDef.name()))
-        export(context, jitDef.name(), new CompiledVar(jitDef));
-      switch (jitDef) {
-        case JitData data -> {
-          // The accessibility doesn't matter, this context is readonly
-          var innerCtx = context.derive(data.name());
-          for (var constructor : data.constructors()) {
-            var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
-            if (!success) Panic.unreachable();
-          }
-          var success = context.importModuleContext(
-            ModuleName.This.resolve(data.name()),
-            innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
+    var object = DeState.getJitDef(jitClass);
+    // Not all JitUnit are JitDef, see JitMatchy
+    if (!(object instanceof JitDef jitDef)) return;
+    var metadata = jitDef.metadata();
+    // because prims are never private
+    if (jitDef instanceof JitPrim || isExported(jitDef.name()))
+      export(context, jitDef.name(), new CompiledVar(jitDef));
+    switch (jitDef) {
+      case JitData data -> {
+        // The accessibility doesn't matter, this context is readonly
+        var innerCtx = context.derive(data.name());
+        for (var constructor : data.constructors()) {
+          var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
           if (!success) Panic.unreachable();
-          if (metadata.shape() != -1) {
-            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
-              ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
-                data.constructors())));
-            shapeFactory.bonjour(jitDef, recognition);
-          }
         }
-        case JitFn fn -> {
-          if (metadata.shape() != -1) {
-            var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
-              ImmutableMap.empty());
-            shapeFactory.bonjour(fn, recognition);
-          }
+        var success = context.importModuleContext(
+          ModuleName.This.resolve(data.name()),
+          innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
+        if (!success) Panic.unreachable();
+        if (metadata.shape() != -1) {
+          var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+            ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
+              data.constructors())));
+          shapeFactory.bonjour(jitDef, recognition);
         }
-        case JitPrim prim -> primFactory.definePrim(prim);
-        default -> { }
       }
+      case JitFn fn -> {
+        if (metadata.shape() != -1) {
+          var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
+            ImmutableMap.empty());
+          shapeFactory.bonjour(fn, recognition);
+        }
+      }
+      case JitPrim prim -> primFactory.definePrim(prim);
+      default -> { }
     }
   }
 
