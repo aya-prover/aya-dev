@@ -179,7 +179,7 @@ public final class ExprTycker extends ScopedTycker {
         MutableList<ConjCofNF> allCof = MutableList.create();
         for (var rcls : clause) {
           var clsCof = elabCof(rcls.cof());
-          var clsRhs = inherit(rcls.tm(), A).wellTyped();
+          var clsRhs = withConnection(clsCof, () -> inherit(rcls.tm(), A).wellTyped(), () -> inherit(rcls.tm(), A).wellTyped());
           cls.append(new PartialTerm.Clause(clsCof, clsRhs));
           allCof.append(clsCof);
         }
