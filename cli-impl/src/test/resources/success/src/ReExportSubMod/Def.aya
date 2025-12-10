@@ -1,0 +1,12 @@
+open import prelude
+
+module submod {
+  def foo : Nat => 114514
+  module subsubmod {
+    def food : Nat => 1919810
+  }
+}
+
+public open submod using (foo as bar)
+public open submod::subsubmod using (food as bard)
+//public open submod using (subsubmod::food as bard2)

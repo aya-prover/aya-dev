@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -23,6 +24,12 @@ public record QPath(@NotNull ModulePath module, int fileModuleSize) implements S
 
   public @NotNull ModulePath fileModule() {
     return new ModulePath(module.module().take(fileModuleSize));
+  }
+
+  public @NotNull ModuleName localModule() {
+    var dropped = module.module().drop(fileModuleSize);
+    if (dropped.isEmpty()) return ModuleName.This;
+    return new ModuleName.Qualified(dropped);
   }
 
   public @NotNull QPath derive(@NotNull String name) {

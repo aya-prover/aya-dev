@@ -128,6 +128,8 @@ public record SourcePos(
   }
 
   @Override public @NotNull String toString() {
+    if (equals(SourcePos.NONE)) return "None";
+    if (equals(SourcePos.SER)) return "Deserialized";
     return "(" + tokenStartIndex + "-" + tokenEndIndex + ") [" + lineColumnString() + ']';
   }
   public @NotNull String lineColumnString() {
