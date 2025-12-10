@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /// ModuleExport stores symbols that imports from another module.
@@ -122,7 +123,10 @@ public record ModuleExport(
    */
   public boolean export(@NotNull String name, @NotNull AnyDefVar ref) {
     var exists = symbols.put(name, ref);
-    return exists.isEmpty();
+    // Allow self-redefinition
+    if (exists.isDefined())
+      return Objects.equals(exists.get(), ref);
+    return true;
   }
 
   public boolean export(@NotNull ModuleName.Qualified componentName, @NotNull ModuleExport module) {

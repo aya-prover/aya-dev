@@ -25,6 +25,7 @@ public sealed interface ModuleName extends Serializable {
     }
     @Override public @NotNull ModuleName concat(@NotNull ModuleName path) { return path; }
     @Override public @NotNull String toString() { return ""; }
+    @Override public int length() { return 0; }
   }
 
   record Qualified(@NotNull ImmutableSeq<String> ids) implements ModuleName {

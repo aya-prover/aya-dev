@@ -25,7 +25,10 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
-import org.aya.syntax.ref.*;
+import org.aya.syntax.ref.CompiledVar;
+import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QName;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.ArrayUtil;
 import org.aya.util.Panic;
 import org.aya.util.binop.OpDecl;
@@ -48,7 +51,7 @@ public record CompiledModule(
   @NotNull ImmutableSeq<SerImport> imports,
   @NotNull ImmutableSet<String> exports,
   @NotNull ImmutableMap<ModulePath, SerUseHide> importReExports,
-  @NotNull ImmutableMap<ModuleName.Qualified, SerUseHide> localReExports,
+  @NotNull ImmutableMap<ModuleName, SerUseHide> localReExports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -93,17 +96,32 @@ public record CompiledModule(
     @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
     boolean isPublic) implements Serializable { }
 
-  /** @see UseHide */
+  record SerQualifiedID(@NotNull ModuleName component, @NotNull String name) implements Serializable {
+    public static @NotNull SerQualifiedID from(@NotNull QualifiedID qid) {
+      return new SerQualifiedID(qid.component(), qid.name());
+    }
+    public @NotNull QualifiedID make() { return new QualifiedID(SourcePos.SER, component, name); }
+  }
+
+  /// @see UseHide.Rename
+  record SerRename(@NotNull SerQualifiedID qid, @NotNull String to) implements Serializable {
+    public static @NotNull SerRename from(@NotNull UseHide.Rename rename) {
+      return new SerRename(SerQualifiedID.from(rename.name()), rename.to());
+    }
+    public @NotNull UseHide.Rename make() { return new UseHide.Rename(qid.make(), to); }
+  }
+
+  /// @see UseHide
   record SerUseHide(
     boolean isUsing,
-    @NotNull ImmutableSeq<ImmutableSeq<String>> names,
-    @NotNull ImmutableSeq<UseHide.Rename> renames
+    @NotNull ImmutableSeq<SerQualifiedID> names,
+    @NotNull ImmutableSeq<SerRename> renames
   ) implements Serializable {
     public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
       return new SerUseHide(
         useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(x -> x.id().ids()),
-        useHide.renaming().map(WithPos::data)
+        useHide.list().map(x -> SerQualifiedID.from(x.id())),
+        useHide.renaming().map(it -> SerRename.from(it.data()))
       );
     }
   }
@@ -197,9 +215,7 @@ public record CompiledModule(
     // Not all JitUnit are JitDef, see JitMatchy
     if (!(object instanceof JitDef jitDef)) return;
     var metadata = jitDef.metadata();
-    // because prims are never private
-    if (jitDef instanceof JitPrim || isExported(jitDef.name()))
-      export(context, jitDef.name(), new CompiledVar(jitDef));
+    export(context, jitDef);
     switch (jitDef) {
       case JitData data -> {
         // The accessibility doesn't matter, this context is readonly
@@ -250,8 +266,8 @@ public record CompiledModule(
       if (useHide != null) {
         success = thisResolve.thisModule().openModule(modRename,
           Stmt.Accessibility.Public,
-          useHide.names().map(x -> new QualifiedID(SourcePos.SER, x)),
-          useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x)),
+          useHide.names().map(SerQualifiedID::make),
+          useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x.make())),
           SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
           reporter);
 
@@ -304,14 +320,33 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  private void export(
-    @NotNull PhysicalModuleContext context,
-    @NotNull String name,
-    @NotNull AnyDefVar var
-  ) {
-    var success = context.exportSymbol(name, var);
+  /// @see org.aya.syntax.context.ModuleExport#map
+  /// @see org.aya.syntax.context.ModuleExport#filter
+  private void export(@NotNull PhysicalModuleContext context, @NotNull JitDef def) {
+    boolean success = true;
+    var module = def.qualifiedName().module().localModule();
+    if (module instanceof ModuleName.ThisRef && exports.contains(def.name())) {
+      success = context.exportSymbol(def.name(), new CompiledVar(def));
+    }
+    for (int i = 0; i < module.length(); ++i) {
+      var qualified = new ModuleName.Qualified(module.ids().drop(i));
+      var local = localReExports.getOrNull(qualified);
+      if (local == null) continue;
+      var contains = local.names.find(qid ->
+          qid.name.contentEquals(def.name()) &&
+            qualified.concat(qid.component).equals(module))
+        .getOrNull();
+      if (local.isUsing && contains != null) {
+        var rename = local.renames.find(it -> it.qid.equals(contains)).getOrNull();
+        if (rename != null) {
+          success = context.exportSymbol(rename.to, new CompiledVar(def)) && success;
+        } else {
+          success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
+        }
+      } else if (!local.isUsing && contains == null) {
+        success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
+      }
+    }
     assert success : "DuplicateExportError should not happen in CompiledModule";
   }
-
-  private boolean isExported(@NotNull String name) { return exports.contains(name); }
 }
