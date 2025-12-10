@@ -1,4 +1,6 @@
 open import prelude
 open import ReExportSubMod::Def
 
-def test => bar
+def test1 => bar
+def test2 => bard
+//def test3 => bard2
