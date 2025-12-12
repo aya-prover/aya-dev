@@ -75,17 +75,15 @@ public final class StmtPreResolver {
     })));
   }
 
-  public record ImportResult(@NotNull ResolveInfo info, @NotNull ModuleName.Qualified importName) { }
-
   /// @return [ResolveInfo] of imported module
-  public static @Nullable ImportResult resolveImport(
+  public static @Nullable ResolveInfo resolveImport(
     @NotNull ModuleLoader loader,
     @NotNull ModuleContext parent,
     @NotNull Reporter reporter,
     @NotNull SourcePos pos,
     @NotNull ResolveInfo info,
     @NotNull ModulePath modulePath,
-    @Nullable WithPos<String> asName,
+    @NotNull ModuleName.Qualified importedName,
     @NotNull Stmt.Accessibility accessibility
   ) {
     var loaded = loader.load(modulePath);
@@ -101,7 +99,6 @@ public final class StmtPreResolver {
     var success = loaded.get();
 
     var mod = success.thisModule();
-    var importedName = asName != null ? ModuleName.This.resolve(asName.data()) : modulePath.asName();
 
     parent.importModuleContext(importedName, mod, accessibility, pos, reporter);
     info.primFactory().importFrom(success.primFactory());
@@ -109,7 +106,7 @@ public final class StmtPreResolver {
     var importInfo = new ResolveInfo.ImportInfo(success, accessibility == Stmt.Accessibility.Public);
     info.imports().put(importedName, importInfo);
 
-    return new ImportResult(success, importedName);
+    return success;
   }
 
   public static boolean resolveOpen(
@@ -142,6 +139,7 @@ public final class StmtPreResolver {
     if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
       // skip if there is no `as` or it is qualified.
       if (use.asAssoc() == Assoc.Unspecified) return;
+      // TODO: this assumption may change if we allow `using (foo::+ as -)`
       // In case of qualified, it must be a module, not a definition.
       if (use.id().component() != ModuleName.This) return;
       var symbol = ctx.modules().get(mod).symbols().get(use.id().name());
@@ -170,12 +168,13 @@ public final class StmtPreResolver {
         yield resolveModule(context, thisReporter, mod.sourcePos(), mod.name(), newCtx -> resolveStmt(mod.contents(), newCtx));
       }
       case Command.Import cmd -> {
+        var importedName = cmd.asName() != null ? ModuleName.This.resolve(cmd.asName().data()) : cmd.path().asName();
         var result = resolveImport(loader, context, thisReporter, cmd.sourcePos(), resolveInfo,
-          cmd.path(), cmd.asName(), cmd.accessibility());
+          cmd.path(), importedName, cmd.accessibility());
 
         if (result != null) {
           // TODO: i guess we won't use `ResolveInfo#commands` when it fails to resolve
-          var ser = new SerImport(cmd.path(), result.importName.ids(), cmd.accessibility() == Stmt.Accessibility.Public);
+          var ser = new SerImport(cmd.path(), importedName.ids(), cmd.accessibility() == Stmt.Accessibility.Public);
           yield new ResolvingStmt.ImportCmd(ser);
         }
 
@@ -185,7 +184,7 @@ public final class StmtPreResolver {
         var success = resolveOpen(context, thisReporter, cmd.sourcePos(), resolveInfo,
           cmd.path(), cmd.accessibility(), cmd.useHide(), cmd.openExample());
         if (success) {
-          var ser = new SerOpen(cmd.accessibility() == Stmt.Accessibility.Private, cmd.path(), SerUseHide.from(cmd.useHide()));
+          var ser = new SerOpen(cmd.accessibility() == Stmt.Accessibility.Public, cmd.path(), SerUseHide.from(cmd.useHide()));
           yield new ResolvingStmt.OpenCmd(ser);
         }
         yield null;

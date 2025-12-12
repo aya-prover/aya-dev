@@ -5,18 +5,19 @@ package org.aya.compiler;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.compiler.serializers.NameSerializer;
 import org.aya.resolve.ResolveInfo;
+import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.salt.AyaBinOpSet;
-import org.aya.resolve.ser.SerCommand;
-import org.aya.resolve.ser.SerImport;
-import org.aya.resolve.ser.SerQualifiedID;
-import org.aya.resolve.ser.SerUseHide;
+import org.aya.resolve.ser.*;
+import org.aya.resolve.visitor.StmtPreResolver;
+import org.aya.resolve.visitor.StmtResolver;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitData;
@@ -24,20 +25,17 @@ import org.aya.syntax.compile.JitDef;
 import org.aya.syntax.compile.JitFn;
 import org.aya.syntax.compile.JitPrim;
 import org.aya.syntax.concrete.stmt.*;
+import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.repr.AyaShape;
 import org.aya.syntax.core.repr.ShapeRecognition;
-import org.aya.syntax.ref.CompiledVar;
-import org.aya.syntax.ref.ModulePath;
-import org.aya.syntax.ref.QName;
-import org.aya.syntax.ref.QPath;
+import org.aya.syntax.ref.*;
 import org.aya.util.ArrayUtil;
 import org.aya.util.Panic;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.position.SourcePos;
-import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,16 +44,15 @@ import java.util.EnumMap;
 
 /// The .ayac file representation.
 ///
-/// @param imports         The modules that this ayac imports. Absolute path.
-/// @param exports         Whether certain definition is exported. Re-exported symbols will not be here.
-/// @param importReExports key: an imported module that is in {@param imports}
-/// @param localReExports  key: a module defined in this module
+/// @param commands        all module relative commands, including `import`, `module` and `open`.
+///                        Note that [SerBind] is not included in [SerOpen], this job is done by [#serOps]
+/// @param exports         all exported definitions, this include all definitions in submodules
+/// @param serOps          all operator defined in this file level module,
+/// @param opRename        all operator renamed by `open using`
 /// @author kiva
 public record CompiledModule(
-  @NotNull ImmutableSeq<SerImport> imports,
-  @NotNull ImmutableSet<String> exports,
-  @NotNull ImmutableMap<ModulePath, SerUseHide> importReExports,
-  @NotNull ImmutableMap<ModuleName, SerUseHide> localReExports,
+  @NotNull ImmutableSeq<SerCommand> commands,
+  @NotNull ImmutableSeq<QName> exports,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -87,10 +84,6 @@ public record CompiledModule(
     }
   }
 
-  record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
-    public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
-  }
-
   record SerRenamedOp(@NotNull OpDecl.OpInfo info, @NotNull SerBind bind) implements Serializable { }
 
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
@@ -101,12 +94,40 @@ public record CompiledModule(
     var serialization = new Serialization(resolveInfo, MutableMap.create());
     defs.forEach(serialization::serOp);
 
-    var exports = ctx.exports().symbols().keysView();
+    var commands = resolveInfo.commands().toSeq();
+    var exports = MutableList.<QName>create();
 
-    var imports = resolveInfo.imports().view().map((k, v) ->
-      new SerImport(v.resolveInfo().modulePath(),
-        k.ids(), v.reExport())).toSeq();
-    var serExport = ImmutableSet.from(exports);
+    // TODO: what if we also store the accessbility information in resolve info?
+    defs.forEach(def -> {
+      var var = AnyDef.fromVar(def.ref());
+      var module = var.module();
+
+      var remain = module.removePrefix(ctx.modulePath());
+      if (remain == null) {
+        Panic.unreachable();
+        return;
+      }
+
+      var export = switch (remain) {
+        case ModuleName.Qualified qualified -> {
+          var mod = ctx.getModuleMaybe(qualified);
+          assert mod != null;
+          yield mod;
+        }
+        case ModuleName.ThisRef _ -> ctx.exports();
+      };
+
+      // exported definition won't get renamed
+      var exported = export.symbols().getOrNull(def.ref().name());
+      if (exported != null) {
+        exports.append(var.qualifiedName());
+      }
+    });
+
+    // var imports = resolveInfo.imports().view().map((k, v) ->
+    //   new SerImport(v.resolveInfo().modulePath(),
+    //     k.ids(), v.reExport())).toSeq();
+    // var serExport = ImmutableSet.from(exports);
     var importReExports = MutableMap.<ModulePath, SerUseHide>create();
     var localReExports = MutableMap.<ModuleName.Qualified, SerUseHide>create();
     resolveInfo.reExports().forEach((qualified, useHide) -> {
@@ -126,9 +147,9 @@ public record CompiledModule(
       .map(data -> Tuple.of(data.name, data.renamed)));
     var prims = resolveInfo.primFactory().qnameMap();
 
-    return new CompiledModule(imports, serExport,
-      ImmutableMap.from(importReExports),
-      ImmutableMap.from(localReExports),
+    return new CompiledModule(
+      commands,
+      exports.toSeq(),
       serOps, prims, opRename);
   }
 
@@ -163,11 +184,11 @@ public record CompiledModule(
     @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull Reporter reporter
   ) {
     var resolveInfo = new ResolveInfo(context, primFactory, shapeFactory, new AyaBinOpSet(reporter));
-    shallowResolve(loader, resolveInfo, reporter);
     var rootClass = state.topLevelClass(context.modulePath());
     for (var jitClass : rootClass.getDeclaredClasses()) {
       loadModule(primFactory, shapeFactory, context, jitClass, reporter);
     }
+    shallowResolve(loader, resolveInfo, resolveInfo.thisModule(), commands, reporter);
     primDefs.forEach((_, qname) ->
       primFactory.definePrim((JitPrim) state.resolve(qname)));
     deOp(state, resolveInfo);
@@ -214,41 +235,68 @@ public record CompiledModule(
     }
   }
 
-  /// like [org.aya.resolve.visitor.StmtPreResolver] but only resolve import
-  private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
-    for (var anImport : imports) {
-      var modName = anImport.path;
-      var modRename = ModuleName.qualified(anImport.rename);
-      var isPublic = anImport.isPublic;
-
-      var loaded = loader.load(modName)
-        .getOrThrow(() -> new Panic("Unable to load a dependency module of a compiled module"));
-
-      thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(loaded, isPublic));
-      var mod = loaded.thisModule();
-      var success = thisResolve.thisModule()
-        .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
-      if (!success) Panic.unreachable();
-      var useHide = importReExports.getOrNull(modName);
-      if (useHide != null) {
-        success = thisResolve.thisModule().openModule(modRename,
-          Stmt.Accessibility.Public,
-          useHide.names().map(SerQualifiedID::make),
-          useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x.make())),
-          SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
-          reporter);
-
-        if (!success) Panic.unreachable();
+  /// like [StmtPreResolver] but only resolve import
+  private void shallowResolve(
+    @NotNull ModuleLoader loader,
+    @NotNull ResolveInfo thisResolve,
+    @NotNull ModuleContext context,
+    @NotNull ImmutableSeq<SerCommand> commands,
+    @NotNull Reporter reporter
+  ) {
+    for (var cmd : commands) {
+      switch (cmd) {
+        case SerImport serImport -> StmtPreResolver.resolveImport(
+          loader, context, reporter, SourcePos.SER, thisResolve,
+          serImport.path(), ModuleName.qualified(serImport.rename()),
+          serImport.isPublic() ? Stmt.Accessibility.Public : Stmt.Accessibility.Private
+        );
+        case SerModule serModule ->
+          StmtPreResolver.resolveModule(context, reporter, SourcePos.SER, serModule.name(), inner -> {
+            shallowResolve(loader, thisResolve, inner, serModule.commands(), reporter);
+            // this is okay
+            return ImmutableSeq.empty();
+          });
+        case SerOpen serOpen -> StmtPreResolver.resolveOpen(
+          context, reporter, SourcePos.SER, thisResolve,
+          serOpen.path(), serOpen.reExport() ? Stmt.Accessibility.Public : Stmt.Accessibility.Private,
+          serOpen.useHide().toUseHide(),
+          // TODO: i guess never?
+          false);
       }
-      var acc = importReExports.containsKey(modName)
-        ? Stmt.Accessibility.Public
-        : Stmt.Accessibility.Private;
-      thisResolve.open(loaded, SourcePos.SER, acc);
     }
+    // for (var anImport : imports) {
+    //   var modName = anImport.path;
+    //   var modRename = ModuleName.qualified(anImport.rename);
+    //   var isPublic = anImport.isPublic;
+    //
+    //   var loaded = loader.load(modName)
+    //     .getOrThrow(() -> new Panic("Unable to load a dependency module of a compiled module"));
+    //
+    //   thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(loaded, isPublic));
+    //   var mod = loaded.thisModule();
+    //   var success = thisResolve.thisModule()
+    //     .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
+    //   if (!success) Panic.unreachable();
+    //   var useHide = importReExports.getOrNull(modName);
+    //   if (useHide != null) {
+    //     success = thisResolve.thisModule().openModule(modRename,
+    //       Stmt.Accessibility.Public,
+    //       useHide.names().map(SerQualifiedID::make),
+    //       useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x.make())),
+    //       SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
+    //       reporter);
+    //
+    //     if (!success) Panic.unreachable();
+    //   }
+    //   var acc = importReExports.containsKey(modName)
+    //     ? Stmt.Accessibility.Public
+    //     : Stmt.Accessibility.Private;
+    //   thisResolve.open(loaded, SourcePos.SER, acc);
+    // }
   }
 
   /**
-   * like {@link org.aya.resolve.visitor.StmtResolver} but only resolve operator
+   * like {@link StmtResolver} but only resolve operator
    */
   private void deOp(@NotNull CompiledModule.DeState state, @NotNull ResolveInfo resolveInfo) {
     // deserialize renamed operator
@@ -287,33 +335,9 @@ public record CompiledModule(
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
 
-  /// @see org.aya.syntax.context.ModuleExport#map
-  /// @see org.aya.syntax.context.ModuleExport#filter
   private void export(@NotNull PhysicalModuleContext context, @NotNull JitDef def) {
-    boolean success = true;
-    var module = def.qualifiedName().module().localModule();
-    if (module instanceof ModuleName.ThisRef && exports.contains(def.name())) {
-      success = context.exportSymbol(def.name(), new CompiledVar(def));
+    if (this.exports.contains(def.qualifiedName())) {
+      context.exportSymbol(def.name(), new CompiledVar(def));
     }
-    for (int i = 0; i < module.length(); ++i) {
-      var qualified = new ModuleName.Qualified(module.ids().drop(i));
-      var local = localReExports.getOrNull(qualified);
-      if (local == null) continue;
-      var contains = local.names.find(qid ->
-          qid.name.contentEquals(def.name()) &&
-            qualified.concat(qid.component).equals(module))
-        .getOrNull();
-      if (local.isUsing && contains != null) {
-        var rename = local.renames.find(it -> it.qid.equals(contains)).getOrNull();
-        if (rename != null) {
-          success = context.exportSymbol(rename.to, new CompiledVar(def)) && success;
-        } else {
-          success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
-        }
-      } else if (!local.isUsing && contains == null) {
-        success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
-      }
-    }
-    assert success : "DuplicateExportError should not happen in CompiledModule";
   }
 }

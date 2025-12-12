@@ -82,7 +82,9 @@ public record StmtBinder(@NotNull ResolveInfo info, @NotNull LocalReporter repor
       case MiscDecl(var decl) -> visitBind(ctx, decl.ref(), decl.bindBlock());
       case TopDecl(PrimDecl _, _), GenStmt _ -> { }
       case TopDecl _ -> Panic.unreachable();
-      case ModCmd(var stmts) -> resolveBind(stmts);
+      case ModCmd(var stmts, _, _) -> resolveBind(stmts);
+      case ImportCmd importCmd -> { }
+      case OpenCmd openCmd -> { }
     }
   }
 }

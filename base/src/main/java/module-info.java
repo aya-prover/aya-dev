@@ -20,4 +20,5 @@ module aya.base {
   exports org.aya.tyck.tycker;
   exports org.aya.tyck;
   exports org.aya.unify;
+  exports org.aya.resolve.ser;
 }

@@ -6,7 +6,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.jetbrains.annotations.NotNull;
 
 public record SerOpen(
-  @NotNull boolean reExport,
+  boolean reExport,
   @NotNull ModuleName.Qualified path,
   @NotNull SerUseHide useHide
 ) implements SerCommand {

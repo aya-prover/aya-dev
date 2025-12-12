@@ -2,6 +2,8 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
+import kala.collection.Seq;
+import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.TyckOrder;
@@ -9,6 +11,7 @@ import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.salt.AyaBinOpSet;
 import org.aya.resolve.ser.SerCommand;
+import org.aya.resolve.ser.SerModule;
 import org.aya.states.GlobalInstanceSet;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
@@ -128,6 +131,25 @@ public record ResolveInfo(
 
   public @NotNull Reporter reporter() {
     return this.opSet.reporter;
+  }
+
+  /// Compute all submodules according to [#commands]
+  public @NotNull ImmutableSeq<ModuleName.Qualified> submodules() {
+    return submodules(ModuleName.This, this.commands);
+  }
+
+  private static @NotNull ImmutableSeq<ModuleName.Qualified> submodules(
+    @NotNull ModuleName context,
+    @NotNull Seq<SerCommand> commands
+  ) {
+    return commands.flatMap(it -> {
+      if (!(it instanceof SerModule(var name, var cmds))) return ImmutableSeq.empty();
+      var thisMod = context.resolve(name);
+      // RECURSIVE!!!!!!
+      var subMods = submodules(thisMod, cmds);
+
+      return subMods.view().prepended(thisMod);
+    });
   }
 
   @Debug.Renderer(text = "opInfo.name()")

@@ -4,4 +4,4 @@ package org.aya.resolve.ser;
 
 import java.io.Serializable;
 
-public sealed interface SerCommand extends Serializable permits SerImport, SerModule, SerOpen, SerUseHide { }
+public sealed interface SerCommand extends Serializable permits SerImport, SerModule, SerOpen { }
