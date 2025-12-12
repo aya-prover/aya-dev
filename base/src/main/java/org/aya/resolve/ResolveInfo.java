@@ -2,11 +2,13 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.resolve;
 
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import org.aya.generic.stmt.TyckOrder;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.salt.AyaBinOpSet;
+import org.aya.resolve.ser.SerCommand;
 import org.aya.states.GlobalInstanceSet;
 import org.aya.states.InstanceSet;
 import org.aya.states.TyckState;
@@ -52,7 +54,10 @@ public record ResolveInfo(
   @NotNull GlobalInstanceSet instancesSet,
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<AnyDef, OpRenameInfo> opRename,
+  @NotNull MutableList<SerCommand> commands,
+  // still useful
   @NotNull MutableMap<ModuleName.Qualified, ImportInfo> imports,
+  // useless
   @NotNull MutableMap<ModuleName.Qualified, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
@@ -63,7 +68,7 @@ public record ResolveInfo(
     @NotNull AyaBinOpSet opSet
   ) {
     this(thisModule, primFactory, shapeFactory, new GlobalInstanceSet(), opSet,
-      MutableMap.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
+      MutableMap.create(), MutableList.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
   }
   public @NotNull TyckState makeTyckState() {
     return new TyckState(shapeFactory, primFactory);

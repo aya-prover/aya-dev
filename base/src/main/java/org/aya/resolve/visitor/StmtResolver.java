@@ -48,7 +48,7 @@ public class StmtResolver {
   private void resolveStmt(@NotNull ResolvingStmt stmt) {
     switch (stmt) {
       case ResolvingStmt.ResolvingDecl decl -> resolveDecl(decl);
-      case ResolvingStmt.ModStmt(var stmts) -> stmts.forEach(this::resolveStmt);
+      case ResolvingStmt.ModCmd(var stmts) -> stmts.forEach(this::resolveStmt);
       case ResolvingStmt.GenStmt(var variables, var context) -> {
         var resolver = new ExprResolver(context, reporter, false);
         resolver.enter(Where.Head);

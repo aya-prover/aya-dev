@@ -5,6 +5,7 @@ package org.aya.resolve;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.resolve.context.Context;
 import org.aya.resolve.context.ModuleContext;
+import org.aya.resolve.ser.*;
 import org.aya.syntax.concrete.stmt.Generalize;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.concrete.stmt.decl.Decl;
@@ -29,9 +30,18 @@ import org.jetbrains.annotations.NotNull;
 ///```
 public sealed interface ResolvingStmt {
   sealed interface ResolvingDecl extends ResolvingStmt { }
+  sealed interface ResolvingCmd extends ResolvingStmt {
+    @NotNull SerCommand cmd();
+  }
 
   record TopDecl(@NotNull Decl stmt, @NotNull Context context) implements ResolvingDecl { }
   record MiscDecl(@NotNull Decl stmt) implements ResolvingDecl { }
   record GenStmt(@NotNull Generalize stmt, @NotNull ModuleContext context) implements ResolvingStmt { }
-  record ModStmt(@NotNull ImmutableSeq<@NotNull ResolvingStmt> resolved) implements ResolvingStmt { }
+  /// @param context the context that `Command.Module` introduce
+  record ModCmd(@NotNull ImmutableSeq<@NotNull ResolvingStmt> resolved, @NotNull ModuleContext context,
+                @NotNull SerModule cmd)
+    implements ResolvingCmd { }
+
+  record ImportCmd(@NotNull SerImport cmd) implements ResolvingCmd { }
+  record OpenCmd(@NotNull SerOpen cmd) implements ResolvingCmd { }
 }

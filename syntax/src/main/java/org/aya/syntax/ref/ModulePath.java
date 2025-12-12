@@ -6,6 +6,7 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -16,6 +17,18 @@ public record ModulePath(@NotNull ImmutableSeq<String> module) implements Serial
     var moduleName = other.module;
     if (module.sizeLessThan(moduleName.size())) return false;
     return module.sliceView(0, moduleName.size()).sameElements(moduleName);
+  }
+
+  /// Remove prefix {@param prefix} and return the remaining components as [ModuleName]
+  ///
+  /// @return null if prefix doesn't match, [ModuleName#This] if `this == prefix`
+  public @Nullable ModuleName removePrefix(@NotNull ModulePath prefix) {
+    var prefixName = prefix.module;
+    if (module.sizeLessThan(prefixName.size())) return null;
+    var prefixMatches = module.sliceView(0, prefixName.size()).sameElements(prefixName);
+    if (!prefixMatches) return null;
+
+    return ModuleName.from(module.sliceView(prefixName.size(), module.size()));
   }
 
   public ModulePath dropLast(int n) { return new ModulePath(module.dropLast(n)); }

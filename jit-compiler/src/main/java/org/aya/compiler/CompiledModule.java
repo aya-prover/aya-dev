@@ -13,6 +13,10 @@ import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.salt.AyaBinOpSet;
+import org.aya.resolve.ser.SerCommand;
+import org.aya.resolve.ser.SerImport;
+import org.aya.resolve.ser.SerQualifiedID;
+import org.aya.resolve.ser.SerUseHide;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.compile.JitData;
@@ -88,43 +92,6 @@ public record CompiledModule(
   }
 
   record SerRenamedOp(@NotNull OpDecl.OpInfo info, @NotNull SerBind bind) implements Serializable { }
-
-  /**
-   * @param rename not empty
-   */
-  record SerImport(
-    @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
-    boolean isPublic) implements Serializable { }
-
-  record SerQualifiedID(@NotNull ModuleName component, @NotNull String name) implements Serializable {
-    public static @NotNull SerQualifiedID from(@NotNull QualifiedID qid) {
-      return new SerQualifiedID(qid.component(), qid.name());
-    }
-    public @NotNull QualifiedID make() { return new QualifiedID(SourcePos.SER, component, name); }
-  }
-
-  /// @see UseHide.Rename
-  record SerRename(@NotNull SerQualifiedID qid, @NotNull String to) implements Serializable {
-    public static @NotNull SerRename from(@NotNull UseHide.Rename rename) {
-      return new SerRename(SerQualifiedID.from(rename.name()), rename.to());
-    }
-    public @NotNull UseHide.Rename make() { return new UseHide.Rename(qid.make(), to); }
-  }
-
-  /// @see UseHide
-  record SerUseHide(
-    boolean isUsing,
-    @NotNull ImmutableSeq<SerQualifiedID> names,
-    @NotNull ImmutableSeq<SerRename> renames
-  ) implements Serializable {
-    public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
-      return new SerUseHide(
-        useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(x -> SerQualifiedID.from(x.id())),
-        useHide.renaming().map(it -> SerRename.from(it.data()))
-      );
-    }
-  }
 
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {

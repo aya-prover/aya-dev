@@ -40,7 +40,12 @@ public sealed interface ModuleName extends Serializable {
     @Override public @NotNull Qualified concat(@NotNull ModuleName path) {
       return new Qualified(ids.concat(path.ids()));
     }
+
     @Override public @NotNull String toString() { return QualifiedID.join(ids); }
+
+    public @NotNull ModuleName drop(int size) {
+      return ModuleName.from(ids.view().drop(size));
+    }
   }
 
   @NotNull ImmutableSeq<String> ids();

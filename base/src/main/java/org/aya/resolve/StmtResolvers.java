@@ -26,7 +26,12 @@ public final class StmtResolvers {
 
   private @NotNull ImmutableSeq<ResolvingStmt> fillContext(@NotNull ImmutableSeq<Stmt> stmts) {
     var resolver = new StmtPreResolver(loader, info);
-    return resolver.resolveStmt(stmts, info.thisModule());
+    var resolving = resolver.resolveStmt(stmts, info.thisModule());
+    info.commands().appendAll(resolving.view().mapNotNull(it ->
+      it instanceof ResolvingStmt.ResolvingCmd cmd
+        ? cmd.cmd()
+        : null));
+    return resolving;
   }
 
   private void resolveStmts(@NotNull ImmutableSeq<ResolvingStmt> stmts) {

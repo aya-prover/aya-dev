@@ -36,6 +36,10 @@ public record QPath(@NotNull ModulePath module, int fileModuleSize) implements S
     return new QPath(module.derive(name), fileModuleSize);
   }
 
+  public @NotNull QPath derive(@NotNull ModulePath path) {
+    return new QPath(module.derive(path), fileModuleSize);
+  }
+
   public boolean isFileModule() {
     return module.size() == fileModuleSize;
   }

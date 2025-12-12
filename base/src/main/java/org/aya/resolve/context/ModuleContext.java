@@ -45,6 +45,7 @@ public interface ModuleContext extends ModuleContextView, Context {
   @Override default @NotNull Path underlyingFile() { return parent().underlyingFile(); }
 
   /// Things (symbol or module) that are exported by this module.
+  /// Must be immutable after the [ModuleContext] is complete
   @NotNull ModuleExport exports();
 
   @Override default @Nullable ModuleExport getModuleLocalMaybe(@NotNull ModuleName.Qualified modName) {

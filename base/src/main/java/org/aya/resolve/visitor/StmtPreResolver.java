@@ -12,15 +12,22 @@ import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.error.NameProblem;
 import org.aya.resolve.error.PrimResolveError;
 import org.aya.resolve.module.ModuleLoader;
+import org.aya.resolve.ser.SerImport;
+import org.aya.resolve.ser.SerModule;
+import org.aya.resolve.ser.SerOpen;
+import org.aya.resolve.ser.SerUseHide;
 import org.aya.syntax.concrete.stmt.*;
 import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.ModulePath;
 import org.aya.syntax.ref.QPath;
 import org.aya.util.Panic;
 import org.aya.util.binop.Assoc;
 import org.aya.util.binop.OpDecl;
+import org.aya.util.position.SourcePos;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.aya.util.reporter.SuppressingReporter;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +51,107 @@ public final class StmtPreResolver {
   /// Resolve {@link Stmt}s under {@param context}.
   ///
   /// @return the context of the body of each {@link Stmt}, where imports and opens are stripped.
-  public ImmutableSeq<ResolvingStmt> resolveStmt(@NotNull ImmutableSeq<Stmt> stmts, ModuleContext context) {
+  public @NotNull ImmutableSeq<ResolvingStmt> resolveStmt(@NotNull ImmutableSeq<Stmt> stmts, ModuleContext context) {
     return stmts.mapNotNull(stmt -> resolveStmt(stmt, context));
+  }
+
+  public static ResolvingStmt.@NotNull ModCmd resolveModule(
+    @NotNull ModuleContext parent,
+    @NotNull Reporter reporter,
+    @NotNull SourcePos pos, @NotNull String name,
+    @NotNull Function<ModuleContext, ImmutableSeq<ResolvingStmt>> cont
+  ) {
+    var newCtx = parent.derive(name);
+    var children = cont.apply(newCtx);
+
+    parent.importModuleContext(ModuleName.This.resolve(name), newCtx, Stmt.Accessibility.Public, pos, reporter);
+
+    return new ResolvingStmt.ModCmd(children, newCtx, new SerModule(name, children.mapNotNull(it -> {
+      if (it instanceof ResolvingStmt.ResolvingCmd cmd) {
+        return cmd.cmd();
+      } else {
+        return null;
+      }
+    })));
+  }
+
+  public record ImportResult(@NotNull ResolveInfo info, @NotNull ModuleName.Qualified importName) { }
+
+  /// @return [ResolveInfo] of imported module
+  public static @Nullable ImportResult resolveImport(
+    @NotNull ModuleLoader loader,
+    @NotNull ModuleContext parent,
+    @NotNull Reporter reporter,
+    @NotNull SourcePos pos,
+    @NotNull ResolveInfo info,
+    @NotNull ModulePath modulePath,
+    @Nullable WithPos<String> asName,
+    @NotNull Stmt.Accessibility accessibility
+  ) {
+    var loaded = loader.load(modulePath);
+    switch (loaded.getErrOrNull()) {
+      case Resolve -> { return null; }
+      case NotFound -> {
+        reporter.report(new NameProblem.ModNotFoundError(modulePath, pos));
+        return null;
+      }
+      case null -> { }
+    }
+
+    var success = loaded.get();
+
+    var mod = success.thisModule();
+    var importedName = asName != null ? ModuleName.This.resolve(asName.data()) : modulePath.asName();
+
+    parent.importModuleContext(importedName, mod, accessibility, pos, reporter);
+    info.primFactory().importFrom(success.primFactory());
+
+    var importInfo = new ResolveInfo.ImportInfo(success, accessibility == Stmt.Accessibility.Public);
+    info.imports().put(importedName, importInfo);
+
+    return new ImportResult(success, importedName);
+  }
+
+  public static boolean resolveOpen(
+    @NotNull ModuleContext parent,
+    @NotNull Reporter reporter,
+    @NotNull SourcePos pos,
+    @NotNull ResolveInfo info,
+    @NotNull ModuleName.Qualified mod,
+    @NotNull Stmt.Accessibility accessibility,
+    @NotNull UseHide useHide,
+    boolean example
+  ) {
+    var ctx = example ? exampleContext(parent) : parent;
+
+    var success = ctx.openModule(mod, accessibility, pos, useHide, reporter);
+    if (!success) return false;
+
+    // store top-level re-exports
+    // FIXME: this is not enough, because submodule export definitions are not stored
+    // TODO: need this no more
+    if (ctx == info.thisModule()) {
+      if (accessibility == Stmt.Accessibility.Public) info.reExports().put(mod, useHide);
+    }
+    // open necessities from imported modules (not submodules)
+    // because the module itself and its submodules share the same ResolveInfo
+    info.imports().getOption(mod).ifDefined(modResolveInfo ->
+      info.open(modResolveInfo.resolveInfo(), pos, accessibility));
+
+    // renaming as infix
+    if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
+      // skip if there is no `as` or it is qualified.
+      if (use.asAssoc() == Assoc.Unspecified) return;
+      // In case of qualified, it must be a module, not a definition.
+      if (use.id().component() != ModuleName.This) return;
+      var symbol = ctx.modules().get(mod).symbols().get(use.id().name());
+      var asName = use.asName().getOrDefault(use.id().name());
+      var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
+      var bind = use.asBind();
+      info.renameOp(ctx, AnyDef.fromVar(symbol), renamedOpDecl, bind, true);
+    });
+
+    return true;
   }
 
   public @Nullable ResolvingStmt resolveStmt(@NotNull Stmt stmt, @NotNull ModuleContext context) {
@@ -58,73 +164,30 @@ public final class StmtPreResolver {
         if (loader.existsFileLevelModule(wholeModeName)) {
           thisReporter.report(new NameProblem.ClashModNameError(wholeModeName, mod.sourcePos()));
           yield null;     // TODO: Is this Problem critical? or we can continue the resolving.
+          // ^ yes, following command may try to open this module
         }
 
-        var newCtx = context.derive(mod.name());
-        mod.theContext().set(newCtx);
-        var children = resolveStmt(mod.contents(), newCtx);
-
-        context.importModuleContext(ModuleName.This.resolve(mod.name()), newCtx, mod.accessibility(), mod.sourcePos(), thisReporter);
-
-        yield new ResolvingStmt.ModStmt(children);
+        yield resolveModule(context, thisReporter, mod.sourcePos(), mod.name(), newCtx -> resolveStmt(mod.contents(), newCtx));
       }
       case Command.Import cmd -> {
-        var modulePath = cmd.path();
+        var result = resolveImport(loader, context, thisReporter, cmd.sourcePos(), resolveInfo,
+          cmd.path(), cmd.asName(), cmd.accessibility());
 
-        var loaded = loader.load(modulePath);
-        switch (loaded.getErrOrNull()) {
-          case Resolve -> { yield null; }
-          case NotFound -> {
-            thisReporter.report(new NameProblem.ModNotFoundError(modulePath, cmd.sourcePos()));
-            yield null;
-          }
-          case null -> { }
+        if (result != null) {
+          // TODO: i guess we won't use `ResolveInfo#commands` when it fails to resolve
+          var ser = new SerImport(cmd.path(), result.importName.ids(), cmd.accessibility() == Stmt.Accessibility.Public);
+          yield new ResolvingStmt.ImportCmd(ser);
         }
 
-        var success = loaded.get();
-
-        var mod = success.thisModule();
-        var as = cmd.asName();
-        var importedName = as != null ? ModuleName.This.resolve(as.data()) : modulePath.asName();
-
-        context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos(), thisReporter);
-        resolveInfo.primFactory().importFrom(success.primFactory());
-
-        var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
-        resolveInfo.imports().put(importedName, importInfo);
         yield null;
       }
       case Command.Open cmd -> {
-        var mod = cmd.path();
-        var acc = cmd.accessibility();
-        var useHide = cmd.useHide();
-        var ctx = cmd.openExample() ? exampleContext(context) : context;
-
-        var success = ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
-        if (!success) yield null;
-
-        // store top-level re-exports
-        // FIXME: this is not enough, because submodule export definitions are not stored
-        if (ctx == resolveInfo.thisModule()) {
-          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
+        var success = resolveOpen(context, thisReporter, cmd.sourcePos(), resolveInfo,
+          cmd.path(), cmd.accessibility(), cmd.useHide(), cmd.openExample());
+        if (success) {
+          var ser = new SerOpen(cmd.accessibility() == Stmt.Accessibility.Private, cmd.path(), SerUseHide.from(cmd.useHide()));
+          yield new ResolvingStmt.OpenCmd(ser);
         }
-        // open necessities from imported modules (not submodules)
-        // because the module itself and its submodules share the same ResolveInfo
-        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo ->
-          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc));
-
-        // renaming as infix
-        if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
-          // skip if there is no `as` or it is qualified.
-          if (use.asAssoc() == Assoc.Unspecified) return;
-          // In case of qualified, it must be a module, not a definition.
-          if (use.id().component() != ModuleName.This) return;
-          var symbol = ctx.modules().get(mod).symbols().get(use.id().name());
-          var asName = use.asName().getOrDefault(use.id().name());
-          var renamedOpDecl = new ResolveInfo.RenamedOpDecl(new OpDecl.OpInfo(asName, use.asAssoc()));
-          var bind = use.asBind();
-          resolveInfo.renameOp(ctx, AnyDef.fromVar(symbol), renamedOpDecl, bind, true);
-        });
         yield null;
       }
       case Generalize variables -> {
