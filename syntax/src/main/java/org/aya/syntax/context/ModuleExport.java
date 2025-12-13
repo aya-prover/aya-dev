@@ -10,6 +10,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.concrete.stmt.UseHide;
 import org.aya.syntax.ref.AnyDefVar;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,13 +22,14 @@ import java.util.function.Consumer;
 /// ModuleExport stores symbols that imports from another module.
 /// Any module should NOT export ambiguous symbol/module, they should be solved before they are exported.
 public record ModuleExport(
+  @NotNull QPath qualifiedPath,
   @NotNull MutableMap<String, AnyDefVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
 ) {
-  public ModuleExport() { this(MutableMap.create(), MutableMap.create()); }
+  public ModuleExport(@NotNull QPath qualifiedPath) { this(qualifiedPath, MutableMap.create(), MutableMap.create()); }
 
   public ModuleExport(@NotNull ModuleExport that) {
-    this(MutableMap.from(that.symbols), MutableMap.from(that.modules));
+    this(that.qualifiedPath, MutableMap.from(that.symbols), MutableMap.from(that.modules));
   }
 
   /// @implSpec In case of qualified renaming, only the module is renamed, for example (pseudocode):
@@ -50,7 +52,7 @@ public record ModuleExport(
 
     switch (strategy) {
       case Using -> {
-        newModule = new ModuleExport();
+        newModule = new ModuleExport(qualifiedPath);
         for (var name : names) {
           var unit = get(name.component(), name.name());
 
