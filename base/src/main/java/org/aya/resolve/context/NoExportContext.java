@@ -9,6 +9,7 @@ import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.context.ModuleSymbol;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -18,14 +19,14 @@ public record NoExportContext(
   @NotNull Context parent,
   @NotNull ModuleSymbol<AnyVar> symbols,
   @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules,
-  @Override @NotNull ModulePath modulePath
+  @Override @NotNull QPath qualifiedPath
 ) implements ModuleContext {
   public NoExportContext(
     @NotNull Context parent,
     @NotNull ModuleSymbol<AnyVar> symbols,
     @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules
   ) {
-    this(parent, symbols, modules, parent.modulePath().derive(":NoExport"));
+    this(parent, symbols, modules, parent.qualifiedPath().derive(":NoExport"));
   }
 
   public NoExportContext(@NotNull Context parent) {
@@ -33,5 +34,5 @@ public record NoExportContext(
   }
 
   @Override public @NotNull Path underlyingFile() { return parent.underlyingFile(); }
-  @Override public @NotNull ModuleExport exports() { return new ModuleExport(); }
+  @Override public @NotNull ModuleExport exports() { return new ModuleExport(qualifiedPath); }
 }

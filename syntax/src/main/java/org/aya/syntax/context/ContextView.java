@@ -9,6 +9,7 @@ import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +43,15 @@ public interface ContextView {
     return container;
   }
 
-  /// The path of this module
-  default @NotNull ModulePath modulePath() {
+  default @NotNull QPath qualifiedPath() {
     var p = parent();
     assert p != null;
-    return p.modulePath();
+    return p.qualifiedPath();
+  }
+
+  /// The path of this module
+  default @NotNull ModulePath modulePath() {
+    return qualifiedPath().module();
   }
 
   /// Getting a symbol by name {@param name}.
