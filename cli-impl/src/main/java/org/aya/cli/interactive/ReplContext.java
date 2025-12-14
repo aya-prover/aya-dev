@@ -16,10 +16,7 @@ import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.context.ModuleSymbol;
-import org.aya.syntax.ref.AnyDefVar;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.DefVar;
-import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.*;
 import org.aya.util.RepoLike;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
@@ -34,7 +31,8 @@ public final class ReplContext extends PhysicalModuleContext implements RepoLike
   private @Nullable ImmutableMap<String, ModuleTrie> moduleTree = null;
 
   public ReplContext(@NotNull Context parent, @NotNull ModulePath name) {
-    super(parent, name);
+    // QPath is used for serialization only
+    super(parent, QPath.fileLevel(name));
   }
 
   @Override public boolean importSymbol(

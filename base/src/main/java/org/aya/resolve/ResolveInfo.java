@@ -76,7 +76,13 @@ public record ResolveInfo(
     return new ExprTycker(makeTyckState(), new InstanceSet(instancesSet), reporter, modulePath());
   }
 
-  public record ImportInfo(@NotNull ResolveInfo resolveInfo, boolean reExport) { }
+  /// @param open only used by serialization, not null if it should be [ResolveInfo#open]
+  public record ImportInfo(
+    @NotNull ResolveInfo resolveInfo,
+    boolean reExport,
+    @Nullable Stmt.Accessibility open
+  ) { }
+
   public record OpRenameInfo(
     @NotNull Context bindCtx, @NotNull RenamedOpDecl renamed,
     @NotNull BindBlock bind, boolean reExport

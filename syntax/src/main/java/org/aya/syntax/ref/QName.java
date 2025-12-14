@@ -1,8 +1,12 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.ref;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
+import org.aya.pretty.doc.Doc;
+import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -19,5 +23,10 @@ public record QName(@NotNull QPath module, @NotNull String name) implements Seri
 
   public ImmutableSeq<String> asStringSeq() {
     return module.module().module().appended(name);
+  }
+
+  @Override
+  public @NotNull String toString() {
+    return QualifiedID.join(module.module().module().appended(name));
   }
 }

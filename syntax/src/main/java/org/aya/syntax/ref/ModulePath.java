@@ -3,8 +3,11 @@
 package org.aya.syntax.ref;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.AyaDocile;
+import org.aya.pretty.doc.Doc;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.util.PrettierOptions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

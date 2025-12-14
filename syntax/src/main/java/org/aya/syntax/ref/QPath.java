@@ -60,4 +60,9 @@ public record QPath(@NotNull ModulePath module, int fileModuleSize) implements S
 
     return result.toSeq();
   }
+
+  @Override
+  public @NotNull String toString() {
+    return module.toString();
+  }
 }

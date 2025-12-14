@@ -4,15 +4,15 @@ package org.aya.compiler;
 
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
-import kala.collection.immutable.ImmutableSet;
 import kala.collection.mutable.MutableLinkedHashMap;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.tuple.Tuple;
 import org.aya.compiler.serializers.AyaSerializer;
 import org.aya.compiler.serializers.NameSerializer;
+import org.aya.generic.AyaDocile;
+import org.aya.pretty.doc.Doc;
 import org.aya.resolve.ResolveInfo;
-import org.aya.resolve.context.ModuleContext;
 import org.aya.resolve.context.PhysicalModuleContext;
 import org.aya.resolve.module.ModuleLoader;
 import org.aya.resolve.salt.AyaBinOpSet;
@@ -29,9 +29,9 @@ import org.aya.syntax.core.repr.ShapeRecognition;
 import org.aya.syntax.ref.*;
 import org.aya.util.ArrayUtil;
 import org.aya.util.Panic;
+import org.aya.util.PrettierOptions;
 import org.aya.util.binop.OpDecl;
 import org.aya.util.position.SourcePos;
-import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +41,15 @@ import java.util.EnumMap;
 
 /// The .ayac file representation.
 ///
-/// @param imports         The modules that this ayac imports. Absolute path.
-/// @param exports         Whether certain definition is exported. Re-exported symbols will not be here.
-/// @param importReExports key: an imported module that is in {@param imports}
-/// @param localReExports  key: a module defined in this module
+/// @param moduleExport the module export of this file level module
+/// @param importOpen all module that is imported and opened by this file level module, this is kinda tricky
+/// @param serOps [SerBind] of definitions in this file level module
+/// @param opRename [SerRenamedOp] (basically a [SerBind]) of renamed symbols from other modules
+///
 /// @author kiva
 public record CompiledModule(
   @NotNull ImmutableMap<ModuleName, SerModuleExport> moduleExport,
+  @NotNull ImmutableSeq<SerImportOpen> importOpen,
   @NotNull ImmutableMap<QName, SerBind> serOps,
   @NotNull EnumMap<PrimDef.ID, QName> primDefs,
   @NotNull ImmutableMap<QName, SerRenamedOp> opRename
@@ -82,7 +84,28 @@ public record CompiledModule(
   record SerModuleExport(
     @NotNull ImmutableMap<String, QName> symbols,
     @NotNull ImmutableMap<ModuleName.Qualified, QPath> modules
-  ) implements Serializable { }
+  ) implements Serializable, AyaDocile {
+    @Override
+    public @NotNull Doc toDoc(@NotNull PrettierOptions options) {
+      var docs = MutableList.<Doc>create();
+
+      symbols.forEach((name, qname) ->
+        docs.append(Doc.sep(
+          Doc.plain("Definition"), Doc.plain(name),
+          Doc.plain("as"), Doc.plain(qname.toString()))));
+
+      modules.forEach((name, qpath) ->
+        docs.append(Doc.sep(
+          Doc.plain("Module"), Doc.plain(name.toString()),
+          Doc.plain("as"), Doc.plain(qpath.toString()))));
+
+      return Doc.vcat(docs);
+    }
+  }
+
+  record SerImportOpen(@NotNull ModulePath path, boolean isPublic) implements Serializable {
+
+  }
 
   record SerBind(@NotNull ImmutableSeq<QName> loosers, @NotNull ImmutableSeq<QName> tighters) implements Serializable {
     public static final SerBind EMPTY = new SerBind(ImmutableSeq.empty(), ImmutableSeq.empty());
@@ -136,7 +159,14 @@ public record CompiledModule(
     defs.forEach(serialization::serOp);
 
     // TODO: i guess we can obtain module path from exports...
-    var moduleExport = serialize(resolveInfo.modulePath(), resolveInfo.thisModule().exports());
+    var moduleExport = serializeModuleExport(resolveInfo.modulePath(), resolveInfo.thisModule().exports());
+    var importOpen = MutableList.<SerImportOpen>create();
+    resolveInfo.imports().forEach((_, info) -> {
+      var acc = info.open();
+      if (acc != null) {
+        importOpen.append(new SerImportOpen(info.resolveInfo().modulePath(), acc == Stmt.Accessibility.Public));
+      }
+    });
 
     // var exports = ctx.exports().symbols().keysView();
     //
@@ -164,11 +194,12 @@ public record CompiledModule(
     var prims = resolveInfo.primFactory().qnameMap();
 
     return new CompiledModule(
-      moduleExport,
+      moduleExport, importOpen.toSeq(),
       serOps, prims, opRename);
   }
 
-  private static @NotNull ImmutableMap<ModuleName, SerModuleExport> serialize(
+  /// Serialize file level [ModuleExport] to ([ModuleName], [SerModuleExport]) pairs
+  private static @NotNull ImmutableMap<ModuleName, SerModuleExport> serializeModuleExport(
     @NotNull ModulePath thisModulePath,
     @NotNull ModuleExport export
   ) {
@@ -209,8 +240,8 @@ public record CompiledModule(
     public final @NotNull DeState state;
     /// ModulePath to currently deserializing module
     public final @NotNull ModulePath thisModulePath;
-    private final @NotNull MutableMap<ModulePath, ModuleExport> cache = MutableMap.create();
-    private final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> subModules = MutableMap.create();
+    public final @NotNull MutableMap<ModulePath, ResolveInfo> cache = MutableMap.create();
+    public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> subModules = MutableMap.create();
     public final @NotNull ImmutableMap<QName, JitDef> thisDefs;
 
     public MyModuleLoader(
@@ -228,12 +259,12 @@ public record CompiledModule(
     private @NotNull ModuleExport loadFileLevel(@NotNull QPath path) {
       var key = path.fileModule();
       var exists = cache.getOrNull(key);
-      if (exists != null) return exists;
+      if (exists != null) return exists.thisModule().exports();
 
       // TODO: handle error
-      var loaded = loader.load(path.fileModule()).get().thisModule().exports();
+      var loaded = loader.load(path.fileModule()).get();
       cache.put(key, loaded);
-      return loaded;
+      return loaded.thisModule().exports();
     }
 
     public @NotNull ModuleExport load(@NotNull QPath path) {
@@ -277,7 +308,7 @@ public record CompiledModule(
 
   /// Deserialize [#thisModulePath] from [#modules], if `thisModulePath` is a sub module,
   /// then deserialized module must be put to [#loader].
-  private @NotNull ModuleExport deserialize(
+  private @NotNull ModuleExport deserializeModuleExport(
     @NotNull QPath thisModulePath,
     @NotNull MyModuleLoader loader,
     @NotNull ImmutableMap<ModuleName, SerModuleExport> modules
@@ -304,7 +335,7 @@ public record CompiledModule(
     thisSer.modules().forEach((name, modPath) -> {
       if (modPath.fileModule().equals(loader.thisModulePath)) {
         // the call graph is equal to the dependency graph, which is a DAG
-        var deser = deserialize(modPath, loader, modules);
+        var deser = deserializeModuleExport(modPath, loader, modules);
         export.modules().put(name, deser);
       } else {
         // otherwise, we just load module
@@ -320,6 +351,7 @@ public record CompiledModule(
     return export;
   }
 
+  // TODO: rename this
   private record Serialization(
     @NotNull ResolveInfo resolveInfo,
     @NotNull MutableMap<QName, SerBind> serOps
@@ -360,16 +392,32 @@ public record CompiledModule(
       loadModule(primFactory, shapeFactory, context, jitDef, reporter);
     }
 
-    var root = deserialize(context.qualifiedPath(),
-      new MyModuleLoader(loader, state, context.modulePath(), allDefs.toSeq()),
-      this.moduleExport);
+    var myLoader = new MyModuleLoader(loader, state, context.modulePath(), allDefs.toSeq());
+    var root = deserializeModuleExport(context.qualifiedPath(),
+      myLoader, this.moduleExport);
 
     // kinda slow, but who cares??
     context.exports.symbols().putAll(root.symbols());
     context.exports.modules().putAll(root.modules());
 
+    // perform ResolveInfo#open
+    this.importOpen.forEach(importOpen -> {
+      var exists = myLoader.cache.getOrNull(importOpen.path);
+
+      if (exists == null) {
+        // in case the module didn't public open the imported module
+        // TODO: handle error
+        exists = loader.load(importOpen.path)
+          .get();
+      }
+
+      resolveInfo.open(exists, SourcePos.SER, importOpen.isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private);
+    });
+
+    // FIXME: will this overlap with `definePrim` in `loadModule` ?
     primDefs.forEach((_, qname) ->
       primFactory.definePrim((JitPrim) state.resolve(qname)));
+
     deOp(state, resolveInfo);
     return resolveInfo;
   }
@@ -440,6 +488,7 @@ public record CompiledModule(
   //     var acc = importReExports.containsKey(modName)
   //       ? Stmt.Accessibility.Public
   //       : Stmt.Accessibility.Private;
+  //     TODO: we still need this
   //     thisResolve.open(loaded, SourcePos.SER, acc);
   //   }
   // }
