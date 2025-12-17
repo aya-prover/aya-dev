@@ -72,16 +72,19 @@ public interface ExprTyckError {
   @Language("Aya") String testBadPartial = """
     open import arith::nat::base
     open import relation::binary::equality
-    def test (i : I) : Nat => partial [ i = 1 => 3 ]
+    open import relation::binary::equality::cubical hiding (I)
+    
+    def test (i : I) : Nat => partial [ i =f 1 => 3 ]
     """;
 
   @Language("Aya") String testPartialMissingClause = """
     open import arith::nat::base
     open import relation::binary::equality
-    def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
+    open import relation::binary::equality::cubical hiding (I)
+    def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat  =>
       partial
-      [ i = 0 => 3
-      , j = 0 => 3
+      [ i =f 0 => 3
+      , j =f 0 => 3
       ]
     """;
 
@@ -90,9 +93,9 @@ public interface ExprTyckError {
     open import relation::binary::equality::cubical
     def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
       partial
-      [ i = 0 => 3
-      , j = 0 => 3
-      , j = 1 => 1
+      [ i =f 0 => 3
+      , j =f 0 => 3
+      , j =f 1 => 1
       ]
     """;
 }

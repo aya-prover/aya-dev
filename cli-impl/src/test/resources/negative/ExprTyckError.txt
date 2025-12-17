@@ -262,15 +262,15 @@ Error: Unsolved meta A
 Let's learn from that.
 
 BadPartial:
-In file $FILE:3:26 ->
+In file $FILE:5:26 ->
 
-  1 │   open import arith::nat::base
-  2 │   open import relation::binary::equality
-  3 │   def test (i : I) : Nat => partial [ i = 1 => 3 ]
-    │                             ╰────────────────────╯
+  3 │   open import relation::binary::equality::cubical hiding (I)
+  4 │   
+  5 │   def test (i : I) : Nat => partial [ i =f 1 => 3 ]
+    │                             ╰─────────────────────╯
 
 Error: The following partial element is not good:
-         partial [i = 1 ⇒ 3]
+         partial [cofEq i 1 ⇒ 3]
        because the type being expected is not a Partial type, but instead:
          Nat
 
@@ -278,14 +278,20 @@ Error: The following partial element is not good:
 Let's learn from that.
 
 PartialMissingClause:
-In file $FILE:3:21 ->
+In file $FILE:5:2 ->
 
-  1 │   open import arith::nat::base
-  2 │   open import relation::binary::equality
-  3 │   def test (i j : I) : Partial [ i = 0, j = 1, j = 0 ] Nat  =>
-    │                        ╰─────╯
+  3 │   open import relation::binary::equality::cubical hiding (I)
+  4 │   def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat  =>
+  5 │     partial
+    │ ╭───╯
+  6 │ │    [ i =f 0 => 3
+    │ │  
+  7 │ │    , j =f 0 => 3
+    │ │  
+  8 │ │   ]
+    │ ╰───╯
 
-Error: The name `Partial` is not defined in the current scope
+Error: Two cofibrations are not equivalent to each other.
 
 1 error(s), 0 warning(s).
 Let's learn from that.
@@ -297,11 +303,11 @@ In file $FILE:4:2 ->
   3 │   def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
   4 │     partial
     │ ╭───╯
-  5 │ │    [ i = 0 => 3
+  5 │ │    [ i =f 0 => 3
     │ │  
-  6 │ │    , j = 0 => 3
+  6 │ │    , j =f 0 => 3
     │ │  
-  7 │ │    , j = 1 => 1
+  7 │ │    , j =f 1 => 1
     │ │  
   8 │ │   ]
     │ ╰───╯

@@ -100,10 +100,10 @@ public record DoubleChecker(
         ImmutableSeq<ConjCofNF> cls_cof = ImmutableSeq.empty();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
-                () -> inherit(c.tm(), A),
-                () -> true)
+                () -> inherit(c.tm(), A))
           ) yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
-          cls_cof = cls_cof.appended(c.cof());
+          // cls_cof = cls_cof || c.cof()
+          cls_cof = cls_cof.appendedAll(c.cof().elements());
         }
         // check cofibration
         var disj = expand(cof);

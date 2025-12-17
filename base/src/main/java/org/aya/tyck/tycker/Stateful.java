@@ -7,7 +7,7 @@ import org.aya.normalize.Finalizer;
 import org.aya.normalize.Normalizer;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
-import org.aya.syntax.core.term.NewTerm;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.ConjCofNF;
 import org.aya.syntax.core.term.xtt.DimTerm;
@@ -33,6 +33,7 @@ public interface Stateful {
   @NotNull TyckState state();
   default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
   default @Nullable DisjCofNF expand(@Closed @NotNull Term term) {return new Normalizer(state()).expand(term); }
+  default @NotNull DisjCofNF expandAnd(@Closed @NotNull DisjCofNF a, @Closed @NotNull DisjCofNF b) {return new Normalizer(state()).expandAnd(a, b); }
   default @NotNull TermVisitor whnfVisitor() {
     return TermVisitor.expectTerm(this::whnf);
   }
@@ -63,4 +64,25 @@ public interface Stateful {
     disconnectConj(cof);
     return ret;
   }
+
+  default Term withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
+    Term ret = null;
+    for (var conj : cof.elements()) {
+      ret = withConnection(conj, action, ifBottom);
+      if (ret instanceof ErrorTerm) {
+        return ret;
+      }
+    }
+    return ret == null? ifBottom.get() : ret;
+  }
+
+  default boolean withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Boolean> action) {
+    for (var conj : cof.elements()) {
+      if (!withConnection(conj, action, () -> true)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }

@@ -812,8 +812,9 @@ public record AyaProducer(
   }
 
   private @NotNull Expr.Partial.Clause partialClause(@NotNull GenericNode<?> node) {
-    return new Expr.Partial.Clause(new Expr.ConjCof(ImmutableSeq.of(cof(node.child(COF)))),
-      expr(node.child(EXPR)));
+    var chd = node.childrenView().toSeq();
+    return new Expr.Partial.Clause((expr(chd.getFirst())),
+      expr(chd.getLast()));
   }
 
   private @NotNull Expr buildProj(

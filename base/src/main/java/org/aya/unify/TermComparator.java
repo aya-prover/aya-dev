@@ -10,7 +10,6 @@ import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.states.TyckState;
-import org.aya.states.primitive.PrimFactory;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
@@ -338,10 +337,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for(var cl1 : clauses1) for(var cl2 : clauses2) {
-          if (withConnection(cl1.cof().add(cl2.cof().descent(whnfVisitor())),
-                () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A),
-                () -> Decision.YES)
-              == Decision.NO)
+          if (!withConnection(expandAnd(cl1.cof(), cl2.cof().descent(whnfVisitor())),
+                () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A) == Decision.YES))
             yield Decision.NO;
         }
         yield Decision.YES;

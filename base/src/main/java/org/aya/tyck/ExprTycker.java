@@ -176,25 +176,35 @@ public final class ExprTycker extends ScopedTycker {
         var A = arg.get(1);
         // check each clause
         MutableList<PartialTerm.Clause> cls = MutableList.create();
-        MutableList<ConjCofNF> allCof = MutableList.create();
+        MutableList<Term> allCof = MutableList.create();
         for (var rcls : clause) {
-          var clsCof = elabCof(rcls.cof());
-          var clsRhs = withConnection(clsCof, () -> inherit(rcls.tm(), A).wellTyped(), () -> inherit(rcls.tm(), A).wellTyped());
-          cls.append(new PartialTerm.Clause(clsCof, clsRhs));
-          allCof.append(clsCof);
+          var clsCof = inherit(rcls.cof(), state().primFactory.getCall(PrimDef.ID.COF));
+          var clsCofNF = expand(clsCof.wellTyped());
+          if (clsCofNF == null) {
+            yield fail(expr.data(), type, new IllegalPartialElement.BadPartialLHS(clsCof.wellTyped(), rcls.cof().sourcePos(), state()));
+          }
+          var clsRhs = withConnection(clsCofNF, () -> inherit(rcls.tm(), A).wellTyped(), () -> inherit(rcls.tm(), A).wellTyped());
+          cls.append(new PartialTerm.Clause(clsCofNF, clsRhs));
+          allCof.append(clsCof.wellTyped());
         }
         // coverage. cof <=> allCof
         var disj = expand(cof);
-        var cnf = new DisjCofNF(allCof.toSeq());
+        var cnf = new DisjCofNF(ImmutableSeq.empty());
+        if (!allCof.isEmpty()) {
+          cnf = expand(allCof.drop(1).foldRight(allCof.get(0), (l, r) ->
+            state().primFactory.getCall(PrimDef.ID.COF_OR, ImmutableSeq.of(l,r)) ));
+        }
+        if (disj == null || cnf == null) {
+          yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
+        }
         if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, cnf)))
           yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
           if (c1 == c2) continue;
-          if (!(withConnection(c1.cof().add(c2.cof().descent(whnfVisitor())),
-              () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES,
-              () -> true)))
+          if (!(withConnection(expandAnd(c1.cof(), (c2.cof().descent(whnfVisitor()))),
+              () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES)))
             yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
         }
         yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);

@@ -327,8 +327,8 @@ public sealed interface Expr extends AyaDocile {
   }
 
   record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
-    public record Clause(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
-      public @NotNull Clause update(@NotNull ConjCof cof, @NotNull WithPos<Expr> tm) {
+    public record Clause(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) {
+      public @NotNull Clause update(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) {
         return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
       }
 
