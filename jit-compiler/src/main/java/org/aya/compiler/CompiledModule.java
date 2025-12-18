@@ -157,9 +157,11 @@ public record CompiledModule(
 
     var queue = MutableLinkedHashMap.<ModuleName, ModuleExport>of(ModuleName.This, export);
 
+    // sub modules are always public, thus we can find them in the [ModuleExport]
     export.modules().forEach((_, mod) -> {
       if (mod.qualifiedPath().fileModule().equals(thisModulePath)) {
         var name = mod.qualifiedPath().module().removePrefix(thisModulePath);
+        // guaranteed by the `if` condition
         assert name != null;
         queue.put(name, mod);
       }
@@ -191,6 +193,7 @@ public record CompiledModule(
     /// ModulePath to currently deserializing module
     public final @NotNull ModulePath thisModulePath;
     public final @NotNull MutableMap<ModulePath, ResolveInfo> cache = MutableMap.create();
+    // all deserialized submodule in this file level module
     public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> subModules = MutableMap.create();
     public final @NotNull ImmutableMap<QName, JitDef> thisDefs;
 
@@ -217,7 +220,9 @@ public record CompiledModule(
       return loaded.thisModule().exports();
     }
 
+    // Load ANY module, including submodule
     public @NotNull ModuleExport load(@NotNull QPath path) {
+      // loading a module that previously deserialized.
       if (path.fileModule().equals(thisModulePath)) {
         switch (path.localModule()) {
           case ModuleName.Qualified qualified -> subModules.get(qualified);   // never fail, i guess
@@ -238,6 +243,7 @@ public record CompiledModule(
       };
     }
 
+    /// Load any public definition
     public @NotNull AnyDefVar load(@NotNull QName name) {
       if (name.module().fileModule().equals(thisModulePath)) {
         return new CompiledVar(this.thisDefs.get(name));      // should not fail
@@ -247,6 +253,7 @@ public record CompiledModule(
       return load(name.module()).symbols().get(name.name());
     }
 
+    /// Called when a submodule is deserialized
     public void acceptSubmodule(@NotNull ModuleName.Qualified name, @NotNull ModuleExport export) {
       assert export.qualifiedPath()
         .equals(QPath.fileLevel(thisModulePath).derive(name));
