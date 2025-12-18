@@ -42,7 +42,7 @@ import java.util.EnumMap;
 /// The .ayac file representation.
 ///
 /// @param moduleExport the module export of this file level module
-/// @param importOpen all module that is imported and opened by this file level module, this is kinda tricky
+/// @param importOpen all module that is imported and opened by this file level module, this is kinda tricky, see [ResolveInfo#open]
 /// @param serOps [SerBind] of definitions in this file level module
 /// @param opRename [SerRenamedOp] (basically a [SerBind]) of renamed symbols from other modules
 ///
@@ -113,43 +113,6 @@ public record CompiledModule(
 
   record SerRenamedOp(@NotNull OpDecl.OpInfo info, @NotNull SerBind bind) implements Serializable { }
 
-  /**
-   * @param rename not empty
-   */
-  record SerImport(
-    @NotNull ModulePath path, @NotNull ImmutableSeq<String> rename,
-    boolean isPublic) implements Serializable { }
-
-  record SerQualifiedID(@NotNull ModuleName component, @NotNull String name) implements Serializable {
-    public static @NotNull SerQualifiedID from(@NotNull QualifiedID qid) {
-      return new SerQualifiedID(qid.component(), qid.name());
-    }
-    public @NotNull QualifiedID make() { return new QualifiedID(SourcePos.SER, component, name); }
-  }
-
-  /// @see UseHide.Rename
-  record SerRename(@NotNull SerQualifiedID qid, @NotNull String to) implements Serializable {
-    public static @NotNull SerRename from(@NotNull UseHide.Rename rename) {
-      return new SerRename(SerQualifiedID.from(rename.name()), rename.to());
-    }
-    public @NotNull UseHide.Rename make() { return new UseHide.Rename(qid.make(), to); }
-  }
-
-  /// @see UseHide
-  record SerUseHide(
-    boolean isUsing,
-    @NotNull ImmutableSeq<SerQualifiedID> names,
-    @NotNull ImmutableSeq<SerRename> renames
-  ) implements Serializable {
-    public static @NotNull SerUseHide from(@NotNull UseHide useHide) {
-      return new SerUseHide(
-        useHide.strategy() == UseHide.Strategy.Using,
-        useHide.list().map(x -> SerQualifiedID.from(x.id())),
-        useHide.renaming().map(it -> SerRename.from(it.data()))
-      );
-    }
-  }
-
   public static @NotNull CompiledModule from(@NotNull ResolveInfo resolveInfo, @NotNull ImmutableSeq<TyckDef> defs) {
     if (!(resolveInfo.thisModule() instanceof PhysicalModuleContext ctx)) {
       return Panic.unreachable();
@@ -168,19 +131,6 @@ public record CompiledModule(
       }
     });
 
-    // var exports = ctx.exports().symbols().keysView();
-    //
-    // var imports = resolveInfo.imports().view().map((k, v) ->
-    //   new SerImport(v.resolveInfo().modulePath(),
-    //     k.ids(), v.reExport())).toSeq();
-    // var serExport = ImmutableSet.from(exports);
-    // var importReExports = MutableMap.<ModulePath, SerUseHide>create();
-    // var localReExports = MutableMap.<ModuleName.Qualified, SerUseHide>create();
-    // resolveInfo.reExports().forEach((qualified, useHide) -> {
-    //   var imported = resolveInfo.imports().getOrNull(qualified);
-    //   if (imported != null) importReExports.put(imported.resolveInfo().modulePath(), SerUseHide.from(useHide));
-    //   else localReExports.put(qualified, SerUseHide.from(useHide));
-    // });
     var serOps = ImmutableMap.from(serialization.serOps);
     record RenameData(boolean reExport, QName name, SerRenamedOp renamed) { }
     var opRename = ImmutableMap.from(resolveInfo.opRename().view().map((k, v) -> {
@@ -389,7 +339,7 @@ public record CompiledModule(
       var object = DeState.getJitDef(jitClass);
       if (!(object instanceof JitDef jitDef)) continue;
       allDefs.append(jitDef);
-      loadModule(primFactory, shapeFactory, context, jitDef, reporter);
+      loadDefInfo(primFactory, shapeFactory, jitDef);
     }
 
     var myLoader = new MyModuleLoader(loader, state, context.modulePath(), allDefs.toSeq());
@@ -422,24 +372,12 @@ public record CompiledModule(
     return resolveInfo;
   }
 
-  private void loadModule(
-    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory,
-    @NotNull PhysicalModuleContext context, @NotNull JitDef jitDef, @NotNull Reporter reporter
+  private void loadDefInfo(
+    @NotNull PrimFactory primFactory, @NotNull ShapeFactory shapeFactory, @NotNull JitDef jitDef
   ) {
     var metadata = jitDef.metadata();
-    // export(context, jitDef);
     switch (jitDef) {
       case JitData data -> {
-        // The accessibility doesn't matter, this context is readonly
-        // var innerCtx = context.derive(data.name());
-        // for (var constructor : data.constructors()) {
-        //   var success = innerCtx.defineSymbol(new CompiledVar(constructor), Stmt.Accessibility.Public, SourcePos.SER, reporter);
-        //   if (!success) Panic.unreachable();
-        // }
-        // var success = context.importModuleContext(
-        //   ModuleName.This.resolve(data.name()),
-        //   innerCtx, Stmt.Accessibility.Public, SourcePos.SER, reporter);
-        // if (!success) Panic.unreachable();
         if (metadata.shape() != -1) {
           var recognition = new ShapeRecognition(AyaShape.values()[metadata.shape()],
             ImmutableMap.from(ArrayUtil.zip(metadata.recognition(),
@@ -458,40 +396,6 @@ public record CompiledModule(
       default -> { }
     }
   }
-
-  /// like [org.aya.resolve.visitor.StmtPreResolver] but only resolve import
-  // private void shallowResolve(@NotNull ModuleLoader loader, @NotNull ResolveInfo thisResolve, @NotNull Reporter reporter) {
-  //   for (var anImport : imports) {
-  //     var modName = anImport.path;
-  //     var modRename = ModuleName.qualified(anImport.rename);
-  //     var isPublic = anImport.isPublic;
-  //
-  //     var loaded = loader.load(modName)
-  //       .getOrThrow(() -> new Panic("Unable to load a dependency module of a compiled module"));
-  //
-  //     thisResolve.imports().put(modRename, new ResolveInfo.ImportInfo(loaded, isPublic));
-  //     var mod = loaded.thisModule();
-  //     var success = thisResolve.thisModule()
-  //       .importModuleContext(modRename, mod, isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private, SourcePos.SER, reporter);
-  //     if (!success) Panic.unreachable();
-  //     var useHide = importReExports.getOrNull(modName);
-  //     if (useHide != null) {
-  //       success = thisResolve.thisModule().openModule(modRename,
-  //         Stmt.Accessibility.Public,
-  //         useHide.names().map(SerQualifiedID::make),
-  //         useHide.renames().map(x -> new WithPos<>(SourcePos.SER, x.make())),
-  //         SourcePos.SER, useHide.isUsing() ? UseHide.Strategy.Using : UseHide.Strategy.Hiding,
-  //         reporter);
-  //
-  //       if (!success) Panic.unreachable();
-  //     }
-  //     var acc = importReExports.containsKey(modName)
-  //       ? Stmt.Accessibility.Public
-  //       : Stmt.Accessibility.Private;
-  //     TODO: we still need this
-  //     thisResolve.open(loaded, SourcePos.SER, acc);
-  //   }
-  // }
 
   /**
    * like {@link org.aya.resolve.visitor.StmtResolver} but only resolve operator
@@ -532,34 +436,4 @@ public record CompiledModule(
   private @NotNull OpDecl resolveOp(@NotNull ResolveInfo resolveInfo, @NotNull CompiledModule.DeState state, @NotNull QName name) {
     return resolveInfo.resolveOpDecl(state.resolve(name));
   }
-
-  /// @see org.aya.syntax.context.ModuleExport#map
-  /// @see org.aya.syntax.context.ModuleExport#filter
-  // private void export(@NotNull PhysicalModuleContext context, @NotNull JitDef def) {
-  //   boolean success = true;
-  //   var module = def.qualifiedName().module().localModule();
-  //   if (module instanceof ModuleName.ThisRef && exports.contains(def.name())) {
-  //     success = context.exportSymbol(def.name(), new CompiledVar(def));
-  //   }
-  //   for (int i = 0; i < module.length(); ++i) {
-  //     var qualified = new ModuleName.Qualified(module.ids().drop(i));
-  //     var local = localReExports.getOrNull(qualified);
-  //     if (local == null) continue;
-  //     var contains = local.names.find(qid ->
-  //         qid.name.contentEquals(def.name()) &&
-  //           qualified.concat(qid.component).equals(module))
-  //       .getOrNull();
-  //     if (local.isUsing && contains != null) {
-  //       var rename = local.renames.find(it -> it.qid.equals(contains)).getOrNull();
-  //       if (rename != null) {
-  //         success = context.exportSymbol(rename.to, new CompiledVar(def)) && success;
-  //       } else {
-  //         success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
-  //       }
-  //     } else if (!local.isUsing && contains == null) {
-  //       success = context.exportSymbol(def.name(), new CompiledVar(def)) && success;
-  //     }
-  //   }
-  //   assert success : "DuplicateExportError should not happen in CompiledModule";
-  // }
 }

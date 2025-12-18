@@ -41,8 +41,6 @@ import org.jetbrains.annotations.Nullable;
  * @param imports      importing information, it only contains the modules that is explicitly imported,
  *                     should not be confused with the {@code import} in {@link ModuleContext#importModuleContext}
  *                     the prim factory will be copied to the current one
- * @param reExports    re-exporting module, it is {@link ModuleName.Qualified} rather than {@link String}
- *                     because we can re-export a module inside another module without import it.
  */
 @Debug.Renderer(text = "modulePath().toString()")
 public record ResolveInfo(
@@ -53,7 +51,6 @@ public record ResolveInfo(
   @NotNull AyaBinOpSet opSet,
   @NotNull MutableMap<AnyDef, OpRenameInfo> opRename,
   @NotNull MutableMap<ModuleName.Qualified, ImportInfo> imports,
-  @NotNull MutableMap<ModuleName.Qualified, UseHide> reExports,
   @NotNull MutableGraph<TyckOrder> depGraph
 ) {
   public ResolveInfo(
@@ -63,7 +60,7 @@ public record ResolveInfo(
     @NotNull AyaBinOpSet opSet
   ) {
     this(thisModule, primFactory, shapeFactory, new GlobalInstanceSet(), opSet,
-      MutableMap.create(), MutableMap.create(), MutableMap.create(), MutableGraph.create());
+      MutableMap.create(), MutableMap.create(), MutableGraph.create());
   }
   public @NotNull TyckState makeTyckState() {
     return new TyckState(shapeFactory, primFactory);
