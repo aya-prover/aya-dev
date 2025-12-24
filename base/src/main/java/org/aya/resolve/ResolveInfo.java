@@ -110,6 +110,8 @@ public record ResolveInfo(
     opRename.put(defVar, new OpRenameInfo(bindCtx, renamed, bind, reExport));
   }
 
+  /// Called when a module opens another imported module, note that [#opSet] and [#shapeFactory] are not affected by
+  /// {@param acc}
   public void open(@NotNull ResolveInfo other, @NotNull SourcePos sourcePos, @NotNull Stmt.Accessibility acc) {
     // open defined operator and their bindings
     opSet.importBind(other.opSet, sourcePos);

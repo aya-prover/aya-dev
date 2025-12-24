@@ -244,13 +244,13 @@ public record CompiledModule(
     }
 
     /// Load any public definition
-    public @NotNull AnyDefVar load(@NotNull QName name) {
+    public @NotNull CompiledVar load(@NotNull QName name) {
       if (name.module().fileModule().equals(thisModulePath)) {
         return new CompiledVar(this.thisDefs.get(name));      // should not fail
       }
 
-      // TODO: will we support hot compilation? or we can just assume this is a CompiledVar
-      return load(name.module()).symbols().get(name.name());
+      // sanity check, even we can just return a AnyDefVar
+      return (CompiledVar) load(name.module()).symbols().get(name.name());
     }
 
     /// Called when a submodule is deserialized
@@ -364,8 +364,13 @@ public record CompiledModule(
       if (exists == null) {
         // in case the module didn't public open the imported module
         // TODO: handle error
-        exists = loader.load(importOpen.path)
-          .get();
+        var result = loader.load(importOpen.path);
+        var err = result.getErrOrNull();
+        if (err != null) {
+          throw new Panic("Failed to load module " + importOpen.path + " that is referred by a compiled aya since: " + err + ".");
+        } else {
+          exists = result.get();
+        }
       }
 
       resolveInfo.open(exists, SourcePos.SER, importOpen.isPublic ? Stmt.Accessibility.Public : Stmt.Accessibility.Private);
