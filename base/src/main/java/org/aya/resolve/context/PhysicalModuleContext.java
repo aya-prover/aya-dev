@@ -10,7 +10,7 @@ import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.context.ModuleSymbol;
 import org.aya.syntax.ref.AnyDefVar;
 import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -23,17 +23,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PhysicalModuleContext implements ModuleContext {
   public final @NotNull Context parent;
-  public final @NotNull ModuleExport exports = new ModuleExport();
+  public final @NotNull ModuleExport exports;
   public final @NotNull ModuleSymbol<AnyVar> symbols = new ModuleSymbol<>();
   public final @NotNull MutableMap<ModuleName.Qualified, ModuleExport> modules = MutableHashMap.create();
-  private final @NotNull ModulePath modulePath;
-  @Override public @NotNull ModulePath modulePath() { return modulePath; }
+  private final @NotNull QPath qualifiedPath;
+  @Override public @NotNull QPath qualifiedPath() { return qualifiedPath; }
 
   private @Nullable NoExportContext exampleContext;
 
-  public PhysicalModuleContext(@NotNull Context parent, @NotNull ModulePath modulePath) {
+  public PhysicalModuleContext(@NotNull Context parent, @NotNull QPath qualifiedPath) {
     this.parent = parent;
-    this.modulePath = modulePath;
+    this.qualifiedPath = qualifiedPath;
+    this.exports = new ModuleExport(qualifiedPath);
   }
 
   @Override public boolean importModule(

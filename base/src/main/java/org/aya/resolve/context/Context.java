@@ -8,10 +8,7 @@ import org.aya.resolve.error.NameProblem;
 import org.aya.syntax.concrete.stmt.ModuleName;
 import org.aya.syntax.context.Candidate;
 import org.aya.syntax.context.ContextView;
-import org.aya.syntax.ref.AnyVar;
-import org.aya.syntax.ref.GenerateKind;
-import org.aya.syntax.ref.LocalVar;
-import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +100,8 @@ public interface Context extends ContextView {
     return derive(new ModulePath(ImmutableSeq.of(extraName)));
   }
 
+  /// Note that this won't increase [QPath#fileLevelSize]
   default @NotNull ModuleContext derive(@NotNull ModulePath extraName) {
-    return new PhysicalModuleContext(this, modulePath().derive(extraName));
+    return new PhysicalModuleContext(this, qualifiedPath().derive(extraName));
   }
 }

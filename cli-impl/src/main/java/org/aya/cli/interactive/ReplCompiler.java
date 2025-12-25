@@ -182,7 +182,7 @@ public class ReplCompiler {
   private @NotNull ResolveInfo makeResolveInfo(@NotNull ModuleContext ctx) {
     var resolveInfo = new ResolveInfo(ctx, tcState.primFactory, tcState.shapeFactory, opSet);
     imports.forEach(ii -> resolveInfo.imports().put(
-      ii.modulePath().asName(), new ResolveInfo.ImportInfo(ii, false)));
+      ii.modulePath().asName(), new ResolveInfo.ImportInfo(ii, false, null)));
     return resolveInfo;
   }
 
