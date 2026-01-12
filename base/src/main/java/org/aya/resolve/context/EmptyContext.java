@@ -8,6 +8,7 @@ import org.aya.syntax.context.Candidate;
 import org.aya.syntax.context.ModuleExport;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.syntax.ref.QPath;
 import org.aya.util.position.SourcePos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +30,10 @@ public record EmptyContext(@NotNull Path underlyingFile) implements Context {
   ) { return null; }
 
   @Override public @NotNull PhysicalModuleContext derive(@NotNull ModulePath extraName) {
-    return new PhysicalModuleContext(this, extraName);
+    return new PhysicalModuleContext(this, QPath.fileLevel(extraName));
   }
 
-  @Override public @NotNull ModulePath modulePath() {
+  @Override public @NotNull QPath qualifiedPath() {
     throw new UnsupportedOperationException();
   }
 
