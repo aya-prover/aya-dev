@@ -90,7 +90,7 @@ public final class StmtPreResolver {
         context.importModuleContext(importedName, mod, cmd.accessibility(), cmd.sourcePos(), thisReporter);
         resolveInfo.primFactory().importFrom(success.primFactory());
 
-        var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public);
+        var importInfo = new ResolveInfo.ImportInfo(success, cmd.accessibility() == Stmt.Accessibility.Public, null);
         resolveInfo.imports().put(importedName, importInfo);
         yield null;
       }
@@ -103,15 +103,13 @@ public final class StmtPreResolver {
         var success = ctx.openModule(mod, acc, cmd.sourcePos(), useHide, thisReporter);
         if (!success) yield null;
 
-        // store top-level re-exports
-        // FIXME: this is not enough, because submodule export definitions are not stored
-        if (ctx == resolveInfo.thisModule()) {
-          if (acc == Stmt.Accessibility.Public) resolveInfo.reExports().put(mod, useHide);
-        }
         // open necessities from imported modules (not submodules)
         // because the module itself and its submodules share the same ResolveInfo
-        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo ->
-          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc));
+        resolveInfo.imports().getOption(mod).ifDefined(modResolveInfo -> {
+          // TODO: open regardless the strategy(use / hide)? the user may be able to refer hidden data by `shapeFactory`
+          resolveInfo.open(modResolveInfo.resolveInfo(), cmd.sourcePos(), acc);
+          resolveInfo.imports().put(mod, new ResolveInfo.ImportInfo(modResolveInfo.resolveInfo(), modResolveInfo.reExport(), acc));
+        });
 
         // renaming as infix
         if (useHide.strategy() == UseHide.Strategy.Using) useHide.list().forEach(use -> {
