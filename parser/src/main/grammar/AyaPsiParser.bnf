@@ -302,7 +302,7 @@ partialAtom ::= KW_PARTIAL LARRAY <<commaSep partialClause>>? RARRAY
 
 cof ::= cofOperand "=" cofOperand
 private cofOperand ::= refExpr | litIntExpr
-partialClause ::= cof IMPLIES expr
+partialClause ::= expr IMPLIES expr
 
 letBind ::= KW_INSTANCE? weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"

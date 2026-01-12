@@ -4,6 +4,7 @@ package org.aya.tyck.error;
 
 import org.aya.pretty.doc.Doc;
 import org.aya.states.TyckState;
+import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.xtt.DisjCofNF;
 import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.tyck.tycker.Stateful;
@@ -35,6 +36,16 @@ public interface IllegalPartialElement extends TyckError, Stateful {
     @Override
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       return Doc.english("Two partial clauses are different in their intersection"); // TODO: elaborate the info.
+    }
+  }
+
+  record BadPartialLHS(@NotNull Term lhs,
+                       @NotNull SourcePos sourcePos,
+                       @NotNull TyckState state)
+    implements  IllegalPartialElement {
+    @Override
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
+      return Doc.english("LHS of this clause is not a cofibration.");
     }
   }
 }

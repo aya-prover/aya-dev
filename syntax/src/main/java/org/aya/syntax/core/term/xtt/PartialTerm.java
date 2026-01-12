@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 
 // { phi1 => rhs; ... }
 public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements StableWHNF {
-  public record Clause(@NotNull ConjCofNF cof, @NotNull Term tm) {
-    public @NotNull Clause update(@NotNull ConjCofNF cof, @NotNull Term tm) {
+  public record Clause(@NotNull DisjCofNF cof, @NotNull Term tm) {
+    public @NotNull Clause update(@NotNull DisjCofNF cof, @NotNull Term tm) {
       return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
     }
 

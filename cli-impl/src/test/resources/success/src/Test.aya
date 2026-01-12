@@ -153,16 +153,16 @@ module Issue1293 {
   open import relation::binary::equality::cubical hiding (I)
   def test1 (i : I) : Partial ((i =f 0) ∨f (i =f 1)) Nat =>
     partial
-    [ i = 0 => 114
-    , i = 1 => 514
+    [ i =f 0 => 114
+    , i =f 1 => 514
     ]
 
   def test2 (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat =>
     partial
-    [ i = 0 => 114
-    , j = 1 => 114
-    , j = 0 => 114
+    [ i =f 0 => 114
+    , j =f 1 => 114
+    , j =f 0 => 114
     ]
 
-//  def test3 (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∧f (i =f 1)) Nat
+   // def test3 (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∧f (i =f 1)) Nat
 }

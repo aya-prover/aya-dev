@@ -76,7 +76,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   }
 
   // compute a and b
-  private @NotNull DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
+  public @NotNull DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
     MutableSeq<ConjCofNF> ret = MutableSeq.create(a.elements().size() * b.elements().size());
     var i = 0;
     for (var ae : a.elements())
