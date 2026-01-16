@@ -2,6 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
+import kala.collection.immutable.ImmutableSeq;
 import org.aya.generic.Renamer;
 import org.aya.generic.term.DTKind;
 import org.aya.generic.term.SortKind;
@@ -148,6 +149,8 @@ public record Synthesizer(
         carr.ref().id() == PrimDef.ID.I
           ? state().primFactory.getCall(PrimDef.ID.COF)
           : null;
+      case HCompTerm(var A, var cof, var face) ->
+        synthesize(state().primFactory.getCall(PrimDef.ID.HCOMP, ImmutableSeq.of(A, cof, face)));
     };
   }
 

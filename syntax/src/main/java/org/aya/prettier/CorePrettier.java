@@ -232,6 +232,11 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case DisjCofNF disjCofNF -> visitCof(disjCofNF);
       case EqCofTerm eqCofTerm -> visitCof(eqCofTerm);
+      case HCompTerm(var A, var cof, var face) -> Doc.sep(KW_HCOMP,
+        // Doc.wrap("{", "}", term(Outer.Free, A)),
+        term(Outer.AppSpine, cof),
+        term(Outer.AppSpine, face)
+      );
     };
   }
 

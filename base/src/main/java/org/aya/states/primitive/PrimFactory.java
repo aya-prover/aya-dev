@@ -22,6 +22,7 @@ import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.HCompTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.QName;
@@ -201,14 +202,18 @@ public class PrimFactory {
     }, ImmutableSeq.of(ID.COF));
 
   public final @NotNull PrimSeed hcomp = new PrimSeed(ID.HCOMP,
-    (prim, _) -> prim,
+    (prim, _) -> {
+      @Closed var args = prim.args();
+      return new HCompTerm(args.get(0), args.get(1), args.get(2));
+    },
     ref -> {
-      // hcomp {A : Type} {φ : F} (u : (i : I) -> Partial (phi ∧f (i =f 0)) A) : A
+      // hcomp {A : Type} (φ : F) (u : (i : I) -> Partial (φ ∧f (i =f 0)) A) : A
+
       var varA = LocalVar.generate("A");
       var varPhi = LocalVar.generate("φ");
       var uType = new DepTypeTerm(DTKind.Pi, getCall(ID.I),
         new Closure.Locns(getCall(ID.PARTIAL, ImmutableSeq.of(
-          getCall(ID.COF_AND, ImmutableSeq.of(
+          getCall(ID.COF_OR, ImmutableSeq.of(
             new FreeTerm(varPhi),
             getCall(ID.COF_EQ, ImmutableSeq.of(
               new LocalTerm(0),
@@ -216,11 +221,11 @@ public class PrimFactory {
           new FreeTerm(varA)))));
       var telescope = ImmutableSeq.of(
         new Param("A", Type0, false),
-        new Param("φ", getCall(ID.COF), false),
-        new Param("u", uType, false)
+        new Param("φ", getCall(ID.COF), true),
+        new Param("u", uType, true)
       );
       return new PrimDef(ref, telescope, new FreeTerm("A"), ID.HCOMP);
-    }, ImmutableSeq.of(ID.PARTIAL, ID.COF_AND, ID.COF_EQ, ID.I));
+    }, ImmutableSeq.of(ID.PARTIAL, ID.COF_OR, ID.COF_EQ, ID.I));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
     (prim, _) -> prim,

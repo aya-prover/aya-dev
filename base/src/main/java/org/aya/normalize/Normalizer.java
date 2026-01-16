@@ -285,8 +285,41 @@ public final class Normalizer implements UnaryOperator<Term> {
           term = result;
           continue;
         }
+        case HCompTerm(var A, var cof, var face) -> {
+          //   ⊢ φ    ⊢ u : (i : I) -> Partial (φ vf (i =f 0)) A)
+          // ---------------------------------------------------------
+          //                 ⊢ hcomp u = u 1
+          var conf = expand(cof);
+          if (conf == null) return term;
+          if (cofibrationAssert(conf)) {
+            term = new AppTerm(face, DimTerm.I1);
+            continue;
+          }
+          return term;
+        }
       }
     }
+  }
+
+
+  private boolean cofibrationAssert(@NotNull EqCofTerm eq) {
+    if (state.isConnected(eq.lhs(), eq.rhs()))
+      return true;
+    return state.isConnected(eq.lhs(), eq.rhs());
+  }
+
+  private boolean cofibrationAssert(@NotNull ConjCofNF cof) {
+    if (cof.empty())
+      return true;
+    return cofibrationAssert(cof.head()) && cofibrationAssert(cof.tail());
+  }
+
+  private boolean cofibrationAssert(@NotNull DisjCofNF cof) {
+    // ⊢ a ∪ b
+    // iff. ⊢ a or ⊢ b
+    if (cof.empty())
+      return false;
+    return cofibrationAssert(cof.head()) || cofibrationAssert(cof.tail());
   }
 
   private boolean isOpaque(@NotNull FnDef fn) {
