@@ -12,3 +12,6 @@ public open cof-operators using
 //  , cofEq as infix =f tighter ∧f)
   , cofOr as infixl ∨f
   , cofEq as infix =f)
+
+prim hcom {A : Type} (φ : Cof) (u : Fn (i : I) -> Partial (φ ∨f (i =f 0)) A) : A
+

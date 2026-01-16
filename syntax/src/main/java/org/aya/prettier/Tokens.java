@@ -56,7 +56,7 @@ public final class Tokens {
   public static final Doc KW_COE = Doc.styled(KEYWORD, "coe");
   public static final Doc KW_PARTIAL_TYPE = Doc.styled(KEYWORD, "Partial");
   public static final Doc KW_PARTIAL = Doc.styled(KEYWORD, "partial");
-  public static final Doc KW_HCOMP = Doc.styled(KEYWORD, "hcomp");
+  public static final Doc KW_HCOMP = Doc.styled(KEYWORD, "hcom");
 
   public static final Doc COMMENT_COMPILED_CODE = Doc.styled(COMMENT, "/* compiled code */");
   public static final Doc COMMENT_COMPILED_PATTERN = Doc.styled(COMMENT, "/* compiled pattern */");

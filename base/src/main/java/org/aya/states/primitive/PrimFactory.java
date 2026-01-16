@@ -49,7 +49,7 @@ public class PrimFactory {
       stringConcat,
       intervalType,
       partialType,
-
+      hcomp,
       cofType,
       cofAnd,
       cofOr,
@@ -207,24 +207,27 @@ public class PrimFactory {
       return new HCompTerm(args.get(0), args.get(1), args.get(2));
     },
     ref -> {
-      // hcomp {A : Type} (φ : F) (u : (i : I) -> Partial (φ ∧f (i =f 0)) A) : A
-
+      // hcomp {A : Type} (φ : F) (u : (i : I) -> Partial (φ vf (i =f 0)) A) : A
+      //                   ^-------------------------------^
       var varA = LocalVar.generate("A");
       var varPhi = LocalVar.generate("φ");
+      var varU = LocalVar.generate("u");
+
       var uType = new DepTypeTerm(DTKind.Pi, getCall(ID.I),
         new Closure.Locns(getCall(ID.PARTIAL, ImmutableSeq.of(
           getCall(ID.COF_OR, ImmutableSeq.of(
-            new FreeTerm(varPhi),
+            new LocalTerm(1),
             getCall(ID.COF_EQ, ImmutableSeq.of(
               new LocalTerm(0),
               DimTerm.I0)))),
-          new FreeTerm(varA)))));
+          new LocalTerm(2)))));
+
       var telescope = ImmutableSeq.of(
         new Param("A", Type0, false),
         new Param("φ", getCall(ID.COF), true),
         new Param("u", uType, true)
       );
-      return new PrimDef(ref, telescope, new FreeTerm("A"), ID.HCOMP);
+      return new PrimDef(ref, telescope, new LocalTerm(2), ID.HCOMP);
     }, ImmutableSeq.of(ID.PARTIAL, ID.COF_OR, ID.COF_EQ, ID.I));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
