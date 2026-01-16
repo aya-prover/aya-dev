@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.lsp.server;
 
@@ -59,11 +59,12 @@ public class AyaLanguageServer implements LanguageServer {
   private static final @NotNull CompilerFlags FLAGS = new CompilerFlags(CompilerFlags.Message.EMOJI, false, false, null, SeqView.empty(), null);
 
   private final BufferReporter reporter = new BufferReporter();
+
+  /// Key: path to directory for project with aya.json, path to file for single aya file.
+  /// Value: [LibraryOwner]s from [#registerLibrary], note that dependencies of libraries are not included.
   private final @NotNull MutableMap<Path, LibraryOwner> libraries = MutableMap.create();
-  /**
-   * When working with LSP, we need to track all previously created Primitives.
-   * This is shared per library.
-   */
+  /// When working with LSP, we need to track all previously created Primitives.
+  /// This is shared per library.
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
@@ -87,12 +88,19 @@ public class AyaLanguageServer implements LanguageServer {
 
   /// @return the libraries that are actually loaded
   public @NotNull SeqView<LibraryOwner> registerLibrary(@NotNull Path path) {
+    return registerLibrary(path, false);
+  }
+
+  public @NotNull SeqView<LibraryOwner> registerLibrary(@NotNull Path path, boolean reload) {
     Log.i("Adding library path %s", path);
     var resolved = ProjectPath.resolve(path);
-    if (resolved == null) return SeqView.empty();
+    if (resolved == null) {
+      Log.i("Cannot load library: " + Constants.AYA_JSON + " is not found.");
+      return SeqView.empty();
+    }
 
     if (resolved instanceof ProjectPath.Project project) {
-      return tryAyaLibrary(project);
+      return tryAyaLibrary(project, reload);
     }
 
     // resolved is Directory or File
@@ -104,12 +112,13 @@ public class AyaLanguageServer implements LanguageServer {
     return libraries.getOrNull(projectOrFile.path());
   }
 
-  /// @apiNote requires the lock to {@link #libraries}
-  private @NotNull SeqView<LibraryOwner> tryAyaLibrary(@NotNull ProjectPath.Project path) {
-    var registered = getRegisteredLibrary(path);
-    if (registered != null) {
-      Log.i("Duplicated: %s", path.path());
-      return SeqView.of(registered);
+  private @NotNull SeqView<LibraryOwner> tryAyaLibrary(@NotNull ProjectPath.Project path, boolean reload) {
+    if (!reload) {
+      var registered = getRegisteredLibrary(path);
+      if (registered != null) {
+        Log.i("Duplicated: %s", path.path());
+        return SeqView.of(registered);
+      }
     }
 
     return importAyaLibrary(path);
@@ -118,7 +127,6 @@ public class AyaLanguageServer implements LanguageServer {
   /// @param project a path to the directory that contains "aya.json"
   /// @return empty if the library fails to load (due to IO exceptions
   /// or possibly malformed config files), and nonempty if successfully loaded.
-  /// @apiNote requires the lock to {@link #libraries}
   private @NotNull SeqView<LibraryOwner> importAyaLibrary(@NotNull ProjectPath.Project project) {
     var projectPath = project.path();
     try {
@@ -138,6 +146,9 @@ public class AyaLanguageServer implements LanguageServer {
 
   /// @apiNote requires the lock to {@link #libraries}
   private SeqView<WsLibrary> mockLibraries(@NotNull Path path) {
+    // we can't distinguish if aya files come from a directory [path] or a file [path],
+    // thus we cann't remove all single file library in [libraries] with prefix [path] even `reload == true`
+
     var mocked = AyaFiles.collectAyaSourceFiles(path, 1)
       .map(f -> Tuple.of(f, WsLibrary.mock(f)));
 
