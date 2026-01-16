@@ -48,6 +48,7 @@ public class PrimFactory {
       stringConcat,
       intervalType,
       partialType,
+
       cofType,
       cofAnd,
       cofOr,
@@ -194,27 +195,50 @@ public class PrimFactory {
     ref -> {
       var F = getCall(ID.COF);
       return new PrimDef(ref, ImmutableSeq.of(
-        new Param("φ", F, true),
-        new Param("A", Type0, true)), Set0, ID.PARTIAL);
+          new Param("φ", F, true),
+          new Param("A", Type0, true)),
+        Set0, ID.PARTIAL);
     }, ImmutableSeq.of(ID.COF));
+
+  public final @NotNull PrimSeed hcomp = new PrimSeed(ID.HCOMP,
+    (prim, _) -> prim,
+    ref -> {
+      // hcomp {A : Type} {φ : F} (u : (i : I) -> Partial (phi ∧f (i =f 0)) A) : A
+      var varA = LocalVar.generate("A");
+      var varPhi = LocalVar.generate("φ");
+      var uType = new DepTypeTerm(DTKind.Pi, getCall(ID.I),
+        new Closure.Locns(getCall(ID.PARTIAL, ImmutableSeq.of(
+          getCall(ID.COF_AND, ImmutableSeq.of(
+            new FreeTerm(varPhi),
+            getCall(ID.COF_EQ, ImmutableSeq.of(
+              new LocalTerm(0),
+              DimTerm.I0)))),
+          new FreeTerm(varA)))));
+      var telescope = ImmutableSeq.of(
+        new Param("A", Type0, false),
+        new Param("φ", getCall(ID.COF), false),
+        new Param("u", uType, false)
+      );
+      return new PrimDef(ref, telescope, new FreeTerm("A"), ID.HCOMP);
+    }, ImmutableSeq.of(ID.PARTIAL, ID.COF_AND, ID.COF_EQ, ID.I));
 
   public final @NotNull PrimSeed cofType = new PrimSeed(ID.COF,
     (prim, _) -> prim,
     ref -> new PrimDef(ref, Set0, ID.COF),
     ImmutableSeq.empty());
 
-  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND, ID.COF);
-  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR, ID.COF);
-  public final @NotNull PrimSeed cofEq = makeCofAndOr(ID.COF_EQ, ID.I);
+  public final @NotNull PrimSeed cofAnd = makeCofAndOr(ID.COF_AND, ID.COF, false);
+  public final @NotNull PrimSeed cofOr = makeCofAndOr(ID.COF_OR, ID.COF, false);
+  public final @NotNull PrimSeed cofEq = makeCofAndOr(ID.COF_EQ, ID.I, true);
 
-  private @NotNull PrimSeed makeCofAndOr(ID id, ID paramTy) {
+  private @NotNull PrimSeed makeCofAndOr(ID id, ID paramTy, boolean cofEq) {
     return new PrimSeed(id, (prim, _) -> prim, ref -> {
       var param = getCall(paramTy);
       return new PrimDef(ref, ImmutableSeq.of(
-        new Param("φ", param, true),
-        new Param("ψ", param, true)
+        new Param(cofEq ? "i" : "φ", param, true),
+        new Param(cofEq ? "j" : "ψ", param, true)
       ), getCall(ID.COF), id);
-    }, ImmutableSeq.of(ID.COF));
+    }, cofEq ? ImmutableSeq.of(ID.COF, ID.I) : ImmutableSeq.of(ID.COF));
   }
 
   public @NotNull PrimDefLike factory(@NotNull ID name, @NotNull DefVar<PrimDef, PrimDecl> ref) {
