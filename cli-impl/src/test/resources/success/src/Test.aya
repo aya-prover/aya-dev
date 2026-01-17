@@ -166,3 +166,18 @@ module Issue1293 {
 
    // def test3 (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∧f (i =f 1)) Nat
 }
+
+module HComp {
+
+  open import relation::binary::equality::cubical hiding (I)
+
+  // def hcomp {A : Type} (φ : Cof) (u : Fn (i : I) -> Partial (φ ∨f (i =f 0)) A) : A => hcom φ u
+
+
+  def test {A : Type} (j : I) (u : I -> A) :
+    Partial (j =f 1) (
+      hcom (j =f 1) (fn i ⇒ partial [ (j =f 1) ∨f (i =f 0) => u i ]) = u 1)
+    => partial
+      [ j =f 1 => (fn i => u 1) ]
+
+}

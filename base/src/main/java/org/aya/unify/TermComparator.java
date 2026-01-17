@@ -344,6 +344,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.YES;
       }
       case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.COF && arg.isEmpty() -> {
+        // TODO : delete this when we fully support variable cofibration.
+        // We use this to make sure `φ = φ : Cof`, in signature of hcom `φ ∨f (i =f 0)`.
+        // With this, we can show `φ ∨f (i =f 0) = φ ∨f (i =f 0) : Cof`.
+        if (lhs instanceof FreeTerm(var ln) && rhs instanceof FreeTerm(var rn) && ln == rn) {
+          yield Decision.YES;
+        }
+
+
         var nl = expand(lhs); if (nl == null) yield Decision.NO;
         var nr = expand(rhs); if (nr == null) yield Decision.NO;
         if (cofibrationEquiv(nl, nr)) yield Decision.YES;
@@ -365,6 +373,11 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
 
     var lhs = whnf(preLhs);
     var rhs = whnf(preRhs);
+    if (lhs instanceof AppTerm(var f, _) && preLhs instanceof AppTerm && f instanceof LamTerm) {
+      // Why didn't beta
+      var lhs_ = whnf(preLhs);
+    }
+
     if (!(lhs == preLhs && rhs == preRhs)) {
       var result = compareCalls(lhs, rhs);
       if (result.isYes()) return RelDec.of(whnf(result.get()));
