@@ -31,7 +31,8 @@ import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.actions.LensMaker;
 import org.aya.lsp.actions.SemanticHighlight;
 import org.aya.lsp.actions.SymbolMaker;
-import org.aya.lsp.library.WsLibrary;
+import org.aya.lsp.library.LibraryOwnerFactory;
+import org.aya.lsp.library.internal.WsLibrary;
 import org.aya.lsp.models.*;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.LspRange;
@@ -68,6 +69,7 @@ public class AyaLanguageServer implements LanguageServer {
   protected final @NotNull MutableMap<LibraryConfig, LspPrimFactory> primFactories = MutableMap.create();
   private final @NotNull CompilerAdvisor advisor;
   private final @NotNull AyaLanguageClient client;
+  private final @NotNull LibraryOwnerFactory ownerFactory;
   private final @NotNull PrettierOptions options = AyaPrettierOptions.pretty();
 
   /**
@@ -79,7 +81,12 @@ public class AyaLanguageServer implements LanguageServer {
   private @NotNull RenderOptions renderOptions;
 
   public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull AyaLanguageClient client) {
+    this(advisor, LibraryOwnerFactory.Default.INSTANCE, client);
+  }
+
+  public AyaLanguageServer(@NotNull CompilerAdvisor advisor, @NotNull LibraryOwnerFactory ownerFactory, @NotNull AyaLanguageClient client) {
     this.advisor = new CallbackAdvisor(this, advisor);
+    this.ownerFactory = ownerFactory;
     this.client = client;
     Log.init(this.client);
   }
@@ -131,7 +138,7 @@ public class AyaLanguageServer implements LanguageServer {
     var projectPath = project.path();
     try {
       var config = LibraryConfigData.fromLibraryRoot(projectPath);
-      var owner = DiskLibraryOwner.from(config);
+      var owner = ownerFactory.disk(config);
       libraries.put(projectPath, owner);
       return SeqView.of(owner);
     } catch (IOException e) {
@@ -145,12 +152,12 @@ public class AyaLanguageServer implements LanguageServer {
   }
 
   /// @apiNote requires the lock to {@link #libraries}
-  private SeqView<WsLibrary> mockLibraries(@NotNull Path path) {
+  private SeqView<LibraryOwner> mockLibraries(@NotNull Path path) {
     // we can't distinguish if aya files come from a directory [path] or a file [path],
     // thus we cann't remove all single file library in [libraries] with prefix [path] even `reload == true`
 
     var mocked = AyaFiles.collectAyaSourceFiles(path, 1)
-      .map(f -> Tuple.of(f, WsLibrary.mock(f)));
+      .map(f -> Tuple.of(f, ownerFactory.mock(f)));
 
     // Cannot replace with `onEach` due to the laziness of `onEach`
     mocked.forEach(libraries::put);

@@ -1,6 +1,6 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
-package org.aya.lsp.library;
+package org.aya.lsp.library.internal;
 
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
