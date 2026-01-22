@@ -17,7 +17,6 @@ import org.aya.cli.library.incremental.CompilerAdvisor;
 import org.aya.cli.library.incremental.DelegateCompilerAdvisor;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.json.LibraryConfigData;
-import org.aya.cli.library.source.DiskLibraryOwner;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.cli.library.source.MutableLibraryOwner;
@@ -128,6 +127,11 @@ public class AyaLanguageServer implements LanguageServer {
       }
     }
 
+    // FIXME: This is very bad when reload=true, as a brand new LibraryOwner is created WITHOUT ANY CACHE.
+    //        That causes increment compilation has no effect, and the lsp don't know the [LibrarySource] lost its cache
+    //        thus no recompilation is triggered, and that [LibrarySource] keep no data.
+    //        Possible solution: try fill new [LibraryOwner] with old [LibrarySource] if possible
+    //        Or we can have a LibrarySourceManager
     return importAyaLibrary(path);
   }
 
@@ -138,8 +142,12 @@ public class AyaLanguageServer implements LanguageServer {
     var projectPath = project.path();
     try {
       var config = LibraryConfigData.fromLibraryRoot(projectPath);
-      var owner = ownerFactory.disk(config);
-      libraries.put(projectPath, owner);
+      var owner = ownerFactory.library(config);
+      var old = libraries.put(projectPath, owner);
+      old.forEachChecked(o -> {
+        advisor.clearLibraryOutput(o);
+        primFactories.remove(o.underlyingLibrary());
+      });
       return SeqView.of(owner);
     } catch (IOException e) {
       Log.e("Cannot load library. Stack trace:");
@@ -160,6 +168,7 @@ public class AyaLanguageServer implements LanguageServer {
       .map(f -> Tuple.of(f, ownerFactory.mock(f)));
 
     // Cannot replace with `onEach` due to the laziness of `onEach`
+    // TODO: invalidate core of old libraries
     mocked.forEach(libraries::put);
     return mocked.view().map(Tuple2::component2);
   }

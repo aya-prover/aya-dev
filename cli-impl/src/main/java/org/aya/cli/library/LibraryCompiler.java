@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library;
 
@@ -228,6 +228,7 @@ public class LibraryCompiler {
       advisor.clearLibraryOutput(owner);
     }
 
+    // FIXME: every recompile will add the exact same srcRoot to owner.modulePath
     var srcRoot = library.librarySrcRoot();
     owner.addModulePath(srcRoot);
 

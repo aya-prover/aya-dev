@@ -7,6 +7,10 @@ module aya.ide.lsp {
   requires com.google.gson;
   requires aya.javacs.protocol;
   requires info.picocli;
+  requires aya.util.more;
+  requires kala.collection;
+  requires aya.syntax;
+  requires aya.cli.impl;
 
   exports org.aya.lsp.models;
   exports org.aya.lsp.server;

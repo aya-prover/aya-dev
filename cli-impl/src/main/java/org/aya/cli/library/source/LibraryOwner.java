@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.source;
 
@@ -39,6 +39,10 @@ public interface LibraryOwner {
   @NotNull LibraryConfig underlyingLibrary();
 
   void addModulePath(@NotNull Path newPath);
+
+  default @NotNull LibrarySource createLibrarySource(@NotNull Path path) {
+    return LibrarySource.create(this, path);
+  }
 
   /** @return Out dir of this module. */
   default @NotNull Path outDir() {
