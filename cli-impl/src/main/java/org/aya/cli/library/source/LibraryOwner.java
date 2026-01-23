@@ -40,10 +40,6 @@ public interface LibraryOwner {
 
   void addModulePath(@NotNull Path newPath);
 
-  default @NotNull LibrarySource createLibrarySource(@NotNull Path path) {
-    return LibrarySource.create(this, path);
-  }
-
   /** @return Out dir of this module. */
   default @NotNull Path outDir() {
     return underlyingLibrary().libraryOutRoot();

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.test.cli;
 
@@ -10,6 +10,7 @@ import kala.collection.mutable.MutableMap;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.library.source.LibraryVisitor;
 import org.aya.cli.utils.LiteratePrettierOptions;
 import org.aya.util.Version;
 import org.aya.util.position.SourceFileLocator;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LibraryGraphTest {
   private static final class TestLibraryOwner implements LibraryOwner {
@@ -36,6 +38,14 @@ public class LibraryGraphTest {
     @Override public @NotNull SeqView<LibraryOwner> libraryDeps() { return mutLibraryDeps.view(); }
     @Override public @NotNull LibraryConfig underlyingLibrary() { return underlyingLibrary; }
     @Override public void addModulePath(@NotNull Path newPath) { throw new UnsupportedOperationException(); }
+    public @NotNull TestLibraryOwner copy() {
+      return new TestLibraryOwner(underlyingLibrary);
+    }
+
+    @Override
+    public String toString() {
+      return underlyingLibrary.name();
+    }
   }
 
   /**
@@ -72,6 +82,17 @@ public class LibraryGraphTest {
     assertEquals(expected, LibraryOwner.buildDependencyGraph(libSet.view()).E());
   }
 
+  private void visit(@NotNull LibraryOwner root, @NotNull LibraryOwner... order) {
+    var actual = MutableList.<LibraryOwner>create();
+    LibraryVisitor.visit(root, (o, p) -> {
+      if (p != null) assertTrue(p.libraryDeps().contains(o));
+      actual.append(o);
+      return LibraryVisitor.VisitResult.Recursive;
+    });
+
+    assertEquals(ImmutableSeq.from(order), actual);
+  }
+
   @Test public void libGraph0() {
     // A -> B -> C
     //      ^____|
@@ -106,5 +127,23 @@ public class LibraryGraphTest {
     a2.addDependency(b2);
 
     check(a1, b1, c, a2, b2);
+  }
+
+  @Test public void libWalk0() {
+    // A -> B -> D
+    //        -> E
+    //   -> C
+    var a = new TestLibraryOwner(config("A"));
+    var b = new TestLibraryOwner(config("B"));
+    var c = new TestLibraryOwner(config("C"));
+    var d = new TestLibraryOwner(config("D"));
+    var e = new TestLibraryOwner(config("E"));
+
+    a.addDependency(b);
+    a.addDependency(c);
+    b.addDependency(d);
+    b.addDependency(e);
+
+    visit(a, a, b, d, e, c);
   }
 }
