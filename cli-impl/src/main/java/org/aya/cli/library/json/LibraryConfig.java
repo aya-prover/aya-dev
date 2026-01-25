@@ -1,9 +1,10 @@
-// Copyright (c) 2020-2024 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.cli.library.json;
 
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.cli.utils.LiteratePrettierOptions;
+import org.aya.generic.Constants;
 import org.aya.util.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,10 @@ public record LibraryConfig(
   @NotNull LibraryLiterateConfig literateConfig,
   @NotNull ImmutableSeq<LibraryDependency> deps
 ) {
+  public @NotNull Path libraryConfigPath() {
+    return libraryRoot.resolve(Constants.AYA_JSON);
+  }
+
   /// @param datetimeFrontMatterKey it makes little sense to specify the "values" too,
   ///                               because a library has many files, and each file should
   ///                               have their own modified time, which is unrealistic to retrieve.
