@@ -45,4 +45,23 @@ public interface TerckError {
     def crazyAdd (a : Nat) : crazyAdd a
     | x => x
     """;
+
+  @Language("Aya") String testDirectNegative = """
+    inductive Empty
+    inductive Bad | introBad (Bad -> Empty)
+    """;
+
+  @Language("Aya") String testIndirectNegative = """
+    inductive Empty
+    inductive Arrow (A B : Type) | intro (A -> B)
+    inductive Bad | introBad (Arrow Bad Empty)
+    """;
+
+  @Language("Aya") String testFunctionCallIsNegative = """
+    open inductive Nat | zro | suc Nat
+    def justId (n : Nat) (A : Type) : Type
+    | zro, A => A
+    | suc _, A => A
+    inductive Bad | introBad (n : Nat) (justId n Bad)
+    """;
 }

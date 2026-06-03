@@ -3,7 +3,9 @@
 package org.aya.resolve.module;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.control.Result;
+import org.aya.generic.stmt.TyckOrder;
 import org.aya.resolve.ResolveInfo;
 import org.aya.resolve.StmtResolvers;
 import org.aya.resolve.context.ModuleContext;
@@ -13,12 +15,16 @@ import org.aya.resolve.salt.PatternBinParser;
 import org.aya.states.primitive.PrimFactory;
 import org.aya.states.primitive.ShapeFactory;
 import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.decl.DataDecl;
 import org.aya.syntax.ref.ModulePath;
+import org.aya.terck.InductiveChecker;
+import org.aya.terck.ParameterChecker;
 import org.aya.tyck.order.AyaOrgaTycker;
 import org.aya.tyck.order.AyaSccTycker;
 import org.aya.tyck.tycker.Problematic;
 import org.aya.util.reporter.ClearableReporter;
 import org.aya.util.reporter.DelayedReporter;
+import org.aya.util.terck.MutableGraph;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +35,28 @@ import org.jetbrains.annotations.Nullable;
 public interface ModuleLoader extends Problematic {
   @Override @NotNull ClearableReporter reporter();
 
+  /// @return graph that [TyckOrder.Head] is connected to [TyckOrder.Body]
+  static @NotNull MutableGraph<TyckOrder> headToBody(@NotNull MutableGraph<TyckOrder> graph) {
+    var datas = MutableList.<TyckOrder.Head>create();
+    var result = MutableGraph.<TyckOrder>create();
+
+    graph.E().forEach((node, edges) -> {
+      var suc = result.sucMut(node);
+      suc.appendAll(edges);
+
+      if (node instanceof TyckOrder.Head(DataDecl data)) {
+        datas.append((TyckOrder.Head) node);
+      }
+    });
+
+    for (var data : datas) {
+      result.sucMut(data)
+        .append(new TyckOrder.Body(data.unit()));
+    }
+
+    return result;
+  }
+
   default <E extends Exception> @NotNull ResolveInfo
   tyckModule(@NotNull ResolveInfo resolveInfo, ModuleCallback<E> onTycked) throws E {
     var SCCs = resolveInfo.depGraph().topologicalOrder();
@@ -36,7 +64,38 @@ public interface ModuleLoader extends Problematic {
     var sccTycker = new AyaOrgaTycker(AyaSccTycker.create(resolveInfo, delayedReporter), resolveInfo);
     // in case we have un-messaged TyckException
     try (delayedReporter) {
+      // type check
       SCCs.forEach(sccTycker::tyckSCC);
+
+      // positivity check, TODO: move to somewhere else
+      var mutualSCCs = headToBody(resolveInfo.depGraph())
+        .topologicalOrder().view()
+        .map(SCC -> {
+          var bodies = SCC.view().map(it -> {
+            // TODO: allow FnDecl here to accept inductive-recursive
+            if (it instanceof TyckOrder.Body(DataDecl decl)) {
+              return decl.ref;
+            } else {
+              return null;
+            }
+          }).filterNotNull().toSeq();
+
+          if (bodies.isEmpty()) return null;
+          return bodies;
+        })
+        .filterNotNull()
+        .toSeq();
+
+      for (var mutual : mutualSCCs) {
+        InductiveChecker.check(mutual.map(it -> it), resolveInfo.makeTyckState(), delayedReporter);
+
+        if (mutual.sizeEquals(1)) {
+          var first = mutual.getFirst();
+          if (first.core != null) {
+            ParameterChecker.check(first.core, resolveInfo.makeTyckState());
+          }
+        }
+      }
     } finally {
       if (onTycked != null) onTycked.onModuleTycked(
         resolveInfo, sccTycker.sccTycker().wellTyped().toSeq());

@@ -3,6 +3,7 @@
 package org.aya.syntax.core.term;
 
 import kala.collection.immutable.ImmutableSeq;
+import org.aya.generic.Constants;
 import org.aya.generic.TermVisitor;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.ref.LocalVar;
@@ -16,6 +17,10 @@ public record FreeTerm(@NotNull LocalVar name) implements FreeTermLike {
 
   public static @NotNull ImmutableSeq<@Closed Term> dummy(int size) {
     return ImmutableSeq.fill(size, i -> new FreeTerm(new LocalVar("dummy" + i)));
+  }
+
+  public static @Closed @NotNull Term dummy() {
+    return new FreeTerm(LocalVar.generate(Constants.ANONYMOUS_PREFIX));
   }
 
   public FreeTerm(@NotNull String name) { this(LocalVar.generate(name)); }

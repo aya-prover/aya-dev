@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public record DataDef(
   @Override @NotNull DefVar<DataDef, DataDecl> ref,
+  boolean @NotNull [] covariance,   // will be modified after tycking
   @NotNull ImmutableSeq<ConDef> body
 ) implements TopLevelDef {
   public DataDef { ref.initialize(this); }
@@ -25,5 +26,16 @@ public record DataDef(
     public Delegate(@NotNull DefVar<DataDef, ?> ref) { super(ref); }
     @Override public @NotNull ImmutableSeq<ConDef.Delegate>
     body() { return ref.core.body.map(x -> new ConDef.Delegate(x.ref)); }
+
+    @Override
+    public boolean isCovariant(int index) {
+      assert index <= signature().telescopeSize();
+
+      if (ref.core == null) {
+        return false;
+      } else {
+        return ref.core.covariance[index];
+      }
+    }
   }
 }

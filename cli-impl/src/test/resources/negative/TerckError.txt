@@ -73,3 +73,41 @@ Error: Self-reference found in the signature of crazyAdd
 1 error(s), 0 warning(s).
 Let's learn from that.
 
+DirectNegative:
+In file $FILE:2:16 ->
+
+  1 │   inductive Empty
+  2 │   inductive Bad | introBad (Bad -> Empty)
+    │                   ╰──────╯
+
+Error: This constructor doesn't satisfy strictly positivity.
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+IndirectNegative:
+In file $FILE:3:16 ->
+
+  1 │   inductive Empty
+  2 │   inductive Arrow (A B : Type) | intro (A -> B)
+  3 │   inductive Bad | introBad (Arrow Bad Empty)
+    │                   ╰──────╯
+
+Error: This constructor doesn't satisfy strictly positivity.
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+FunctionCallIsNegative:
+In file $FILE:5:16 ->
+
+  3 │   | zro, A => A
+  4 │   | suc _, A => A
+  5 │   inductive Bad | introBad (n : Nat) (justId n Bad)
+    │                   ╰──────╯
+
+Error: This constructor doesn't satisfy strictly positivity.
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+

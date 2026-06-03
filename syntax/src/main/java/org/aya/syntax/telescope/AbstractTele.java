@@ -50,7 +50,7 @@ public interface AbstractTele {
     return enrich(tele, GenerateKind.Basic.Pretty);
   }
 
-  static @NotNull ImmutableSeq<ParamLike<Term>> enrich(@NotNull AbstractTele tele, @NotNull GenerateKind usage) {
+  static @NotNull ImmutableSeq<ParamLike<@Closed Term>> enrich(@Closed @NotNull AbstractTele tele, @NotNull GenerateKind usage) {
     var richTele = FreezableMutableList.<ParamLike<Term>>create();
 
     for (var i = 0; i < tele.telescopeSize(); ++i) {

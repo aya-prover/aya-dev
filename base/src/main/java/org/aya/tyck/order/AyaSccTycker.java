@@ -10,10 +10,7 @@ import org.aya.generic.Modifier;
 import org.aya.generic.stmt.TyckOrder;
 import org.aya.generic.stmt.TyckUnit;
 import org.aya.resolve.ResolveInfo;
-import org.aya.syntax.concrete.stmt.decl.Decl;
-import org.aya.syntax.concrete.stmt.decl.FnBody;
-import org.aya.syntax.concrete.stmt.decl.FnDecl;
-import org.aya.syntax.concrete.stmt.decl.TeleDecl;
+import org.aya.syntax.concrete.stmt.decl.*;
 import org.aya.syntax.core.def.FnDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.call.Callable;
@@ -112,7 +109,7 @@ public record AyaSccTycker(
       .map(TyckOrder::unit)
       .toSeq();
     if (recDefs.isEmpty()) return;
-    // TODO: positivity check for data/record definitions
+
     var fn = recDefs.view()
       .filterIsInstance(FnDecl.class)
       .filterNot(f -> f.modifiers.contains(Modifier.NonTerminating))

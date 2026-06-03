@@ -194,7 +194,12 @@ public record StmtTycker(
       case DataDecl data -> {
         assert data.ref.signature != null;
         for (var kon : data.body.clauses) checkHeader(kon);
-        yield new DataDef(data.ref, data.body.clauses.map(kon -> kon.ref.core));
+
+        // TODO: calculate covariance, not sure if it work well on mutual inductive
+
+        yield new DataDef(data.ref,
+          new boolean[data.telescope.size()],
+          data.body.clauses.map(kon -> kon.ref.core));
       }
     };
 

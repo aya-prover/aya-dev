@@ -28,4 +28,9 @@ public abstract non-sealed class JitData extends JitTele implements DataDefLike 
   @Override public @NotNull ImmutableSeq<JitCon> body() {
     return ImmutableArray.Unsafe.wrap(constructors());
   }
+
+  @Override
+  public boolean isCovariant(int index) {
+    throw new UnsupportedOperationException("TODO");
+  }
 }

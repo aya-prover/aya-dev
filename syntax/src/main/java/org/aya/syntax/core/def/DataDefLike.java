@@ -7,5 +7,7 @@ import org.aya.syntax.compile.JitData;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface DataDefLike extends AnyDef permits JitData, DataDef.Delegate {
+  /// @return if the data parameter at `index` is covariant
+  boolean isCovariant(int index);
   @NotNull ImmutableSeq<? extends ConDefLike> body();
 }
