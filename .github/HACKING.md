@@ -115,6 +115,8 @@ nix <subcommand> \
 
 [Cachix]: https://app.cachix.org
 
+For developers who do not use nix but need to update the nix lock file, you need to add `experimental-features = nix-command flakes` to your `~/.config/nix/nix.conf` before running the nix scripts provided.
+
 ## Authoring and running tests
 
 We prefer using integration tests, which is very convenient -- all fixtures can use the stdlib,
