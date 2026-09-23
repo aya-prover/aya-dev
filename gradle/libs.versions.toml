@@ -15,7 +15,7 @@ picocli = "4.7.7"
 # https://repo1.maven.org/maven2/org/aya-prover/upstream/build-util
 aya-upstream = "0.0.39"
 # https://github.com/jline/jline3
-jline = "4.1.3"
+jline = "4.4.5"
 # http://junit.org/junit5
 junit = "5.14.0-RC1"
 hamcrest = "2.2"

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.aya.gradle.CommonTasks
@@ -49,11 +49,13 @@ fun jdkUrl(platform: String): String = JdkUrls(javaVersion, platform).jdk()
 val allPlatformImageDir = layout.buildDirectory.asFile.get().resolve("image-all-platforms")
 jlink {
   addOptions("--strip-debug", "--compress", "zip-6", "--no-header-files", "--no-man-pages")
-  addExtraDependencies("jline-terminal-ni")
+  addExtraDependencies("jline-terminal")
+  addExtraDependencies("jline-terminal-ffm")
   imageDir.set(allPlatformImageDir)
   mergedModule {
-    uses("org.jline.terminal.impl.ffm.FfmTerminalProvider")
     requires("java.logging")
+    requires("org.jline.terminal.ffm")
+    uses("org.jline.terminal.impl.ffm.FfmTerminalProvider")
   }
   launcher {
     mainClass = Constants.mainClassQName
