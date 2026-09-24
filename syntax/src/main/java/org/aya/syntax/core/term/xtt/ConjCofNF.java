@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
@@ -12,19 +12,11 @@ public record ConjCofNF(@NotNull ImmutableSeq<EqCofTerm> elements) {
   }
   public @NotNull ConjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
-    // TODO: check if mapped [elements] are identical to [elements]
-    return new ConjCofNF(elements().map(cof -> cof.descent(visitor)));
-  }
-  public @NotNull EqCofTerm head() {
-    return elements().get(0);
-  }
-  public @NotNull ConjCofNF tail() {
-    return new ConjCofNF(elements().drop(1));
+    var mapped = elements().map(cof -> cof.descent(visitor));
+    if (mapped.sameElements(elements())) return this;
+    return new ConjCofNF(mapped);
   }
   public boolean empty() {
     return elements().isEmpty();
-  }
-  public @NotNull ConjCofNF add(@NotNull ConjCofNF c) {
-    return new ConjCofNF(elements().appendedAll(c.elements()));
   }
 }

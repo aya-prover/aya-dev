@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
@@ -648,13 +648,6 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, EqCofTerm c2) {
-    return withConnection(c1,
-      () -> state.isConnected(c2.lhs(), c2.rhs()),
-      () -> true // exfalso
-    );
-  }
-
   // a => c ∩ d?
   private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull ConjCofNF c2) {
     // a => c ∩ d
@@ -662,7 +655,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     if (c2.empty())
       return true; // An empty conjunction should be considered as true.
     return withConnection(c1,
-      () -> cofibrationImply(c1, c2.head()) && cofibrationImply(c1, c2.tail()),
+      () -> c2.elements().allMatch(state::isConnected),
       () -> true // exfalso
     );
   }
@@ -673,10 +666,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     // iff. (a => c) or (a => d)
     if (c2.empty())
       return false;
-    return withConnection(c1,
-      () -> cofibrationImply(c1, c2.head()) || cofibrationImply(c1, c2.tail()),
-      () -> true // exfalso
-    );
+    return c2.elements().anyMatch(c -> cofibrationImply(c1, c));
   }
 
   // a ∪ b => c ∪ d?

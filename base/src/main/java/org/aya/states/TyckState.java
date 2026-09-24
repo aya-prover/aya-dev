@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states;
 
@@ -19,6 +19,7 @@ import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.xtt.DimTerm;
+import org.aya.syntax.core.term.xtt.EqCofTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
@@ -64,6 +65,10 @@ public final class TyckState {
       };
       default -> null;
     };
+  }
+
+  public boolean isConnected(@NotNull EqCofTerm eqCof) {
+    return isConnected(eqCof.lhs(), eqCof.rhs());
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
@@ -14,8 +14,9 @@ public record DisjCofNF(@NotNull ImmutableSeq<ConjCofNF> elements) implements St
 
   @Override public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
-    // TODO: see ConjCof
-    return new DisjCofNF(elements.map(t -> t.descent(visitor)));
+    var mapped = elements.map(t -> t.descent(visitor));
+    if (mapped.sameElements(elements())) return this;
+    return new DisjCofNF(mapped);
   }
 
   public boolean empty() {
