@@ -35,10 +35,16 @@ jobs:
 
       - name: Run build tasks in Nix and upload cache
         run: |
+          eval_workers=()
+          if [ "${{ matrix.platform }}" = "aarch64-linux" ]; then
+            # nix-eval-jobs is flaky on ubuntu-24.04-arm with multiple workers.
+            eval_workers+=(--eval-workers 1)
+          fi
           nix run github:Mic92/nix-fast-build -- \
             --skip-cached \
             --no-nom \
             --cachix-cache aya-prover \
+            "${eval_workers[@]}" \
             --flake ".#packages.${{ matrix.platform }}"
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
