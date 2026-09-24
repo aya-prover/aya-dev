@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.def;
 
@@ -52,7 +52,7 @@ public record PrimDef(
     PATH("Path"),
     PARTIAL("Partial"),
     COE("coe"),
-    HCOMP("hcom"),
+    HCOM("hcom"),
     COF("Cof"),
     COF_AND("cofAnd"),
     COF_OR("cofOr"),
