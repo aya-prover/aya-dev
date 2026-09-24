@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
@@ -648,44 +648,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, EqCofTerm c2) {
-    return withConnection(c1,
-      () -> state.isConnected(c2.lhs(), c2.rhs()),
-      () -> true // exfalso
-    );
-  }
-
-  // a => c ∩ d?
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull ConjCofNF c2) {
-    // a => c ∩ d
-    // iff. (a => c) and (a => d)
-    if (c2.empty())
-      return true; // An empty conjunction should be considered as true.
-    return withConnection(c1,
-      () -> cofibrationImply(c1, c2.head()) && cofibrationImply(c1, c2.tail()),
-      () -> true // exfalso
-    );
-  }
-
-  // a => c ∪ d?
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull DisjCofNF c2) {
-    // a => c ∪ d
-    // iff. (a => c) or (a => d)
-    if (c2.empty())
-      return false;
-    return withConnection(c1,
-      () -> cofibrationImply(c1, c2.head()) || cofibrationImply(c1, c2.tail()),
-      () -> true // exfalso
-    );
-  }
-
   // a ∪ b => c ∪ d?
   private boolean cofibrationImply(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
-    if (c1.empty())
-      return true; // empty disjunction is bottom, hence exfalso.
-    return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
+    return withConnection(c1, () ->
+      c2.elements().anyMatch(c ->
+        c.elements().allMatch(state::isConnected)));
   }
 
   public boolean cofibrationEquiv(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {

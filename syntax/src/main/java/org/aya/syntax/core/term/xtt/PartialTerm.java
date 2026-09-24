@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.syntax.core.term.xtt;
 
@@ -16,8 +16,7 @@ public record PartialTerm(@NotNull ImmutableSeq<Clause> clauses) implements Stab
     }
 
     public @NotNull Clause descent(@NotNull TermVisitor visitor) {
-      // TODO: really? tm.descent(visitor) instead of visitor.term(tm) ?
-      return new Clause(cof().descent(visitor), tm.descent(visitor));
+      return update(cof().descent(visitor), visitor.term(tm()));
     }
   }
 
