@@ -7,16 +7,12 @@ import org.aya.generic.TermVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public record ConjCofNF(@NotNull ImmutableSeq<EqCofTerm> elements) {
-  public @NotNull ConjCofNF add(@NotNull EqCofTerm c) {
-    return new ConjCofNF(elements.appended(c));
-  }
   public @NotNull ConjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
-    var mapped = elements().map(cof -> cof.descent(visitor));
-    if (mapped.sameElements(elements())) return this;
-    return new ConjCofNF(mapped);
+    return update(elements().map(e -> e.descent(visitor)));
   }
-  public boolean empty() {
-    return elements().isEmpty();
+
+  public @NotNull ConjCofNF update(@NotNull ImmutableSeq<EqCofTerm> elements) {
+    return elements.sameElements(elements(), true) ? this : new ConjCofNF(elements);
   }
 }

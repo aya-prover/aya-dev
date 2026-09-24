@@ -10,8 +10,10 @@ import org.jetbrains.annotations.NotNull;
 public record DisjCofNF(@NotNull ImmutableSeq<ConjCofNF> elements) implements StableWHNF {
   @Override public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
-    var mapped = elements.map(t -> t.descent(visitor));
-    if (mapped.sameElements(elements())) return this;
-    return new DisjCofNF(mapped);
+    return update(elements().map(e -> e.descent(visitor)));
+  }
+
+  public @NotNull DisjCofNF update(@NotNull ImmutableSeq<ConjCofNF> elements) {
+    return elements.sameElements(elements(), true) ? this : new DisjCofNF(elements);
   }
 }
