@@ -19,8 +19,6 @@ jobs:
             platform: x86_64-linux
           - os: ubuntu-24.04-arm
             platform: aarch64-linux
-          - os: macos-15-intel
-            platform: x86_64-darwin
           - os: macos-latest
             platform: aarch64-darwin
     steps:
