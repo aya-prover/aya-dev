@@ -27,8 +27,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Nix
-        uses: nixbuild/nix-quick-install-action@v34
+        uses: nixbuild/nix-quick-install-action@v35
         with:
+          nix_version: 2.29.4
           nix_conf: |
             extra-substituters = https://aya-prover.cachix.org
             extra-trusted-public-keys = aya-prover.cachix.org-1:BNuUD9aNZMDmYISC77aqZfzP4l9XtTHQvYwPhKO+Msg=
