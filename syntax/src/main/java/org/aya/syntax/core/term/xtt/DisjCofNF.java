@@ -8,26 +8,10 @@ import org.aya.syntax.core.term.marker.StableWHNF;
 import org.jetbrains.annotations.NotNull;
 
 public record DisjCofNF(@NotNull ImmutableSeq<ConjCofNF> elements) implements StableWHNF {
-  public @NotNull DisjCofNF add(ConjCofNF c) {
-    return new DisjCofNF(elements().appended(c));
-  }
-
   @Override public @NotNull DisjCofNF descent(@NotNull TermVisitor visitor) {
     if (elements().isEmpty()) return this;
     var mapped = elements.map(t -> t.descent(visitor));
     if (mapped.sameElements(elements())) return this;
     return new DisjCofNF(mapped);
-  }
-
-  public boolean empty() {
-    return elements().isEmpty();
-  }
-
-  public ConjCofNF head() {
-    return elements().get(0);
-  }
-
-  public DisjCofNF tail() {
-    return new DisjCofNF(elements().drop(1));
   }
 }

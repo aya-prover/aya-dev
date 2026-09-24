@@ -648,34 +648,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     };
   }
 
-  // a => c ∩ d?
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull ConjCofNF c2) {
-    // a => c ∩ d
-    // iff. (a => c) and (a => d)
-    if (c2.empty())
-      return true; // An empty conjunction should be considered as true.
-    return withConnection(c1,
-      () -> c2.elements().allMatch(state::isConnected),
-      () -> true // exfalso
-    );
-  }
-
-  // a => c ∪ d?
-  private boolean cofibrationImply(@NotNull ConjCofNF c1, @NotNull DisjCofNF c2) {
-    // a => c ∪ d
-    // iff. (a => c) or (a => d)
-    if (c2.empty())
-      return false;
-    return c2.elements().anyMatch(c -> cofibrationImply(c1, c));
-  }
-
   // a ∪ b => c ∪ d?
   private boolean cofibrationImply(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
-    if (c1.empty())
-      return true; // empty disjunction is bottom, hence exfalso.
-    return cofibrationImply(c1.head(), c2) && cofibrationImply(c1.tail(), c2);
+    return withConnection(c1, () ->
+      c2.elements().anyMatch(c ->
+        c.elements().allMatch(state::isConnected)));
   }
 
   public boolean cofibrationEquiv(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
