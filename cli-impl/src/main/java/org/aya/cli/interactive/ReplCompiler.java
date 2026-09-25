@@ -4,6 +4,7 @@ package org.aya.cli.interactive;
 
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.collection.mutable.MutableMap;
 import kala.control.Either;
 import kala.function.CheckedFunction;
 import kala.value.MutableValue;
@@ -37,6 +38,7 @@ import org.aya.syntax.GenericAyaFile;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.syntax.core.Jdg;
+import org.aya.syntax.core.def.AnyDef;
 import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
@@ -68,6 +70,7 @@ public class ReplCompiler {
   private final @NotNull AyaBinOpSet opSet;
   private final @NotNull TyckState tcState;
   private final @NotNull GlobalInstanceSet replInstances;
+  private final @NotNull MutableMap<AnyDef, ResolveInfo.OpRenameInfo> opRenames = MutableMap.create();
 
   public ReplCompiler(
     @NotNull ImmutableSeq<Path> modulePaths,
@@ -162,6 +165,7 @@ public class ReplCompiler {
           if (reporter.anyError()) return Either.left(ImmutableSeq.empty());
           context.merge();
           shapeFactory.merge();
+          opRenames.putAll(resolveInfo.opRename());
           return Either.left(newDefs.get());
         },
         expr -> {
@@ -183,6 +187,7 @@ public class ReplCompiler {
     var resolveInfo = new ResolveInfo(ctx, tcState.primFactory, tcState.shapeFactory, opSet);
     imports.forEach(ii -> resolveInfo.imports().put(
       ii.modulePath().asName(), new ResolveInfo.ImportInfo(ii, false, null)));
+    resolveInfo.opRename().putAll(opRenames);
     return resolveInfo;
   }
 
