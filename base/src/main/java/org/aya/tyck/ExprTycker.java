@@ -183,7 +183,7 @@ public final class ExprTycker extends ScopedTycker {
           var clsCof = inherit(rcls.cof(), state().primFactory.getCall(PrimDef.ID.COF));
           var clsCofNF = expand(clsCof.wellTyped());
           if (clsCofNF == null) {
-            yield fail(expr.data(), type, new IllegalPartialElement.BadPartialLHS(clsCof.wellTyped(), rcls.cof().sourcePos(), state()));
+            yield fail(expr.data(), type, new PartialElError.BadPartialLHS(clsCof.wellTyped(), rcls.cof().sourcePos(), state()));
           }
           var clsRhs = withConnection(clsCofNF, () -> inherit(rcls.tm(), A).wellTyped(), () -> inherit(rcls.tm(), A).wellTyped());
           cls.append(new PartialTerm.Clause(clsCofNF, clsRhs));
@@ -200,14 +200,16 @@ public final class ExprTycker extends ScopedTycker {
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         }
         if (!(unifier(expr.sourcePos(), Ordering.Eq).cofEquiv(disj, cnf)))
-          yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
+          yield fail(expr.data(), type, new PartialElError.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
             if (c1 == c2) continue;
-            if (!(withConnection(CofNF.and(c1.cof(), c2.cof()),
-              () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES)))
-              yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
+            var unifier = unifier(expr.sourcePos(), Ordering.Eq);
+            var intersect = CofNF.and(c1.cof(), c2.cof());
+            var compareYes = withConnection(intersect, () -> unifier.compare(c1.tm(), c2.tm(), A) == Decision.YES);
+            if (!compareYes)
+              yield fail(expr.data(), type, new PartialElError.ValueMismatch(c1, c2, intersect, expr.sourcePos(), state()));
           }
         yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);
       }
