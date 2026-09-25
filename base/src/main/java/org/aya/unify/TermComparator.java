@@ -344,8 +344,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         yield Decision.YES;
       }
       case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.COF && arg.isEmpty() -> {
-        var nl = expand(lhs); if (nl == null) yield Decision.NO;
-        var nr = expand(rhs); if (nr == null) yield Decision.NO;
+        var nl = expand(lhs);
+        if (nl == null) yield Decision.NO;
+        var nr = expand(rhs);
+        if (nr == null) yield Decision.NO;
         if (cofibrationEquiv(nl, nr)) yield Decision.YES;
         yield Decision.NO;
       }
