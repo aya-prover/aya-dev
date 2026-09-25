@@ -12,21 +12,18 @@ plugins {
   `maven-publish`
   signing
   alias(libs.plugins.jlink) apply false
-  id("com.gradleup.nmcp.aggregation").version("1.2.0")
 }
 
-var projectVersion: String by rootProject.ext
-var currentPlatform: String by rootProject.ext
-var supportedPlatforms: List<String> by rootProject.ext
-var javaVersion: Int by rootProject.ext
-
-projectVersion = libs.versions.project.get()
-javaVersion = libs.versions.java.get().toInt()
+val projectVersion = libs.versions.project.get()
+extra["projectVersion"] = projectVersion
+val javaVersion = libs.versions.java.get().toInt()
+extra["javaVersion"] = javaVersion
 
 // Platforms we build jlink-ed aya for:
 // The "current" means the "current platform", as it is unnecessary to detect what the current system is,
 // as calling jlink with default arguments will build for the current platform.
-currentPlatform = "current"
+val currentPlatform = "current"
+extra["currentPlatform"] = currentPlatform
 
 // In case we are in CI, or we are debugging CI locally, we build for all platforms
 fun buildAllPlatforms(): Boolean {
@@ -35,28 +32,23 @@ fun buildAllPlatforms(): Boolean {
     && project.rootDir.resolve(".git/HEAD").readLines().joinToString().contains("refs/heads/ci")) return true
   return false
 }
-supportedPlatforms = if (!buildAllPlatforms()) listOf(currentPlatform) else listOf(
+val supportedPlatforms = if (!buildAllPlatforms()) listOf(currentPlatform) else listOf(
   "windows-aarch64",
   "windows-x64",
   "linux-aarch64",
   "linux-x64",
   "linux-riscv64",
   "macos-aarch64",
-  // disabled for a while because jdk download on GitHub Actions keeps failing
-  // "macos-x64",
 )
+extra["supportedPlatforms"] = supportedPlatforms
 
 allprojects {
   group = "org.aya-prover"
   version = projectVersion
+  repositories { mavenCentral() }
 }
 
 val useJacoco = listOf("base", "syntax", "producer", "pretty", "cli-impl", "jit-compiler", "tools")
-
-/** gradle.properties or environmental variables */
-fun propOrEnv(name: String): String =
-  if (hasProperty(name)) property(name).toString()
-  else System.getenv(name) ?: ""
 
 val isSnapshot = projectVersion.endsWith("SNAPSHOT")
 val isRelease = !isSnapshot
@@ -146,7 +138,7 @@ subprojects {
 
   @Suppress("UnstableApiUsage")
   testing.suites {
-    val test by getting(JvmTestSuite::class) {
+    getByName<JvmTestSuite>("test") {
       useJUnitJupiter(rootProject.libs.versions.junit)
       targets.all {
         testTask.configure {
@@ -201,22 +193,6 @@ subprojects {
     sign(publishing.publications["maven"])
   }
 }
-
-val ossrhUsername = propOrEnv("mavenCentralPortalUsername")
-val ossrhPassword = propOrEnv("mavenCentralPortalPassword")
-
-if (ossrhUsername.isNotEmpty()) nmcpAggregation {
-  centralPortal {
-    username = ossrhUsername
-    password = ossrhPassword
-    publishingType = if (isRelease) "USER_MANAGED"
-    else "AUTOMATIC"
-  }
-
-  // Publish all projects that apply the 'maven-publish' plugin
-  publishAllProjectsProbablyBreakingProjectIsolation()
-}
-
 
 apply { plugin("jacoco-report-aggregation") }
 dependencies { useJacoco.forEach { jacocoAggregation(project(":$it")) { isTransitive = false } } }

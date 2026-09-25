@@ -5,15 +5,12 @@ import org.aya.gradle.GenerateVersionTask
 dependencies {
   api(project(":syntax"))
   api(project(":tools-md"))
-  // implementation(libs.manifold.delegate.runtime)
-  // annotationProcessor(libs.manifold.delegate.codegen)
   testImplementation(project(":producer"))
   testImplementation(project(":jit-compiler"))
-  // testAnnotationProcessor(libs.manifold.delegate.codegen)
 }
 
 val genDir = file("src/main/gen")
-var javaVersion: Int by rootProject.ext
+var javaVersion = rootProject.extra["javaVersion"] as Int
 
 val generateVersion = tasks.register<GenerateVersionTask>("generateVersion") {
   basePackage = "org.aya"

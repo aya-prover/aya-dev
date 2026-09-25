@@ -40,9 +40,9 @@ object Constants {
   const val mainClassQName = "org.aya.lsp.LspMain"
 }
 
-val supportedPlatforms: List<String> by rootProject.ext
-val currentPlatform: String by rootProject.ext
-val javaVersion: Int by rootProject.ext
+var currentPlatform = rootProject.extra["currentPlatform"] as String
+var supportedPlatforms = rootProject.extra["supportedPlatforms"] as List<*>
+var javaVersion = rootProject.extra["javaVersion"] as Int
 
 fun jdkUrl(platform: String): String = JdkUrls(javaVersion, platform).jdk()
 
@@ -69,6 +69,7 @@ jlink {
     jvmArgs = mutableListOf("--enable-preview")
   }
   supportedPlatforms.forEach { platform ->
+    platform as String
     targetPlatform(platform) {
       if (platform != currentPlatform) setJdkHome(jdkDownload(jdkUrl(platform)))
     }
@@ -80,6 +81,7 @@ val ayaJlinkTask = tasks.register("jlinkAya")
 val ayaJlinkZipTask = tasks.register("jlinkAyaZip")
 val ayaImageDir = layout.buildDirectory.asFile.get().resolve("image")
 supportedPlatforms.forEach { platform ->
+  platform as String
   val installDir = ayaImageDir.resolve(platform)
   val copyAyaExecutables = tasks.register<Copy>("copyAyaExecutables_$platform") {
     from(file("src/main/shell")) {

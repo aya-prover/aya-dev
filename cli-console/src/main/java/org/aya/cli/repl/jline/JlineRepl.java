@@ -45,7 +45,6 @@ public final class JlineRepl extends AyaRepl {
     super(modulePaths, config);
     terminal = TerminalBuilder.builder()
       .ffm(true)
-      .jna(false)
       .jni(false)
       .build();
     lineReader = LineReaderBuilder.builder()
@@ -78,7 +77,7 @@ public final class JlineRepl extends AyaRepl {
 
   private int widthOf(@NotNull Terminal terminal) {
     if (terminal instanceof DumbTerminal) return 80;
-    return terminal.getWidth();
+    return terminal.getColumns();
   }
 
   @Override @NotNull public String readLine(@NotNull String prompt)

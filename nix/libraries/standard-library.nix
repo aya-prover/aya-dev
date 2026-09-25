@@ -34,7 +34,6 @@ mkDerivation rec {
       "x86_64-linux"
       "riscv64-linux"
       "aarch64-darwin"
-      "x86_64-darwin"
     ];
   };
 }

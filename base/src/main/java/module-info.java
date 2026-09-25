@@ -3,8 +3,6 @@ module aya.base {
 
   requires static org.jetbrains.annotations;
 
-  // requires manifold.delegation.rt;
-
   exports org.aya.normalize;
   exports org.aya.prelude;
   exports org.aya.resolve.context;
