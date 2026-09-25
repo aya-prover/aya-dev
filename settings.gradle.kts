@@ -24,3 +24,26 @@ include(
   "ide",
   "ide-lsp",
 )
+
+plugins {
+  id("com.gradleup.nmcp.settings") version "1.6.2"
+}
+
+/** gradle.properties or environmental variables */
+fun propOrEnv(name: String): String {
+  val property = providers.gradleProperty(name)
+  return if (property.isPresent) property.get()
+  else System.getenv(name) ?: ""
+}
+
+val ossrhUsername = propOrEnv("mavenCentralPortalUsername")
+val ossrhPassword = propOrEnv("mavenCentralPortalPassword")
+
+if (ossrhUsername.isNotEmpty()) nmcpSettings {
+  centralPortal {
+    username = ossrhUsername
+    password = ossrhPassword
+    publishingType = if (System.getenv("CI").isEmpty()) "USER_MANAGED"
+    else "AUTOMATIC"
+  }
+}
