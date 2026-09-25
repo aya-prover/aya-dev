@@ -22,6 +22,7 @@ import org.aya.syntax.core.term.repr.StringTerm;
 import org.aya.syntax.core.term.xtt.CoeTerm;
 import org.aya.syntax.core.term.xtt.DimTerm;
 import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.QName;
@@ -48,6 +49,7 @@ public class PrimFactory {
       stringConcat,
       intervalType,
       partialType,
+      unPartial,
       cofType,
       cofAnd,
       cofOr,
@@ -154,6 +156,23 @@ public class PrimFactory {
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
 
+  private final @NotNull PrimSeed unPartial = new PrimSeed(ID.UNPARTIAL, (prim, _) -> {
+    if (prim.args().get(1) instanceof PartialTerm(var clauses)) {
+      return clauses.get(0).tm();
+    } else {
+      return prim;
+    }
+  }, ref -> {
+    // (A : Type) (u : Partial (1 =f 1) A) : A
+    var paramA = new Param("A", Type0, true);
+    var paramU = new Param("u", getCall(ID.PARTIAL, ImmutableSeq.of(
+      getCall(ID.COF_EQ, ImmutableSeq.of(DimTerm.I1, DimTerm.I1)),
+      new LocalTerm(0)
+    )), true);
+    // result: A=1, u=0
+    return new PrimDef(ref, ImmutableSeq.of(paramA, paramU), new LocalTerm(1), ID.UNPARTIAL);
+  }, ImmutableSeq.of(ID.PARTIAL));
+
   private final @NotNull PrimSeed hcom = new PrimSeed(ID.HCOM, this::hcom, ref -> {
     // Only fibrant types (in Type universe) support hcom
     var paramA = new Param("A", Type0, true);
@@ -176,7 +195,7 @@ public class PrimFactory {
       // refers to the first parameter as a De Bruijn index
       new LocalTerm(telescope.size() - 1),
       ID.HCOM);
-  }, ImmutableSeq.of(ID.I, ID.COF, ID.COF_EQ, ID.COF_OR, ID.PARTIAL));
+  }, ImmutableSeq.of(ID.COF_EQ, ID.COF_OR, ID.PARTIAL));
 
   private @Closed @NotNull Term hcom(@Closed @NotNull PrimCall prim, @NotNull TyckState state) {
     // TODO: implement hcom reduction

@@ -166,3 +166,8 @@ module Issue1293 {
 
    // def test3 (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∧f (i =f 1)) Nat
 }
+
+module Issue1468 {
+  open import relation::binary::equality::cubical hiding (I)
+  def test (A : Type) (a : A) (i : I) : unPartial A (partial [ i =f i => a ]) = a => refl
+}

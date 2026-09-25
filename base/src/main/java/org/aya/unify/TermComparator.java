@@ -129,7 +129,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   // region Utilities
   private void fail(@NotNull Term lhs, @NotNull Term rhs) {
     if (failure == null) {
-      failure = new FailureData(lhs, rhs);
+      failure = new FailureData(lhs, rhs, state.buildCofTerms());
     }
   }
 
@@ -272,6 +272,10 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   ///
   /// @param type the type in whnf.
   /// @return whether they are 'the same' and their types are {@param type}
+  /// @implNote to delegate the compare of lhs and rhs to untyped compare, use
+  ///   [#doCompare(Term, Term, Term)] instead of [#compare(Term, Term, Term)] because we have already whnfed lhs and rhs.
+  ///   However, comparing subterms or derived terms should still use [#compare(Term, Term, Term)] to ensure the subterms are whnfed
+  ///   and the order is correct.
   private @NotNull Decision doCompareTyped(@Closed @NotNull Term lhs, @Closed @NotNull Term rhs, @Closed @NotNull Term type) {
     return switch (whnf(type)) {
       case LamTerm _, ConCallLike _, TupTerm _ -> Panic.unreachable();
@@ -304,7 +308,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, eq);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, eq);
-        default -> compare(lhs, rhs, null);
+        default -> doCompare(lhs, rhs, null);
       };
       case DepTypeTerm pi when pi.kind() == DTKind.Pi -> switch (new Pair<>(lhs, rhs)) {
         case Pair(LamTerm(var lbody), LamTerm(var rbody)) -> {
@@ -319,7 +323,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
         case Pair(LamTerm lambda, _) -> compareLambda(lambda, rhs, pi);
         case Pair(_, LamTerm rambda) -> compareLambda(rambda, lhs, pi);
-        default -> compare(lhs, rhs, null);
+        default -> doCompare(lhs, rhs, null);
       };
       // Sigma types
       case DepTypeTerm(_, var lTy, var rTy) -> {
@@ -332,7 +336,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         var A = arg.get(1);
         // var cof = arg.get(0);
         if (!(lhs instanceof PartialTerm(var clauses1)) || !(rhs instanceof PartialTerm(var clauses2)))
-          yield Decision.NO;
+          yield doCompare(lhs, rhs, null);
         // {phi_1 => u_1 ... phi_n => u_n} = {psi_1 => v_1 ... psi_m => v_m}
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
@@ -394,6 +398,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       });
 
     return switch (lhs) {
+      case ErrorTerm _ -> RelDec.yes();
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield RelDec.no();
         var fTy = compareUntyped(f, g);
@@ -677,9 +682,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return failure.map(this::freezeHoles);
   }
 
-  public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
+  public record FailureData(
+    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull ImmutableSeq<Term> cofs
+  ) {
     public @NotNull FailureData map(@NotNull UnaryOperator<Term> f) {
-      return new FailureData(f.apply(lhs), f.apply(rhs));
+      // Cofs are not meant to have holes, so we do not freeze them for now
+      return new FailureData(f.apply(lhs), f.apply(rhs), cofs);
     }
   }
 

@@ -3,6 +3,7 @@
 package org.aya.states;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
@@ -45,11 +46,16 @@ public final class TyckState {
   public final @NotNull MutableMap<MetaVar, Term> solutions = MutableMap.create();
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
-  private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
-  private final @NotNull MutableSet<LocalVar> assumptions = MutableSet.create();
+  public static final int I0 = 0;
+  public static final int I1 = 1;
 
-  public static final DynamicForest.Handle I0 = DynamicForest.create();
-  public static final DynamicForest.Handle I1 = DynamicForest.create();
+  private final @NotNull MutableMap<LocalVar, Integer> varToId = MutableMap.create();
+  private int nextId = 2;
+
+  private final @NotNull MutableList<Edge> edgeStack = MutableList.create();
+  private final @NotNull MutableList<LocalVar> assumptions = MutableList.create();
+
+  public record Edge(int u, int v) { }
 
   public TyckState(
     @NotNull ShapeFactory shapeFactory,
@@ -59,14 +65,20 @@ public final class TyckState {
     this.primFactory = primFactory;
   }
 
-  private @Nullable DynamicForest.Handle computeHandle(@NotNull Term term, boolean create) {
+  private int computeId(@NotNull Term term, boolean create) {
     return switch (term) {
-      case FreeTerm(var v) -> create ? connections.getOrPut(v, DynamicForest::create) : connections.getOrNull(v);
+      case FreeTerm(var v) -> {
+        if (!varToId.containsKey(v)) {
+          if (create) varToId.put(v, nextId++);
+          else yield -1;
+        }
+        yield varToId.get(v);
+      }
       case DimTerm dim -> switch (dim) {
         case I0 -> I0;
         case I1 -> I1;
       };
-      default -> null;
+      default -> -1;
     };
   }
 
@@ -90,28 +102,57 @@ public final class TyckState {
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
-    var l = computeHandle(lhs, true);
-    var r = computeHandle(rhs, true);
-    if (l == null || r == null) return false;
-    return l.isConnected(r);
+    // First one set it to true in case the lhs and rhs are the same but not in the table
+    var l = computeId(lhs, true);
+    var r = computeId(rhs, false);
+    if (l < 0 || r < 0) return false;
+    if (l == r) return true;
+
+    // Rebuild Union-Find from the edge stack on demand
+    var uf = new UnionFind(nextId);
+    for (Edge edge : edgeStack) {
+      uf.union(edge.u(), edge.v());
+    }
+    return uf.find(l) == uf.find(r);
   }
 
   public void connect(@NotNull Term lhs, @NotNull Term rhs) {
-    var l = computeHandle(lhs, true);
-    var r = computeHandle(rhs, true);
-    if (l == null || r == null) throw new Panic("Unsupported connection, need error report");
-    l.connect(r);
+    var l = computeId(lhs, true);
+    var r = computeId(rhs, true);
+    if (l < 0 || r < 0) throw new Panic("Unsupported connection, need error report");
+    edgeStack.append(new Edge(l, r));
   }
 
   public void disconnect(@NotNull Term lhs, @NotNull Term rhs) {
-    var l = computeHandle(lhs, false);
-    var r = computeHandle(rhs, false);
-    if (l != null && r != null) l.disconnect(r);
+    var l = computeId(lhs, false);
+    var r = computeId(rhs, false);
+    if (l < 0 || r < 0) return;
+
+    for (int i = edgeStack.size() - 1; i >= 0; i--) {
+      var edge = edgeStack.get(i);
+      if (edge.u() == l && edge.v() == r) {
+        edgeStack.removeAt(i);
+        return;
+      }
+    }
+    throw new Panic("Trying to disconnect a non-existing connection, panic");
   }
 
-  public void assume(LocalVar v) { assumptions.add(v); }
+  public void assume(LocalVar v) { assumptions.append(v); }
   public void unassume(LocalVar v) { assumptions.remove(v); }
-  public void removeConnection(@NotNull LocalVar var) { connections.remove(var); }
+  public void removeConnection(@NotNull LocalVar var) { varToId.remove(var); }
+
+  public @NotNull ImmutableSeq<Term> buildCofTerms() {
+    var ret = MutableArrayList.<Term>create(assumptions.size() + edgeStack.size());
+    for (var v : assumptions) ret.append(new FreeTerm(v));
+    var idToVar = new LocalVar[nextId];
+    varToId.forEach((var, id) -> idToVar[id] = var);
+    for (var edge : edgeStack) {
+      var eqTerm = new CofNF.EqCofTerm(new FreeTerm(idToVar[edge.u()]), new FreeTerm(idToVar[edge.v()]));
+      ret.append(new CofNF.Disj(new CofNF.Conj(eqTerm)));
+    }
+    return ret.toSeq();
+  }
 
   @ApiStatus.Internal
   public void solve(MetaVar meta, Term candidate) { solutions.put(meta, candidate); }
