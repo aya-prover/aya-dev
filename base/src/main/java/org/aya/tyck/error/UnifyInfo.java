@@ -70,6 +70,13 @@ public record UnifyInfo(@Override @NotNull TyckState state) implements Stateful 
         fullNormalize(failureTermR).toDoc(options),
         buf);
     }
+    var cofs = comparison.failureData.cofs();
+    if (cofs.isNotEmpty()) {
+      buf.append(Doc.english("Cofibrations in the context:"));
+      for (var cof : cofs) {
+        buf.append(Doc.par(1, cof.toDoc(options)));
+      }
+    }
     return Doc.vcat(buf);
   }
 }

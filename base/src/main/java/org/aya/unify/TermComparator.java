@@ -129,7 +129,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   // region Utilities
   private void fail(@NotNull Term lhs, @NotNull Term rhs) {
     if (failure == null) {
-      failure = new FailureData(lhs, rhs);
+      failure = new FailureData(lhs, rhs, state.buildCofTerms());
     }
   }
 
@@ -682,9 +682,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
     return failure.map(this::freezeHoles);
   }
 
-  public record FailureData(@NotNull Term lhs, @NotNull Term rhs) {
+  public record FailureData(
+    @NotNull Term lhs, @NotNull Term rhs,
+    @NotNull ImmutableSeq<Term> cofs
+  ) {
     public @NotNull FailureData map(@NotNull UnaryOperator<Term> f) {
-      return new FailureData(f.apply(lhs), f.apply(rhs));
+      // Cofs are not meant to have holes, so we do not freeze them for now
+      return new FailureData(f.apply(lhs), f.apply(rhs), cofs);
     }
   }
 

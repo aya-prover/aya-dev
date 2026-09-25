@@ -102,7 +102,8 @@ public final class TyckState {
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
-    var l = computeId(lhs, false);
+    // First one set it to true in case the lhs and rhs are the same but not in the table
+    var l = computeId(lhs, true);
     var r = computeId(rhs, false);
     if (l < 0 || r < 0) return false;
     if (l == r) return true;
