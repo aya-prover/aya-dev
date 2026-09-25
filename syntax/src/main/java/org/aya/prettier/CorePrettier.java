@@ -214,7 +214,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case PartialTerm(var clause) -> Doc.sep(KW_PARTIAL, Doc.wrap("[", "]",
         Doc.vcommaList(clause.map(cls ->
-          Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
+          Doc.sep(visitCofDisj(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
       case LetTerm let -> {
         var unlet = let.unlet(nameGen);
         if (unlet.definedAs().isEmpty()) {
@@ -230,7 +230,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield letDoc;
       }
-      case CofNF.Disj disjCofNF -> visitCof(disjCofNF);
+      case CofNF.Disj disjCofNF -> visitCofDisj(disjCofNF);
     };
   }
 
@@ -468,16 +468,22 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  private @NotNull Doc visitCof(@NotNull CofNF.EqCofTerm cof) {
-    return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
+  private @NotNull Doc visitCofEq(@NotNull CofNF.OrVar<CofNF.EqCofTerm> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.sep(term(Outer.BinOp, c.lhs()), EQ, term(Outer.BinOp, c.rhs()));
+    };
   }
 
-  private @NotNull Doc visitCof(@NotNull CofNF.Conj cof) {
-    return Doc.join(COF_AND, cof.elements().map(this::visitCof));
+  private @NotNull Doc visitCof(@NotNull CofNF.OrVar<CofNF.Conj> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.join(COF_AND, c.elements().map(this::visitCofEq));
+    };
   }
 
-  private @NotNull Doc visitCof(@NotNull CofNF.Disj cof) {
-    return Doc.braced(Doc.join(COF_OR, cof .elements().map(this::visitCof)));
+  private @NotNull Doc visitCofDisj(@NotNull CofNF.Disj cof) {
+    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
   }
 
   // region Name Generation

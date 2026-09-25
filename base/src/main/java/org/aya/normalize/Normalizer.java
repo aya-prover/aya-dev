@@ -5,7 +5,6 @@ package org.aya.normalize;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.immutable.ImmutableSet;
-import kala.collection.mutable.MutableSeq;
 import kala.control.Either;
 import kala.control.Result;
 import org.aya.generic.Modifier;
@@ -61,7 +60,7 @@ public final class Normalizer implements UnaryOperator<Term> {
         var anf = expand(args.get(0));
         var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
-        yield expandAnd(anf, bnf);
+        yield CofNF.and(anf, bnf);
       }
       case COF_OR -> {
         var anf = expand(args.get(0));
@@ -69,22 +68,9 @@ public final class Normalizer implements UnaryOperator<Term> {
         if (anf == null || bnf == null) yield null;
         yield new CofNF.Disj(anf.elements().appendedAll(bnf.elements()));
       }
-      case COF_EQ -> new CofNF.Disj(ImmutableSeq.of(new CofNF.Conj(ImmutableSeq.of(
-        new CofNF.EqCofTerm(args.get(0), args.get(1))))));
+      case COF_EQ -> new CofNF.Disj(new CofNF.Conj(new CofNF.EqCofTerm(args.get(0), args.get(1))));
       default -> null;
     };
-  }
-
-  // compute a and b
-  public @NotNull CofNF.Disj expandAnd(@NotNull CofNF.Disj a, @NotNull CofNF.Disj b) {
-    MutableSeq<CofNF.Conj> ret = MutableSeq.create(a.elements().size() * b.elements().size());
-    var i = 0;
-    for (var ae : a.elements())
-      for (var be : b.elements()) {
-        ret.set(i, new CofNF.Conj(ae.elements().appendedAll(be.elements())));
-        i++;
-      }
-    return new CofNF.Disj(ret.toImmutableArray());
   }
 
   /**

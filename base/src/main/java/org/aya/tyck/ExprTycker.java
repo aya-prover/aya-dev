@@ -197,7 +197,7 @@ public final class ExprTycker extends ScopedTycker {
         if (disj == null || cnf == null) {
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         }
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, cnf)))
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofEquiv(disj, cnf)))
           yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
@@ -223,14 +223,14 @@ public final class ExprTycker extends ScopedTycker {
     MutableList<CofNF.@Closed EqCofTerm> ret = MutableList.create();
     for (var c : conj.elements())
       ret.append(elabCof(c));
-    return new CofNF.Conj(ret.toSeq());
+    return new CofNF.Conj(ret.map(CofNF.Conc::new));
   }
 
   private @Closed @NotNull CofNF.Disj elabCof(@NotNull Expr.DisjCof disj) {
     MutableList<CofNF.@Closed Conj> ret = MutableList.create();
     for (var c : disj.elements())
       ret.append(elabCof(c));
-    return new CofNF.Disj(ret.toSeq());
+    return new CofNF.Disj(ret.map(CofNF.Conc::new));
   }
 
   /// @return a [Bound] term where lives in wellArgs.size()-th db-level

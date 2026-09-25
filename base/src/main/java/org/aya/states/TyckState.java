@@ -69,8 +69,18 @@ public final class TyckState {
     };
   }
 
-  public boolean isConnected(@NotNull CofNF.EqCofTerm eqCof) {
-    return isConnected(eqCof.lhs(), eqCof.rhs());
+  public boolean isTrue(@NotNull CofNF.OrVar<CofNF.Conj> conjCof) {
+    return switch (conjCof) {
+      case CofNF.IsVar(var v) -> assumptions.contains(v);
+      case CofNF.Conc(var cof) -> cof.elements().allMatch(this::isTrueEq);
+    };
+  }
+
+  private boolean isTrueEq(@NotNull CofNF.OrVar<CofNF.EqCofTerm> eqCof) {
+    return switch (eqCof) {
+      case CofNF.IsVar(var v) -> assumptions.contains(v);
+      case CofNF.Conc(var cof) -> isConnected(cof.lhs(), cof.rhs());
+    };
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
@@ -93,6 +103,8 @@ public final class TyckState {
     if (l != null && r != null) l.disconnect(r);
   }
 
+  public void assume(LocalVar v) { assumptions.add(v); }
+  public void unassume(LocalVar v) { assumptions.remove(v); }
   public void removeConnection(@NotNull LocalVar var) { connections.remove(var); }
 
   @ApiStatus.Internal

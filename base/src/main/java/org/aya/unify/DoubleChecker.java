@@ -92,22 +92,24 @@ public record DoubleChecker(
       // add `localLet` to this class.
       case LetTerm let -> inherit(let.make(), expected);
       case PartialTerm(var cls) -> {
-        if (!(whnf(expected) instanceof PrimCall(var ref, _, var arg) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
+        if (!(whnf(expected) instanceof PrimCall(
+          var ref, _, var arg
+        ) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         var cof = arg.get(0);
         var A = arg.get(1);
         // check each element
-        ImmutableSeq<CofNF.Conj> cls_cof = ImmutableSeq.empty();
+        ImmutableSeq<CofNF.OrVar<CofNF.Conj>> cls_cof = ImmutableSeq.empty();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
-                () -> inherit(c.tm(), A))
+            () -> inherit(c.tm(), A))
           ) yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
           // cls_cof = cls_cof || c.cof()
           cls_cof = cls_cof.appendedAll(c.cof().elements());
         }
         // check cofibration
         var disj = expand(cof);
-        if (!unifier.cofibrationEquiv(disj, new CofNF.Disj(cls_cof)))
+        if (!unifier.cofEquiv(disj, new CofNF.Disj(cls_cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

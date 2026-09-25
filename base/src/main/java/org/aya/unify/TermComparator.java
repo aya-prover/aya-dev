@@ -336,11 +336,12 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // {phi_1 => u_1 ... phi_n => u_n} = {psi_1 => v_1 ... psi_m => v_m}
         // if
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
-        for(var cl1 : clauses1) for(var cl2 : clauses2) {
-          if (!withConnection(expandAnd(cl1.cof(), cl2.cof().descent(whnfVisitor())),
-                () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A) == Decision.YES))
-            yield Decision.NO;
-        }
+        for (var cl1 : clauses1)
+          for (var cl2 : clauses2) {
+            if (!withConnection(expandAnd(cl1.cof(), cl2.cof().descent(whnfVisitor())),
+              () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A) == Decision.YES))
+              yield Decision.NO;
+          }
         yield Decision.YES;
       }
       case PrimCall(var ref, _, var arg) when ref.id() == PrimDef.ID.COF && arg.isEmpty() -> {
@@ -348,7 +349,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         if (nl == null) yield Decision.NO;
         var nr = expand(rhs);
         if (nr == null) yield Decision.NO;
-        if (cofibrationEquiv(nl, nr)) yield Decision.YES;
+        if (cofEquiv(nl, nr)) yield Decision.YES;
         yield Decision.NO;
       }
       default -> compareUntyped(lhs, rhs).downgrade();
@@ -489,7 +490,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
       }
       case CofNF.Disj ld -> {
-        if (expand(rhs) instanceof CofNF.Disj rd && cofibrationEquiv(ld, rd)) {
+        if (expand(rhs) instanceof CofNF.Disj rd && cofEquiv(ld, rd)) {
           yield RelDec.of(state().primFactory.getCall(PrimDef.ID.COE));
         }
         yield RelDec.no();
@@ -651,16 +652,14 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a ∪ b => c ∪ d?
-  private boolean cofibrationImply(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
+  private boolean cofImply(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
-    return withConnection(c1, () ->
-      c2.elements().anyMatch(c ->
-        c.elements().allMatch(state::isConnected)));
+    return withConnection(c1, () -> c2.elements().anyMatch(state::isTrue));
   }
 
-  public boolean cofibrationEquiv(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
-    return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
+  public boolean cofEquiv(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
+    return cofImply(c1, c2) && cofImply(c2, c1);
   }
 
   public @NotNull SubscopedFreshVar subscope(@NotNull Term type) {
