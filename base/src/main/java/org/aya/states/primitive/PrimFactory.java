@@ -162,13 +162,14 @@ public class PrimFactory {
     var phi = new Param("φ", getCall(ID.COF), true);
     var paramPar = new Param("par", new DepTypeTerm(DTKind.Pi, getCall(ID.I),
       new Closure.Jit(i -> getCall(ID.PARTIAL, ImmutableSeq.of(
-        // counting: A=3, r=2, s=1, φ=0
-        // r = i ∨ φ
+        // counting: A=4, r=3, s=2, φ=1, i=0
+        // (r = i) ∨ φ
         getCall(ID.COF_OR, ImmutableSeq.of(
-          getCall(ID.COF_EQ, ImmutableSeq.of(new LocalTerm(1), i)),
-          new LocalTerm(0)
+          getCall(ID.COF_EQ, ImmutableSeq.of(new LocalTerm(3), i)),
+          new LocalTerm(1)
         )),
-        new LocalTerm(3)
+        // A
+        new LocalTerm(4)
       )))), true);
     var telescope = ImmutableSeq.of(paramA, r, s, phi, paramPar);
     return new PrimDef(ref, telescope,

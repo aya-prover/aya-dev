@@ -42,11 +42,13 @@ public final class JlineRepl extends AyaRepl {
   public final @NotNull GKReplLexer lexer = new GKReplLexer(AyaParserDefinitionBase.createLexer(true));
 
   public JlineRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config) throws IOException {
-    super(modulePaths, config);
     terminal = TerminalBuilder.builder()
       .ffm(true)
       .jni(false)
       .build();
+    // If error is reported in the parent constructor, they will use the terminal instance for printing
+    super(modulePaths, config);
+
     lineReader = LineReaderBuilder.builder()
       .appName("Aya REPL")
       .terminal(terminal)

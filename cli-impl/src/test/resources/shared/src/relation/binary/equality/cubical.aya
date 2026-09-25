@@ -8,7 +8,6 @@ module cof-operators {
 }
 public open cof-operators using
   ( cofAnd as infixl ∧f
-//  , cofOr as infixl ∨f looser ∧f
-//  , cofEq as infix =f tighter ∧f)
   , cofOr as infixl ∨f
   , cofEq as infix =f)
+prim hcom (A : Type) (r s : I) (φ : Cof) (u : Fn (i : I) -> Partial (φ ∨f (i =f r)) A) : A
