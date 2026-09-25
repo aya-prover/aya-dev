@@ -3,6 +3,7 @@
 package org.aya.states;
 
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableArrayList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
@@ -26,10 +27,7 @@ import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.MetaVarError;
 import org.aya.unify.Unifier;
-import org.aya.util.Decision;
-import org.aya.util.Ordering;
-import org.aya.util.Panic;
-import org.aya.util.PrettierOptions;
+import org.aya.util.*;
 import org.aya.util.position.SourcePos;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Reporter;
@@ -55,7 +53,7 @@ public final class TyckState {
   private int nextId = 2;
 
   private final @NotNull MutableList<Edge> edgeStack = MutableList.create();
-  private final @NotNull MutableSet<LocalVar> assumptions = MutableSet.create();
+  private final @NotNull MutableList<LocalVar> assumptions = MutableList.create();
 
   public record Edge(int u, int v) { }
 
@@ -139,37 +137,20 @@ public final class TyckState {
     throw new Panic("Trying to disconnect a non-existing connection, panic");
   }
 
-  public void assume(LocalVar v) { assumptions.add(v); }
+  public void assume(LocalVar v) { assumptions.append(v); }
   public void unassume(LocalVar v) { assumptions.remove(v); }
   public void removeConnection(@NotNull LocalVar var) { varToId.remove(var); }
 
-  private record UnionFind(int[] parent) {
-    public UnionFind(int size) {
-      this(new int[size]);
-      for (int i = 0; i < size; i++) parent[i] = i;
+  public @NotNull ImmutableSeq<Term> buildCofTerms() {
+    var ret = MutableArrayList.<Term>create(assumptions.size() + edgeStack.size());
+    for (var v : assumptions) ret.append(new FreeTerm(v));
+    var idToVar = new LocalVar[nextId];
+    varToId.forEach((var, id) -> idToVar[id] = var);
+    for (var edge : edgeStack) {
+      var eqTerm = new CofNF.EqCofTerm(new FreeTerm(idToVar[edge.u()]), new FreeTerm(idToVar[edge.v()]));
+      ret.append(new CofNF.Disj(new CofNF.Conj(eqTerm)));
     }
-
-    public int find(int i) {
-      int root = i;
-      while (root != parent[root]) {
-        root = parent[root];
-      }
-      int curr = i;
-      while (curr != root) {
-        int nxt = parent[curr];
-        parent[curr] = root;
-        curr = nxt;
-      }
-      return root;
-    }
-
-    public void union(int i, int j) {
-      int rootI = find(i);
-      int rootJ = find(j);
-      if (rootI != rootJ) {
-        parent[rootI] = rootJ;
-      }
-    }
+    return ret.toSeq();
   }
 
   @ApiStatus.Internal

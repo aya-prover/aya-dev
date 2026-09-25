@@ -63,32 +63,39 @@ public interface CofNF {
   }
 
   static @NotNull OrVar<Disj> or(@NotNull OrVar<Disj> lhs, @NotNull OrVar<Disj> rhs) {
-    return normalizeSingleton(helperForAndOr(lhs, rhs, (a, b) -> a.elements().view().concat(b.elements())));
+    return normalizeSingleton(helperForAndOr(lhs, rhs,
+      (a, b) -> a.elements().view().concat(b.elements()),
+      (val, var) -> ImmutableSeq.of(new IsVar<>(val), new IsVar<>(var)),
+      (var, disj) -> disj.elements().view().appended(new IsVar<>(var))));
   }
 
   static @NotNull OrVar<Disj> and(@NotNull OrVar<Disj> lhs, @NotNull OrVar<Disj> rhs) {
-    return normalizeSingleton(helperForAndOr(lhs, rhs, CofNF::andDisj));
+    return normalizeSingleton(helperForAndOr(lhs, rhs, CofNF::andDisj,
+      (val, var) -> ImmutableSeq.of(new Conc<>(new Conj(ImmutableSeq.of(new IsVar<>(val), new IsVar<>(var))))),
+      (var, disj) -> disj.elements().view().map(el -> new Conc<>(andConj(new IsVar<>(var), el)))));
   }
 
-  private static @NotNull SeqLike<OrVar<Conj>> helperForAndOr(
+  private static @NotNull SeqView<OrVar<Conj>> helperForAndOr(
     @NotNull OrVar<Disj> lhs, @NotNull OrVar<Disj> rhs,
-    @NotNull BiFunction<Disj, Disj, SeqView<OrVar<Conj>>> combine
+    @NotNull BiFunction<Disj, Disj, SeqView<OrVar<Conj>>> conc,
+    @NotNull BiFunction<LocalVar, LocalVar, ImmutableSeq<OrVar<Conj>>> vars,
+    @NotNull BiFunction<LocalVar, Disj, SeqView<OrVar<Conj>>> conv
     ) {
     return switch (lhs) {
       case Conc(var value) -> switch (rhs) {
-        case Conc(var varue) -> combine.apply(value, varue);
-        case IsVar(var var) -> value.elements().view().appended(new IsVar<>(var));
+        case Conc(var varue) -> conc.apply(value, varue);
+        case IsVar(var var) -> conv.apply(var, value);
       };
       case IsVar(var val) -> switch (rhs) {
-        case Conc(var varue) -> varue.elements().view().appended(new IsVar<>(val));
-        case IsVar(var var) -> ImmutableSeq.of(new IsVar<>(val), new IsVar<>(var));
+        case Conc(var varue) -> conv.apply(val, varue);
+        case IsVar(var var) -> vars.apply(val, var).view();
       };
     };
   }
 
   /// @apiNote Cannot be [SeqView], because ImmSeq.of().view() cannot backwards infer the type of the elements
   /// This is a relatively rare case of an appropriate use of `SeqLike`
-  private static @NotNull OrVar<Disj> normalizeSingleton(SeqLike<OrVar<Conj>> elements) {
+  private static @NotNull OrVar<Disj> normalizeSingleton(SeqView<OrVar<Conj>> elements) {
     if (elements.sizeEquals(1)) {
       return switch (elements.get(0)) {
         case Conc(var value) -> new Conc<>(new Disj(value));
