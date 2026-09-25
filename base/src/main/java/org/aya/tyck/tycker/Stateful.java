@@ -77,10 +77,10 @@ public interface Stateful {
     return ret;
   }
 
-  default <T> T withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<T> action, @NotNull Supplier<T> ifBottom) {
+  default Term withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
     return switch (cofOrVar) {
       case CofNF.Conc(var cof) -> {
-        T ret = null;
+        Term ret = null;
         for (var conj : cof.elements()) {
           ret = withConjCof(conj, action, ifBottom);
           if (ret instanceof ErrorTerm) {
@@ -98,7 +98,22 @@ public interface Stateful {
     };
   }
 
-  default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cof, @NotNull Supplier<Boolean> action) {
-    return withConnection(cof, action, () -> true);
+  default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<Boolean> action) {
+    return switch (cofOrVar) {
+      case CofNF.Conc(var cof) -> {
+        for (var conj : cof.elements()) {
+          if (!withConjCof(conj, action, () -> true)) {
+            yield false;
+          }
+        }
+        yield true;
+      }
+      case CofNF.IsVar(var v) -> {
+        state().assume(v);
+        var ret = action.get();
+        state().unassume(v);
+        yield ret;
+      }
+    };
   }
 }
