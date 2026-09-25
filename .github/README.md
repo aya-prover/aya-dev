@@ -18,6 +18,11 @@
 
 ## What to expect?
 
+It might be concerning to a lot of people that Aya is written in Java, because a common misconception is that
+whatever wriiten in Java will be (1) slow and (2) require a Java runtime installed separately to run.
+Neither of them are true: (1) Aya codebase is very small and we rely on as little external dependencies as possible,
+(2) Aya releases are self-contained and are *designed to run on Java-free environments* (see [GitHub Releases]).
+
 + Dependent types, including Π-types, Σ-types, indexed families, etc.
   You could write a [sized-vector type][gadt].
 + Set-level cubical type theory (XTT).
@@ -43,6 +48,14 @@ See also [use as a library](#use-as-a-library).
 
 [GitHub Releases]: https://github.com/aya-prover/aya-dev/releases/tag/nightly-build
 [1lab]: https://1lab.dev
+
+## TODO and Under Development
+
++ A class system similar to Arend, used to organize mathematical structures and proofs.
++ Positivity checking for higher inductive types.
++ I want to completely rework the VSCode extension. Right now, it just doesn't load.
+  I also lost access to my VSCode marketplace email.
++ Something similar to rustup but for Aya.
 
 ## Contributing to Aya
 

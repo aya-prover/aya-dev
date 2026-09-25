@@ -19,7 +19,7 @@ You are encouraged to:
 These are currently not accepted:
 
 - PRs adding new language features without prior consent,
-  because we have our own plans and accepting a PR means maintaining it.
+  because we have our own plans and accepting a PR means maintaining it until the end of the world.
   We refer to [Lean4 contribution guidelines](https://github.com/leanprover/lean4/blob/master/CONTRIBUTING.md)
   to explain the rationale.
 - Feature proposals -- but please do share your ideas!
