@@ -5,6 +5,7 @@ package org.aya.states;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import kala.value.Value;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Instance;
@@ -18,8 +19,8 @@ import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.xtt.CofNF;
 import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.EqCofTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
@@ -44,6 +45,7 @@ public final class TyckState {
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
   private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
+  private final @NotNull MutableSet<LocalVar> assumptions = MutableSet.create();
 
   public static final DynamicForest.Handle I0 = DynamicForest.create();
   public static final DynamicForest.Handle I1 = DynamicForest.create();
@@ -67,7 +69,7 @@ public final class TyckState {
     };
   }
 
-  public boolean isConnected(@NotNull EqCofTerm eqCof) {
+  public boolean isConnected(@NotNull CofNF.EqCofTerm eqCof) {
     return isConnected(eqCof.lhs(), eqCof.rhs());
   }
 

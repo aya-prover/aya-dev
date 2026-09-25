@@ -97,7 +97,7 @@ public record DoubleChecker(
         var cof = arg.get(0);
         var A = arg.get(1);
         // check each element
-        ImmutableSeq<ConjCofNF> cls_cof = ImmutableSeq.empty();
+        ImmutableSeq<CofNF.Conj> cls_cof = ImmutableSeq.empty();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
                 () -> inherit(c.tm(), A))
@@ -107,7 +107,7 @@ public record DoubleChecker(
         }
         // check cofibration
         var disj = expand(cof);
-        if (!unifier.cofibrationEquiv(disj, new DisjCofNF(cls_cof)))
+        if (!unifier.cofibrationEquiv(disj, new CofNF.Disj(cls_cof)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

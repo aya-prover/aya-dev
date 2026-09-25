@@ -189,7 +189,7 @@ public final class ExprTycker extends ScopedTycker {
         }
         // coverage. cof <=> allCof
         var disj = expand(cof);
-        var cnf = new DisjCofNF(ImmutableSeq.empty());
+        var cnf = new CofNF.Disj(ImmutableSeq.empty());
         if (!allCof.isEmpty()) {
           cnf = expand(allCof.drop(1).foldRight(allCof.get(0), (l, r) ->
             state().primFactory.getCall(PrimDef.ID.COF_OR, ImmutableSeq.of(l,r)) ));
@@ -213,27 +213,27 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
+  private @Closed @NotNull CofNF.EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
     var lhs = inherit(cof.lhs(), interval());
     var rhs = inherit(cof.rhs(), interval());
-    return new EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
+    return new CofNF.EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
   }
 
-  private @Closed @NotNull ConjCofNF elabCof(@NotNull Expr.ConjCof conj) {
-    MutableList<@Closed EqCofTerm> ret = MutableList.create();
+  private @Closed @NotNull CofNF.Conj elabCof(@NotNull Expr.ConjCof conj) {
+    MutableList<CofNF.@Closed EqCofTerm> ret = MutableList.create();
     for (var c : conj.elements())
       ret.append(elabCof(c));
-    return new ConjCofNF(ret.toSeq());
+    return new CofNF.Conj(ret.toSeq());
   }
 
-  private @Closed @NotNull DisjCofNF elabCof(@NotNull Expr.DisjCof disj) {
-    MutableList<@Closed ConjCofNF> ret = MutableList.create();
+  private @Closed @NotNull CofNF.Disj elabCof(@NotNull Expr.DisjCof disj) {
+    MutableList<CofNF.@Closed Conj> ret = MutableList.create();
     for (var c : disj.elements())
       ret.append(elabCof(c));
-    return new DisjCofNF(ret.toSeq());
+    return new CofNF.Disj(ret.toSeq());
   }
 
-  /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level
+  /// @return a [Bound] term where lives in wellArgs.size()-th db-level
   private @Bound @NotNull Term matchReturnTy(
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
     ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns

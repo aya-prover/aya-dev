@@ -488,8 +488,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
           yield RelDec.no();
         }
       }
-      case DisjCofNF ld -> {
-        if (expand(rhs) instanceof DisjCofNF rd && cofibrationEquiv(ld, rd)) {
+      case CofNF.Disj ld -> {
+        if (expand(rhs) instanceof CofNF.Disj rd && cofibrationEquiv(ld, rd)) {
           yield RelDec.of(state().primFactory.getCall(PrimDef.ID.COE));
         }
         yield RelDec.no();
@@ -651,7 +651,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a ∪ b => c ∪ d?
-  private boolean cofibrationImply(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
+  private boolean cofibrationImply(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
     return withConnection(c1, () ->
@@ -659,7 +659,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         c.elements().allMatch(state::isConnected)));
   }
 
-  public boolean cofibrationEquiv(@NotNull DisjCofNF c1, @NotNull DisjCofNF c2) {
+  public boolean cofibrationEquiv(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
     return cofibrationImply(c1, c2) && cofibrationImply(c2, c1);
   }
 

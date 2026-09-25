@@ -38,6 +38,6 @@ but are still implementation of `EndoFunctor`/`TermConsumer` anyway.
 For example, to calculate the WHNF of some term, the `WHNFer` skips certain subterms to save calculations.
 We achieve this by overriding the default logic in `apply` when implementing `EndoFunctor`.
 
-It is also common to deal with all `Var` that occurred in a `Term` during traversal.
+It is also common to deal with all `IsVar` that occurred in a `Term` during traversal.
 One can utilize the `VarConsumer` interface that in addition to `TermConsumer`,
-requires specifying the logic of consuming a general `Var`.
+requires specifying the logic of consuming a general `IsVar`.

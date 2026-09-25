@@ -52,9 +52,9 @@ public final class Normalizer implements UnaryOperator<Term> {
    * The function expand of the given cofibration,
    * and returns null when cof is not ready to evaluate.
    */
-  public @Nullable DisjCofNF expand(@Closed @NotNull Term cof) {
+  public @Nullable CofNF.Disj expand(@Closed @NotNull Term cof) {
     var wcof = apply(cof);
-    if (wcof instanceof DisjCofNF nf) return nf;
+    if (wcof instanceof CofNF.Disj nf) return nf;
     if (!(wcof instanceof PrimCall(var ref, _, var args))) return null;
     return switch (ref.id()) {
       case COF_AND -> {
@@ -67,24 +67,24 @@ public final class Normalizer implements UnaryOperator<Term> {
         var anf = expand(args.get(0));
         var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
-        yield new DisjCofNF(anf.elements().appendedAll(bnf.elements()));
+        yield new CofNF.Disj(anf.elements().appendedAll(bnf.elements()));
       }
-      case COF_EQ -> new DisjCofNF(ImmutableSeq.of(new ConjCofNF(ImmutableSeq.of(
-        new EqCofTerm(args.get(0), args.get(1))))));
+      case COF_EQ -> new CofNF.Disj(ImmutableSeq.of(new CofNF.Conj(ImmutableSeq.of(
+        new CofNF.EqCofTerm(args.get(0), args.get(1))))));
       default -> null;
     };
   }
 
   // compute a and b
-  public @NotNull DisjCofNF expandAnd(@NotNull DisjCofNF a, @NotNull DisjCofNF b) {
-    MutableSeq<ConjCofNF> ret = MutableSeq.create(a.elements().size() * b.elements().size());
+  public @NotNull CofNF.Disj expandAnd(@NotNull CofNF.Disj a, @NotNull CofNF.Disj b) {
+    MutableSeq<CofNF.Conj> ret = MutableSeq.create(a.elements().size() * b.elements().size());
     var i = 0;
     for (var ae : a.elements())
       for (var be : b.elements()) {
-        ret.set(i, new ConjCofNF(ae.elements().appendedAll(be.elements())));
+        ret.set(i, new CofNF.Conj(ae.elements().appendedAll(be.elements())));
         i++;
       }
-    return new DisjCofNF(ret.toImmutableArray());
+    return new CofNF.Disj(ret.toImmutableArray());
   }
 
   /**
@@ -107,6 +107,13 @@ public final class Normalizer implements UnaryOperator<Term> {
         case LetFreeTerm(var _, var definedAs) -> {
           term = definedAs.wellTyped();
           continue;
+        }
+        // it is type theoretically correct to return disj directly because we always perform mutual implication
+        // to decide equality between cofibration expressions, but it's still nice to simplify them using some
+        // basic arithmetic rules for pretty printing and error reporting.
+        case CofNF.Disj disj -> {
+          // TODO: simplify these cofibrations.
+          return disj;
         }
         // Already full NF mode
         // Although normalizing a LamTerm looks very bad, but it is required due to our elaboration for partial application:

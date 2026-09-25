@@ -230,8 +230,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield letDoc;
       }
-      case DisjCofNF disjCofNF -> visitCof(disjCofNF);
-      case EqCofTerm eqCofTerm -> visitCof(eqCofTerm);
+      case CofNF.Disj disjCofNF -> visitCof(disjCofNF);
     };
   }
 
@@ -469,15 +468,15 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  private @NotNull Doc visitCof(@NotNull EqCofTerm cof) {
+  private @NotNull Doc visitCof(@NotNull CofNF.EqCofTerm cof) {
     return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
   }
 
-  private @NotNull Doc visitCof(@NotNull ConjCofNF cof) {
+  private @NotNull Doc visitCof(@NotNull CofNF.Conj cof) {
     return Doc.join(COF_AND, cof.elements().map(this::visitCof));
   }
 
-  private @NotNull Doc visitCof(@NotNull DisjCofNF cof) {
+  private @NotNull Doc visitCof(@NotNull CofNF.Disj cof) {
     return Doc.braced(Doc.join(COF_OR, cof .elements().map(this::visitCof)));
   }
 

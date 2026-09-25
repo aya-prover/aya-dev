@@ -9,9 +9,8 @@ import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.ConjCofNF;
+import org.aya.syntax.core.term.xtt.CofNF;
 import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.DisjCofNF;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.ForLSP;
@@ -32,8 +31,8 @@ import java.util.function.Supplier;
 public interface Stateful {
   @NotNull TyckState state();
   default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
-  default @Nullable DisjCofNF expand(@Closed @NotNull Term term) {return new Normalizer(state()).expand(term); }
-  default @NotNull DisjCofNF expandAnd(@Closed @NotNull DisjCofNF a, @Closed @NotNull DisjCofNF b) {return new Normalizer(state()).expandAnd(a, b); }
+  default @Nullable CofNF.Disj expand(@Closed @NotNull Term term) {return new Normalizer(state()).expand(term); }
+  default @NotNull CofNF.Disj expandAnd(@Closed @NotNull CofNF.Disj a, @Closed @NotNull CofNF.Disj b) {return new Normalizer(state()).expandAnd(a, b); }
   default @NotNull TermVisitor whnfVisitor() {
     return TermVisitor.expectTerm(this::whnf);
   }
@@ -46,26 +45,26 @@ public interface Stateful {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 
-  private void connectConj(@NotNull ConjCofNF cof) {
+  private void connectConj(@NotNull CofNF.Conj cof) {
     for (var eqcof : cof.elements()) {
       state().connect(eqcof.lhs(), eqcof.rhs());
     }
   }
 
-  private void disconnectConj(@NotNull ConjCofNF cof) {
+  private void disconnectConj(@NotNull CofNF.Conj cof) {
     for (var eqcof : cof.elements()) {
       state().disconnect(eqcof.lhs(), eqcof.rhs());
     }
   }
 
-  default <R> R withConnection(@NotNull ConjCofNF cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
+  default <R> R withConnection(@NotNull CofNF.Conj cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
     connectConj(cof);
     var ret = state().isConnected(DimTerm.I0, DimTerm.I1) ? ifBottom.get() : action.get();
     disconnectConj(cof);
     return ret;
   }
 
-  default Term withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
+  default Term withConnection(@NotNull CofNF.Disj cof, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
     Term ret = null;
     for (var conj : cof.elements()) {
       ret = withConnection(conj, action, ifBottom);
@@ -76,7 +75,7 @@ public interface Stateful {
     return ret == null? ifBottom.get() : ret;
   }
 
-  default boolean withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Boolean> action) {
+  default boolean withConnection(@NotNull CofNF.Disj cof, @NotNull Supplier<Boolean> action) {
     for (var conj : cof.elements()) {
       if (!withConnection(conj, action, () -> true)) {
         return false;
