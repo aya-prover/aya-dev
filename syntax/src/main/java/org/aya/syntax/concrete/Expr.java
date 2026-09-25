@@ -296,35 +296,6 @@ public sealed interface Expr extends AyaDocile {
       f.accept(last);
     }
   }
-  
-  record EqCof(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
-    public @NotNull EqCof update(@NotNull WithPos<Expr> lhs, @NotNull WithPos<Expr> rhs) {
-      return lhs == lhs() && rhs == rhs() ? this : new EqCof(lhs, rhs);
-    }
-
-    public @NotNull EqCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(lhs.descent(f), rhs.descent(f));
-    }
-  }
-
-  record ConjCof(@NotNull ImmutableSeq<EqCof> elements) {
-    public @NotNull ConjCof update(@NotNull ImmutableSeq<EqCof> elements) {
-      return elements.sameElements(elements(), true) ? this : new ConjCof(elements);
-    }
-
-    public @NotNull ConjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(elements.map(x -> x.descent(f)));
-    }
-  }
-  record DisjCof(@NotNull ImmutableSeq<ConjCof> elements) {
-    public @NotNull DisjCof update(@NotNull ImmutableSeq<ConjCof> elements) {
-      return elements.sameElements(elements(), true) ? this : new DisjCof(elements);
-    }
-
-    public @NotNull DisjCof descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
-      return update(elements.map(x -> x.descent(f)));
-    }
-  }
 
   record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
     public record Clause(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) {

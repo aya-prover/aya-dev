@@ -804,13 +804,6 @@ public record AyaProducer(
     return unreachable(node);
   }
 
-  private @NotNull Expr.EqCof cof(@NotNull GenericNode<?> node) {
-    var chd = node.childrenView().toSeq();
-    return new Expr.EqCof(
-      expr(chd.getFirst()),
-      expr(chd.getLast()));
-  }
-
   private @NotNull Expr.Partial.Clause partialClause(@NotNull GenericNode<?> node) {
     var chd = node.childrenView().toSeq();
     return new Expr.Partial.Clause((expr(chd.getFirst())),

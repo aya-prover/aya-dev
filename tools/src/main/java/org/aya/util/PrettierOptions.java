@@ -2,7 +2,6 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.util;
 
-
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
@@ -10,7 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class PrettierOptions {
-  public final Map<Key, Boolean> map;
+  /// Nonfinal for gson to deserialize
+  public Map<Key, Boolean> map;
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   public PrettierOptions(@NotNull Class<?> keyClass) {

@@ -215,26 +215,6 @@ public final class ExprTycker extends ScopedTycker {
     };
   }
 
-  private @Closed @NotNull CofNF.EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
-    var lhs = inherit(cof.lhs(), interval());
-    var rhs = inherit(cof.rhs(), interval());
-    return new CofNF.EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
-  }
-
-  private @Closed @NotNull CofNF.Conj elabCof(@NotNull Expr.ConjCof conj) {
-    MutableList<CofNF.@Closed EqCofTerm> ret = MutableList.create();
-    for (var c : conj.elements())
-      ret.append(elabCof(c));
-    return new CofNF.Conj(ret.map(CofNF.Conc::new));
-  }
-
-  private @Closed @NotNull CofNF.Disj elabCof(@NotNull Expr.DisjCof disj) {
-    MutableList<CofNF.@Closed Conj> ret = MutableList.create();
-    for (var c : disj.elements())
-      ret.append(elabCof(c));
-    return new CofNF.Disj(ret.map(CofNF.Conc::new));
-  }
-
   /// @return a [Bound] term where lives in wellArgs.size()-th db-level
   private @Bound @NotNull Term matchReturnTy(
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
