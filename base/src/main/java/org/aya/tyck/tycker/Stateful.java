@@ -101,12 +101,13 @@ public interface Stateful {
   default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<Boolean> action) {
     return switch (cofOrVar) {
       case CofNF.Conc(var cof) -> {
+        // No clause, we test the result directly
+        if (cof.elements().isEmpty()) yield action.get();
         for (var conj : cof.elements()) {
-          if (!withConjCof(conj, action, () -> true)) {
-            yield false;
-          }
+          if (withConjCof(conj, action, () -> true)) yield true;
         }
-        yield true;
+        // All clauses lead to false, therefore false
+        yield false;
       }
       case CofNF.IsVar(var v) -> {
         state().assume(v);
