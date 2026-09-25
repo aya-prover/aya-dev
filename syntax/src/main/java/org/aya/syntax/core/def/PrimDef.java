@@ -51,6 +51,7 @@ public record PrimDef(
     I("I"),
     PATH("Path"),
     PARTIAL("Partial"),
+    UNPARTIAL("unPartial"),
     COE("coe"),
     HCOM("hcom"),
     COF("Cof"),

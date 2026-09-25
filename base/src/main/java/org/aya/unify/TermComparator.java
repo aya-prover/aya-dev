@@ -394,6 +394,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
       });
 
     return switch (lhs) {
+      case ErrorTerm _ -> RelDec.yes();
       case AppTerm(var f, var a) -> {
         if (!(rhs instanceof AppTerm(var g, var b))) yield RelDec.no();
         var fTy = compareUntyped(f, g);
