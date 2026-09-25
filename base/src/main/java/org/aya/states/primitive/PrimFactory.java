@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2025 Tesla (Yinsen) Zhang.
+// Copyright (c) 2020-2026 Tesla (Yinsen) Zhang.
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.states.primitive;
 
@@ -53,6 +53,7 @@ public class PrimFactory {
       cofOr,
       cofEq,
       pathType,
+      hcom,
       coe
     ).map(seed -> Tuple.of(seed.name, seed)));
   }
@@ -153,36 +154,34 @@ public class PrimFactory {
     return new PrimCall(prim.ref(), prim.ulift(), ImmutableSeq.of(first, second));
   }
 
-  /*
-  private final @NotNull PrimSeed hcomp = new PrimSeed(ID.HCOMP, this::hcomp, ref -> {
-    var varA = new LocalVar("A");
-    var paramA = new Term.Param(varA, Type0, false);
-    var restr = IntervalTerm.paramImplicit("phi");
-    var varU = new LocalVar("u");
-    var paramFuncU = new Term.Param(varU,
-      new PiTerm(
-        IntervalTerm.param(LocalVar.IGNORED),
-        new PartialTyTerm(new RefTerm(varA), AyaRestrSimplifier.INSTANCE.isOne(restr.toTerm()))),
-      true);
-    var varU0 = new LocalVar("u0");
-    var paramU0 = new Term.Param(varU0, new RefTerm(varA), true);
-    var result = new RefTerm(varA);
-    return new PrimDef(
-      ref,
-      ImmutableSeq.of(paramA, restr, paramFuncU, paramU0),
-      result,
-      ID.HCOMP
-    );
-  }, ImmutableSeq.of(ID.I));
+  private final @NotNull PrimSeed hcom = new PrimSeed(ID.HCOM, this::hcom, ref -> {
+    // Only fibrant types (in Type universe) support hcom
+    var paramA = new Param("A", Type0, true);
+    var r = new Param("r", getCall(ID.I), true);
+    var s = new Param("s", getCall(ID.I), true);
+    var phi = new Param("φ", getCall(ID.COF), true);
+    var paramPar = new Param("par", new DepTypeTerm(DTKind.Pi, getCall(ID.I),
+      new Closure.Jit(i -> getCall(ID.PARTIAL, ImmutableSeq.of(
+        // counting: A=4, r=3, s=2, φ=1, i=0
+        // (r = i) ∨ φ
+        getCall(ID.COF_OR, ImmutableSeq.of(
+          getCall(ID.COF_EQ, ImmutableSeq.of(new LocalTerm(3), i)),
+          new LocalTerm(1)
+        )),
+        // A
+        new LocalTerm(4)
+      )))), true);
+    var telescope = ImmutableSeq.of(paramA, r, s, phi, paramPar);
+    return new PrimDef(ref, telescope,
+      // refers to the first parameter as a De Bruijn index
+      new LocalTerm(telescope.size() - 1),
+      ID.HCOM);
+  }, ImmutableSeq.of(ID.I, ID.COF, ID.COF_EQ, ID.COF_OR, ID.PARTIAL));
 
-  private @NotNull Term hcomp(@NotNull PrimCall prim, @NotNull TyckState state) {
-    var A = prim.args().get(0);
-    var phi = prim.args().get(1);
-    var u = prim.args().get(2);
-    var u0 = prim.args().get(3);
-    return new HCompTerm(A, AyaRestrSimplifier.INSTANCE.isOne(phi), u, u0);
+  private @Closed @NotNull Term hcom(@Closed @NotNull PrimCall prim, @NotNull TyckState state) {
+    // TODO: implement hcom reduction
+    return prim;
   }
-  */
 
   public final @NotNull PrimSeed intervalType = new PrimSeed(ID.I,
     (prim, _) -> prim,

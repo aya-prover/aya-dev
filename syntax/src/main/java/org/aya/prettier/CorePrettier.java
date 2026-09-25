@@ -214,7 +214,7 @@ public class CorePrettier extends BasePrettier<Term> {
       }
       case PartialTerm(var clause) -> Doc.sep(KW_PARTIAL, Doc.wrap("[", "]",
         Doc.vcommaList(clause.map(cls ->
-          Doc.sep(visitCof(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
+          Doc.sep(visitCofDisj(cls.cof()), FN_DEFINED_AS, term(Outer.Free, cls.tm()))))));
       case LetTerm let -> {
         var unlet = let.unlet(nameGen);
         if (unlet.definedAs().isEmpty()) {
@@ -230,8 +230,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield letDoc;
       }
-      case DisjCofNF disjCofNF -> visitCof(disjCofNF);
-      case EqCofTerm eqCofTerm -> visitCof(eqCofTerm);
+      case CofNF.Disj disjCofNF -> visitCofDisj(new CofNF.Conc<>(disjCofNF));
     };
   }
 
@@ -290,9 +289,13 @@ public class CorePrettier extends BasePrettier<Term> {
 
   public @NotNull Doc def(@NotNull TyckDef predef) {
     return switch (predef) {
-      case PrimDef def -> primDoc(def.ref());
+      case PrimDef def -> {
+        var docs = MutableList.of(primDoc(def.ref()));
+        appendTeleDocs(def.defSignature(), docs);
+        yield Doc.sepNonEmpty(docs);
+      }
       case FnDef def -> {
-        var absTele = TyckDef.defSignature(def);
+        var absTele = def.defSignature();
         yield visitFn(defVar(def.ref()), def.modifiers(), absTele,
           (prefix, subst) -> switch (def.body()) {
             case Either.Left(var term) -> Doc.sep(prefix, FN_DEFINED_AS, term(Outer.Free, term.instTele(subst.view())));
@@ -306,7 +309,7 @@ public class CorePrettier extends BasePrettier<Term> {
         if (classCore != null && classCore.classifyingIndex() != -1) {
           isClassifying = field.equals(classCore.classifyingField());
         }
-        yield visitMember(defVar(field.ref()), isClassifying, TyckDef.defSignature(field));
+        yield visitMember(defVar(field.ref()), isClassifying, field.defSignature());
       }
       case ConDef con -> visitCon(con.ref, con.coerce, con.selfTele);
       case ClassDef def -> visitClass(defVar(def.ref()), def.members().view().map(this::def));
@@ -366,7 +369,13 @@ public class CorePrettier extends BasePrettier<Term> {
     var line1 = MutableList.of(KW_DEF);
     modifiers.forEach(m -> line1.append(Doc.styled(KEYWORD, m.keyword)));
     line1.append(name);
+    var subst = appendTeleDocs(telescope, line1);
 
+    var line1Doc = Doc.sepNonEmpty(line1);
+    return cont.apply(line1Doc, subst);
+  }
+
+  private @NotNull ImmutableSeq<Term> appendTeleDocs(@NotNull AbstractTele telescope, MutableList<Doc> line1) {
     var tele = AbstractTele.enrich(telescope);
     var subst = tele.<Term>map(x -> new FreeTerm(x.ref()));
     var result = telescope.result(subst);
@@ -374,9 +383,7 @@ public class CorePrettier extends BasePrettier<Term> {
     line1.append(visitTele(tele));
     line1.append(HAS_TYPE);
     line1.append(term(Outer.Free, result));
-
-    var line1Doc = Doc.sepNonEmpty(line1);
-    return cont.apply(line1Doc, subst);
+    return subst;
   }
 
   /// @param selfTele self tele of the constructor, unlike [JitCon], the data args/owner args should be supplied.
@@ -410,16 +417,13 @@ public class CorePrettier extends BasePrettier<Term> {
   private @NotNull Doc visitData(@NotNull DataDefLike dataDef) {
     var name = defVar(AnyDef.toVar(dataDef));
     var telescope = dataDef.signature();
-    var richDataTele = AbstractTele.enrich(telescope);
-    var dataArgs = richDataTele.<Term>map(t -> new FreeTerm(t.ref()));
+    var line1 = MutableList.of(KW_DATA, name);
+    appendTeleDocs(telescope, line1);
 
-    var line1 = Doc.sepNonEmpty(KW_DATA, name,
-      visitTele(richDataTele, null),
-      HAS_TYPE,
-      term(Outer.Free, telescope.result(dataArgs)));
+    var line1Doc = Doc.sepNonEmpty(line1);
     var consDoc = dataDef.body().view().map(this::def);
 
-    return Doc.vcat(line1, Doc.nest(2, Doc.vcat(consDoc)));
+    return Doc.vcat(line1Doc, Doc.nest(2, Doc.vcat(consDoc)));
   }
 
   /// @param telescope the telescope of a [MemberDefLike], including the `self` parameter
@@ -464,16 +468,25 @@ public class CorePrettier extends BasePrettier<Term> {
     return Doc.vcat(clauses.map(matching -> visitClause(matching, licits)));
   }
 
-  private @NotNull Doc visitCof(@NotNull EqCofTerm cof) {
-    return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
+  private @NotNull Doc visitCofEq(@NotNull CofNF.OrVar<CofNF.EqCofTerm> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.sep(term(Outer.BinOp, c.lhs()), EQ, term(Outer.BinOp, c.rhs()));
+    };
   }
 
-  private @NotNull Doc visitCof(@NotNull ConjCofNF cof) {
-    return Doc.join(COF_AND, cof.elements().map(this::visitCof));
+  private @NotNull Doc visitCof(@NotNull CofNF.OrVar<CofNF.Conj> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.join(COF_AND, c.elements().map(this::visitCofEq));
+    };
   }
 
-  private @NotNull Doc visitCof(@NotNull DisjCofNF cof) {
-    return Doc.braced(Doc.join(COF_OR, cof .elements().map(this::visitCof)));
+  public @NotNull Doc visitCofDisj(@NotNull CofNF.OrVar<CofNF.Disj> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.braced(Doc.join(COF_OR, c.elements().map(this::visitCof)));
+    };
   }
 
   // region Name Generation

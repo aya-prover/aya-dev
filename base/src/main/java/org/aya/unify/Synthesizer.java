@@ -132,23 +132,31 @@ public record Synthesizer(
       case NewTerm newTerm -> newTerm.inner();
       case ClassCastTerm castTerm -> new ClassCall(castTerm.ref(), 0, castTerm.remember());
       case MatchCall(var ref, var args, var captures) -> ref.type(captures, args);
-      case DisjCofNF disj -> {
-        for (var conj : disj.elements()) for (var eq : conj.elements()) {
-          if (!(trySynth(eq) instanceof PrimCall call &&
-              call.ref().id() == PrimDef.ID.COF)) {
-            yield null;
+      case CofNF.Disj disj -> {
+        for (var conj : disj.elements()) {
+          switch (conj) {
+            case CofNF.Conc(CofNF.Conj(var el)) -> {
+              for (var eq : el) if (!checkEq(eq)) yield null;
+            }
+            case CofNF.IsVar(var v) -> {
+              if (!isInterval(new FreeTerm(v))) yield null;
+            }
           }
         }
         yield state().primFactory.getCall(PrimDef.ID.COF);
       }
-      case EqCofTerm(var lhs, var rhs) ->
-        trySynth(lhs) instanceof PrimCall call &&
-        call.ref().id() == PrimDef.ID.I &&
-        trySynth(rhs) instanceof PrimCall carr &&
-        carr.ref().id() == PrimDef.ID.I
-          ? state().primFactory.getCall(PrimDef.ID.COF)
-          : null;
     };
+  }
+
+  private boolean checkEq(CofNF.OrVar<CofNF.EqCofTerm> eqCof) {
+    return switch (eqCof) {
+      case CofNF.IsVar(var v) -> isInterval(new FreeTerm(v));
+      case CofNF.Conc(CofNF.EqCofTerm(var lhs, var rhs)) -> isInterval(lhs) && isInterval(rhs);
+    };
+  }
+
+  private boolean isInterval(Term rhs) {
+    return trySynth(rhs) instanceof PrimCall carr && carr.ref().id() == PrimDef.ID.I;
   }
 
   @Override public @NotNull TyckState state() { return tycker.state; }

@@ -170,7 +170,9 @@ public final class ExprTycker extends ScopedTycker {
       }
       case Expr.Let let -> checkLet(let, e -> inherit(e, type));
       case Expr.Partial(var clause) -> {
-        if (!(whnf(type) instanceof PrimCall(var ref, _, var arg) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
+        if (!(whnf(type) instanceof PrimCall(
+          var ref, _, var arg
+        ) && ref.id() == PrimDef.ID.PARTIAL && arg.sizeEquals(2)))
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         var cof = arg.get(0);
         var A = arg.get(1);
@@ -189,51 +191,51 @@ public final class ExprTycker extends ScopedTycker {
         }
         // coverage. cof <=> allCof
         var disj = expand(cof);
-        var cnf = new DisjCofNF(ImmutableSeq.empty());
+        CofNF.OrVar<CofNF.Disj> cnf = new CofNF.Conc<>(new CofNF.Disj(ImmutableSeq.empty()));
         if (!allCof.isEmpty()) {
           cnf = expand(allCof.drop(1).foldRight(allCof.get(0), (l, r) ->
-            state().primFactory.getCall(PrimDef.ID.COF_OR, ImmutableSeq.of(l,r)) ));
+            state().primFactory.getCall(PrimDef.ID.COF_OR, ImmutableSeq.of(l, r))));
         }
         if (disj == null || cnf == null) {
           yield fail(expr.data(), type, BadTypeError.partialElement(state, expr, type));
         }
-        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofibrationEquiv(disj, cnf)))
+        if (!(unifier(expr.sourcePos(), Ordering.Eq).cofEquiv(disj, cnf)))
           yield fail(expr.data(), type, new IllegalPartialElement.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
         for (@Closed var c1 : cls)
           for (@Closed var c2 : cls) {
-          if (c1 == c2) continue;
-          if (!(withConnection(expandAnd(c1.cof(), (c2.cof().descent(whnfVisitor()))),
+            if (c1 == c2) continue;
+            if (!(withConnection(CofNF.and(c1.cof(), c2.cof()),
               () -> unifier(expr.sourcePos(), Ordering.Eq).compare(c1.tm(), c2.tm(), A) == Decision.YES)))
-            yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
-        }
+              yield fail(expr.data(), type, new IllegalPartialElement.ValueMismatch(c1, c2, expr.sourcePos(), state()));
+          }
         yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);
       }
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };
   }
 
-  private @Closed @NotNull EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
+  private @Closed @NotNull CofNF.EqCofTerm elabCof(@NotNull Expr.EqCof cof) {
     var lhs = inherit(cof.lhs(), interval());
     var rhs = inherit(cof.rhs(), interval());
-    return new EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
+    return new CofNF.EqCofTerm(lhs.wellTyped(), rhs.wellTyped());
   }
 
-  private @Closed @NotNull ConjCofNF elabCof(@NotNull Expr.ConjCof conj) {
-    MutableList<@Closed EqCofTerm> ret = MutableList.create();
+  private @Closed @NotNull CofNF.Conj elabCof(@NotNull Expr.ConjCof conj) {
+    MutableList<CofNF.@Closed EqCofTerm> ret = MutableList.create();
     for (var c : conj.elements())
       ret.append(elabCof(c));
-    return new ConjCofNF(ret.toSeq());
+    return new CofNF.Conj(ret.map(CofNF.Conc::new));
   }
 
-  private @Closed @NotNull DisjCofNF elabCof(@NotNull Expr.DisjCof disj) {
-    MutableList<@Closed ConjCofNF> ret = MutableList.create();
+  private @Closed @NotNull CofNF.Disj elabCof(@NotNull Expr.DisjCof disj) {
+    MutableList<CofNF.@Closed Conj> ret = MutableList.create();
     for (var c : disj.elements())
       ret.append(elabCof(c));
-    return new DisjCofNF(ret.toSeq());
+    return new CofNF.Disj(ret.map(CofNF.Conc::new));
   }
 
-  /// @return a [Bound] term where lives in [#wellArgs].size()-th db-level
+  /// @return a [Bound] term where lives in wellArgs.size()-th db-level
   private @Bound @NotNull Term matchReturnTy(
     ImmutableSeq<Expr.Match.Discriminant> discriminant,
     ImmutableSeq<Jdg> wellArgs, WithPos<Expr> returns
@@ -391,7 +393,7 @@ public final class ExprTycker extends ScopedTycker {
         var result = synthesize(expr);
         if (!(result.type() instanceof SortTerm)) {
           if (whnf(result.type()) instanceof ClassCall clazzCall &&
-          clazzCall.ref().classifyingIndex() != -1) {
+            clazzCall.ref().classifyingIndex() != -1) {
             yield new MemberCall(result.wellTyped(),
               clazzCall.ref().classifyingField(), 0, ImmutableSeq.empty());
           }
@@ -585,7 +587,7 @@ public final class ExprTycker extends ScopedTycker {
   record DoCheckApp(
     @NotNull Jdg result,
     @NotNull Term headType
-  ) {}
+  ) { }
 
   private @NotNull DoCheckApp doCheckApplication(
     @NotNull SourcePos sourcePos, @NotNull AnyVar f,

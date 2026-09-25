@@ -4,7 +4,10 @@ set JAVA_EXEC="%DIR:"=%\..\jre\bin\java"
 set EXTRA_ARGS="--module-path=%~dp0\..\std\src"
 set AYA_MODULE="aya.cli.console"
 set AYA_MAIN="org.aya.cli.console.Main"
-set CDS_JVM_OPTS=%CDS_JVM_OPTS% -XX:+UseCompactObjectHeaders --enable-native-access=org.aya.prover.merged.module
+set CDS_JVM_OPTS=%CDS_JVM_OPTS% -XX:+UseCompactObjectHeaders ^
+  --enable-native-access=org.jline.terminal.ffm ^
+  --enable-native-access=org.jline.nativ ^
+  --enable-final-field-mutation=com.google.gson
 
 REM pushd %DIR%
 %JAVA_EXEC% %CDS_JVM_OPTS% --enable-preview -p "%~dp0/../app" -m %AYA_MODULE%/%AYA_MAIN% %EXTRA_ARGS% %*

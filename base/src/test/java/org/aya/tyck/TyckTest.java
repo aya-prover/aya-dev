@@ -48,6 +48,9 @@ public class TyckTest {
     assertTrue(result.isNotEmpty());
   }
 
+  @Test public void cofEquiv() {
+  }
+
   @SuppressWarnings("unchecked") private static <T extends AnyDef> T
   getDef(@NotNull ImmutableSeq<TyckDef> defs, @NotNull String name) {
     return (T) TyckAnyDef.make(defs.find(x -> x.ref().name().equals(name)).get());

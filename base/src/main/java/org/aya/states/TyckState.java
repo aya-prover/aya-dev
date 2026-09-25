@@ -5,6 +5,7 @@ package org.aya.states;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import kala.value.Value;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Instance;
@@ -18,8 +19,8 @@ import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.core.term.call.MemberCall;
 import org.aya.syntax.core.term.call.MetaCall;
+import org.aya.syntax.core.term.xtt.CofNF;
 import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.EqCofTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.syntax.ref.MetaVar;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public final class TyckState {
@@ -44,6 +46,7 @@ public final class TyckState {
   public final @NotNull ShapeFactory shapeFactory;
   public final @NotNull PrimFactory primFactory;
   private final @NotNull MutableMap<LocalVar, DynamicForest.Handle> connections = MutableMap.create();
+  private final @NotNull MutableSet<LocalVar> assumptions = MutableSet.create();
 
   public static final DynamicForest.Handle I0 = DynamicForest.create();
   public static final DynamicForest.Handle I1 = DynamicForest.create();
@@ -67,8 +70,23 @@ public final class TyckState {
     };
   }
 
-  public boolean isConnected(@NotNull EqCofTerm eqCof) {
-    return isConnected(eqCof.lhs(), eqCof.rhs());
+  private <T> boolean isTrueHelper(@NotNull CofNF.OrVar<T> cof, Predicate<T> pred) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> assumptions.contains(v);
+      case CofNF.Conc(var c) -> pred.test(c);
+    };
+  }
+
+  public boolean isTrue(@NotNull CofNF.OrVar<CofNF.Disj> conjCof) {
+    return isTrueHelper(conjCof, disj -> disj.elements().anyMatch(this::isTrueConj));
+  }
+
+  private boolean isTrueConj(@NotNull CofNF.OrVar<CofNF.Conj> conjCof) {
+    return isTrueHelper(conjCof, conj -> conj.elements().allMatch(this::isTrueEq));
+  }
+
+  private boolean isTrueEq(@NotNull CofNF.OrVar<CofNF.EqCofTerm> eqCof) {
+    return isTrueHelper(eqCof, cof -> isConnected(cof.lhs(), cof.rhs()));
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {
@@ -91,6 +109,8 @@ public final class TyckState {
     if (l != null && r != null) l.disconnect(r);
   }
 
+  public void assume(LocalVar v) { assumptions.add(v); }
+  public void unassume(LocalVar v) { assumptions.remove(v); }
   public void removeConnection(@NotNull LocalVar var) { connections.remove(var); }
 
   @ApiStatus.Internal

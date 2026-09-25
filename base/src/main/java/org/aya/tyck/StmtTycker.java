@@ -405,7 +405,7 @@ public record StmtTycker(
     var core = primRef.core;
     if (prim.telescope.isEmpty() && prim.result == null) {
       var pos = prim.nameSourcePos();
-      primRef.signature = new Signature(TyckDef.defSignature(core), ImmutableSeq.fill(core.telescope().size(), pos));
+      primRef.signature = new Signature(core.defSignature(), ImmutableSeq.fill(core.telescope().size(), pos));
       return;
     }
     if (prim.telescope.isNotEmpty()) {

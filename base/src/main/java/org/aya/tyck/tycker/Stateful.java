@@ -9,9 +9,8 @@ import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
 import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
-import org.aya.syntax.core.term.xtt.ConjCofNF;
+import org.aya.syntax.core.term.xtt.CofNF;
 import org.aya.syntax.core.term.xtt.DimTerm;
-import org.aya.syntax.core.term.xtt.DisjCofNF;
 import org.aya.syntax.literate.CodeOptions;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.util.ForLSP;
@@ -32,8 +31,7 @@ import java.util.function.Supplier;
 public interface Stateful {
   @NotNull TyckState state();
   default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
-  default @Nullable DisjCofNF expand(@Closed @NotNull Term term) {return new Normalizer(state()).expand(term); }
-  default @NotNull DisjCofNF expandAnd(@Closed @NotNull DisjCofNF a, @Closed @NotNull DisjCofNF b) {return new Normalizer(state()).expandAnd(a, b); }
+  default @Nullable CofNF.OrVar<CofNF.Disj> expand(@Closed @NotNull Term term) { return new Normalizer(state()).expand(term); }
   default @NotNull TermVisitor whnfVisitor() {
     return TermVisitor.expectTerm(this::whnf);
   }
@@ -46,43 +44,76 @@ public interface Stateful {
     return new Normalizer(state()).normalize(result, CodeOptions.NormalizeMode.FULL);
   }
 
-  private void connectConj(@NotNull ConjCofNF cof) {
-    for (var eqcof : cof.elements()) {
-      state().connect(eqcof.lhs(), eqcof.rhs());
+  private void connectConj(@NotNull CofNF.OrVar<CofNF.Conj> cofOrVar) {
+    switch (cofOrVar) {
+      case CofNF.IsVar(var v) -> state().assume(v);
+      case CofNF.Conc(var cof) -> {
+        for (var eqcof : cof.elements())
+          switch (eqcof) {
+            case CofNF.IsVar(var v) -> state().assume(v);
+            case CofNF.Conc(var c) -> state().connect(c.lhs(), c.rhs());
+          }
+      }
     }
   }
 
-  private void disconnectConj(@NotNull ConjCofNF cof) {
-    for (var eqcof : cof.elements()) {
-      state().disconnect(eqcof.lhs(), eqcof.rhs());
+  private void disconnectConj(@NotNull CofNF.OrVar<CofNF.Conj> cofOrVar) {
+    switch (cofOrVar) {
+      case CofNF.IsVar(var v) -> state().unassume(v);
+      case CofNF.Conc(var cof) -> {
+        for (var eqcof : cof.elements())
+          switch (eqcof) {
+            case CofNF.IsVar(var v) -> state().unassume(v);
+            case CofNF.Conc(var c) -> state().disconnect(c.lhs(), c.rhs());
+          }
+      }
     }
   }
 
-  default <R> R withConnection(@NotNull ConjCofNF cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
+  private <R> R withConjCof(@NotNull CofNF.OrVar<CofNF.Conj> cof, @NotNull Supplier<R> action, @NotNull Supplier<R> ifBottom) {
     connectConj(cof);
     var ret = state().isConnected(DimTerm.I0, DimTerm.I1) ? ifBottom.get() : action.get();
     disconnectConj(cof);
     return ret;
   }
 
-  default Term withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
-    Term ret = null;
-    for (var conj : cof.elements()) {
-      ret = withConnection(conj, action, ifBottom);
-      if (ret instanceof ErrorTerm) {
-        return ret;
+  default Term withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
+    return switch (cofOrVar) {
+      case CofNF.Conc(var cof) -> {
+        Term ret = null;
+        for (var conj : cof.elements()) {
+          ret = withConjCof(conj, action, ifBottom);
+          if (ret instanceof ErrorTerm) {
+            yield ret;
+          }
+        }
+        yield ret == null ? ifBottom.get() : ret;
       }
-    }
-    return ret == null? ifBottom.get() : ret;
+      case CofNF.IsVar(var v) -> {
+        state().assume(v);
+        var ret = action.get();
+        state().unassume(v);
+        yield ret;
+      }
+    };
   }
 
-  default boolean withConnection(@NotNull DisjCofNF cof, @NotNull Supplier<Boolean> action) {
-    for (var conj : cof.elements()) {
-      if (!withConnection(conj, action, () -> true)) {
-        return false;
+  default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<Boolean> action) {
+    return switch (cofOrVar) {
+      case CofNF.Conc(var cof) -> {
+        for (var conj : cof.elements()) {
+          if (!withConjCof(conj, action, () -> true)) {
+            yield false;
+          }
+        }
+        yield true;
       }
-    }
-    return true;
+      case CofNF.IsVar(var v) -> {
+        state().assume(v);
+        var ret = action.get();
+        state().unassume(v);
+        yield ret;
+      }
+    };
   }
-
 }

@@ -178,8 +178,8 @@ public abstract class AyaRepl implements Closeable, Runnable, Repl {
     private final @NotNull IO io;
 
     public PlainRepl(@NotNull ImmutableSeq<Path> modulePaths, @NotNull ReplConfig config, @NotNull IO io) {
-      super(modulePaths, config);
       this.io = io;
+      super(modulePaths, config);
     }
 
     @Override public @NotNull String readLine(@NotNull String prompt) {
