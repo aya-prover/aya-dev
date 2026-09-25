@@ -138,7 +138,7 @@ subprojects {
 
   @Suppress("UnstableApiUsage")
   testing.suites {
-    val test by getting(JvmTestSuite::class) {
+    getByName<JvmTestSuite>("test") {
       useJUnitJupiter(rootProject.libs.versions.junit)
       targets.all {
         testTask.configure {
