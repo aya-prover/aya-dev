@@ -101,5 +101,4 @@ public interface Stateful {
   default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cof, @NotNull Supplier<Boolean> action) {
     return withConnection(cof, action, () -> true);
   }
-
 }

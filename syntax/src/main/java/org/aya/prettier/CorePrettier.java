@@ -482,7 +482,7 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  private @NotNull Doc visitCofDisj(@NotNull CofNF.OrVar<CofNF.Disj> cof) {
+  public @NotNull Doc visitCofDisj(@NotNull CofNF.OrVar<CofNF.Disj> cof) {
     return switch (cof) {
       case CofNF.IsVar(var v) -> varDoc(v);
       case CofNF.Conc(var c) -> Doc.braced(Doc.join(COF_OR, c.elements().map(this::visitCof)));
