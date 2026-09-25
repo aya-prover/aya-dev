@@ -54,6 +54,7 @@ public final class Normalizer implements UnaryOperator<Term> {
   public @Nullable CofNF.OrVar<CofNF.Disj> expand(@Closed @NotNull Term cof) {
     var wcof = apply(cof);
     if (wcof instanceof CofNF.Disj nf) return new CofNF.Conc<>(nf);
+    if (wcof instanceof FreeTerm(var var)) return new CofNF.IsVar<>(var);
     if (!(wcof instanceof PrimCall(var ref, _, var args))) return null;
     return switch (ref.id()) {
       case COF_AND -> {
