@@ -201,18 +201,6 @@ public class ConcretePrettier extends BasePrettier<Expr> {
     };
   }
 
-  private @NotNull Doc visitCof(@NotNull Expr.EqCof cof) {
-    return Doc.sep(term(Outer.BinOp, cof.lhs()), EQ, term(Outer.BinOp, cof.rhs()));
-  }
-
-  private @NotNull Doc visitCof(@NotNull Expr.ConjCof cof) {
-    return Doc.join(COF_AND, cof.elements().map(this::visitCof));
-  }
-
-  private @NotNull Doc visitCof(@NotNull Expr.DisjCof cof) {
-    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
-  }
-
   public @NotNull Doc patterns(@NotNull ImmutableSeq<Pattern> patterns) {
     return Doc.commaList(patterns.map(pattern -> pattern(pattern, true, Outer.Free)));
   }
