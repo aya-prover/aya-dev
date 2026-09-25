@@ -104,10 +104,9 @@ public interface Stateful {
         // No clause, we test the result directly
         if (cof.elements().isEmpty()) yield action.get();
         for (var conj : cof.elements()) {
-          if (withConjCof(conj, action, () -> true)) yield true;
+          if (!withConjCof(conj, action, () -> true)) yield false;
         }
-        // All clauses lead to false, therefore false
-        yield false;
+        yield true;
       }
       case CofNF.IsVar(var v) -> {
         state().assume(v);
