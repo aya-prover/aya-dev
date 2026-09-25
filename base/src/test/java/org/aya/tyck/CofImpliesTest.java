@@ -6,23 +6,37 @@ import kala.collection.immutable.ImmutableSeq;
 import org.aya.normalize.Normalizer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.prettier.CorePrettier;
+import org.aya.states.TyckState;
 import org.aya.syntax.core.def.FnDef;
+import org.aya.syntax.core.term.FreeTerm;
 import org.aya.syntax.core.term.xtt.CofNF;
 import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.tycker.Stateful;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class CofConversionTest {
+public class CofImpliesTest {
   static TyckTest.TyckResult definfo;
 
-  @BeforeAll
-  public static void init() {
+  @Test public void multigraphSemantics() {
+    var state = definfo.info().makeTyckState();
+    var l = new FreeTerm(new LocalVar("l"));
+    var r = new FreeTerm(new LocalVar("r"));
+    state.connect(l, r);
+    state.connect(l, r);
+    state.disconnect(l, r);
+    // disconnecting once should not remove the connection, because there are two edges
+    assertTrue(state.isConnected(l, r));
+    state.disconnect(l, r);
+    assertFalse(state.isConnected(l, r));
+  }
+
+  @BeforeAll public static void init() {
     definfo = TyckTest.tyck("""
       prim I : ISet
       prim Cof : Set
@@ -102,7 +116,7 @@ public class CofConversionTest {
     }
   }
 
-  private static @NotNull CofConversionTest.ImplicationResult computeImplication(String caseNum, String prefix) {
+  private static @NotNull CofImpliesTest.ImplicationResult computeImplication(String caseNum, String prefix) {
     var testL = (FnDef) definfo.defs().find(d -> d.ref().name().equals(prefix + caseNum + "L")).get();
     var testR = (FnDef) definfo.defs().find(d -> d.ref().name().equals(prefix + caseNum + "R")).get();
     var paramsSize = Math.max(testL.telescope().size(), testR.telescope().size());
