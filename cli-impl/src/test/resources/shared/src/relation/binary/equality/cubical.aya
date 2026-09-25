@@ -11,3 +11,4 @@ public open cof-operators using
   , cofOr as infixl ∨f
   , cofEq as infix =f)
 prim hcom (A : Type) (r s : I) (φ : Cof) (u : Fn (i : I) -> Partial (φ ∨f (i =f r)) A) : A
+prim unPartial (A : Type) (u : Partial (1 =f 1) A) : A
