@@ -169,7 +169,8 @@ public class PrimFactory {
       getCall(ID.COF_EQ, ImmutableSeq.of(DimTerm.I1, DimTerm.I1)),
       new LocalTerm(0)
     )), true);
-    return new PrimDef(ref, ImmutableSeq.of(paramA, paramU), Type0, ID.UNPARTIAL);
+    // result: A=1, u=0
+    return new PrimDef(ref, ImmutableSeq.of(paramA, paramU), new LocalTerm(1), ID.UNPARTIAL);
   }, ImmutableSeq.of(ID.PARTIAL));
 
   private final @NotNull PrimSeed hcom = new PrimSeed(ID.HCOM, this::hcom, ref -> {
