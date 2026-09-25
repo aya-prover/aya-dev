@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public final class TyckState {
@@ -69,18 +70,23 @@ public final class TyckState {
     };
   }
 
-  public boolean isTrue(@NotNull CofNF.OrVar<CofNF.Conj> conjCof) {
-    return switch (conjCof) {
+  private <T> boolean isTrueHelper(@NotNull CofNF.OrVar<T> cof, Predicate<T> pred) {
+    return switch (cof) {
       case CofNF.IsVar(var v) -> assumptions.contains(v);
-      case CofNF.Conc(var cof) -> cof.elements().allMatch(this::isTrueEq);
+      case CofNF.Conc(var c) -> pred.test(c);
     };
   }
 
+  public boolean isTrue(@NotNull CofNF.OrVar<CofNF.Disj> conjCof) {
+    return isTrueHelper(conjCof, disj -> disj.elements().anyMatch(this::isTrueConj));
+  }
+
+  private boolean isTrueConj(@NotNull CofNF.OrVar<CofNF.Conj> conjCof) {
+    return isTrueHelper(conjCof, conj -> conj.elements().allMatch(this::isTrueEq));
+  }
+
   private boolean isTrueEq(@NotNull CofNF.OrVar<CofNF.EqCofTerm> eqCof) {
-    return switch (eqCof) {
-      case CofNF.IsVar(var v) -> assumptions.contains(v);
-      case CofNF.Conc(var cof) -> isConnected(cof.lhs(), cof.rhs());
-    };
+    return isTrueHelper(eqCof, cof -> isConnected(cof.lhs(), cof.rhs()));
   }
 
   public boolean isConnected(@NotNull Term lhs, @NotNull Term rhs) {

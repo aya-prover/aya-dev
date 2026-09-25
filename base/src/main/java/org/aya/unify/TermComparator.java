@@ -338,7 +338,7 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         // forall i j, phi_i ∩ psi_j |- u_i = v_j
         for (var cl1 : clauses1)
           for (var cl2 : clauses2) {
-            if (!withConnection(expandAnd(cl1.cof(), cl2.cof().descent(whnfVisitor())),
+            if (!withConnection(CofNF.and(cl1.cof(), cl2.cof()),
               () -> doCompareTyped(whnf(cl1.tm()), whnf(cl2.tm()), A) == Decision.YES))
               yield Decision.NO;
           }
@@ -490,7 +490,8 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
         }
       }
       case CofNF.Disj ld -> {
-        if (expand(rhs) instanceof CofNF.Disj rd && cofEquiv(ld, rd)) {
+        var rd = expand(rhs);
+        if (rd != null && cofEquiv(new CofNF.Conc<>(ld), rd)) {
           yield RelDec.of(state().primFactory.getCall(PrimDef.ID.COE));
         }
         yield RelDec.no();
@@ -652,13 +653,13 @@ public abstract sealed class TermComparator extends AbstractTycker permits Unifi
   }
 
   // a ∪ b => c ∪ d?
-  private boolean cofImply(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
+  private boolean cofImply(@NotNull CofNF.OrVar<CofNF.Disj> c1, @NotNull CofNF.OrVar<CofNF.Disj> c2) {
     // a ∪ b => c ∪ d
     // iff. (a => c ∪ d) and (b => c ∪ d)
-    return withConnection(c1, () -> c2.elements().anyMatch(state::isTrue));
+    return withConnection(c1, () -> state.isTrue(c2));
   }
 
-  public boolean cofEquiv(@NotNull CofNF.Disj c1, @NotNull CofNF.Disj c2) {
+  public boolean cofEquiv(@NotNull CofNF.OrVar<CofNF.Disj> c1, @NotNull CofNF.OrVar<CofNF.Disj> c2) {
     return cofImply(c1, c2) && cofImply(c2, c1);
   }
 

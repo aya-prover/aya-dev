@@ -2,7 +2,7 @@
 // Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
 package org.aya.unify;
 
-import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import org.aya.generic.term.DTKind;
 import org.aya.states.TyckState;
 import org.aya.syntax.core.annotation.Closed;
@@ -10,7 +10,9 @@ import org.aya.syntax.core.def.PrimDef;
 import org.aya.syntax.core.term.*;
 import org.aya.syntax.core.term.call.MetaCall;
 import org.aya.syntax.core.term.call.PrimCall;
-import org.aya.syntax.core.term.xtt.*;
+import org.aya.syntax.core.term.xtt.CofNF;
+import org.aya.syntax.core.term.xtt.EqTerm;
+import org.aya.syntax.core.term.xtt.PartialTerm;
 import org.aya.syntax.ref.LocalCtx;
 import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.DoubleCheckError;
@@ -99,17 +101,19 @@ public record DoubleChecker(
         var cof = arg.get(0);
         var A = arg.get(1);
         // check each element
-        ImmutableSeq<CofNF.OrVar<CofNF.Conj>> cls_cof = ImmutableSeq.empty();
+        MutableList<CofNF.OrVar<CofNF.Disj>> cls_cof = MutableList.create();
         for (@Closed var c : cls) {
           if (!withConnection(c.cof(),
             () -> inherit(c.tm(), A))
           ) yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
           // cls_cof = cls_cof || c.cof()
-          cls_cof = cls_cof.appendedAll(c.cof().elements());
+          cls_cof.append(c.cof());
         }
+        assert cls_cof.isNotEmpty();
         // check cofibration
         var disj = expand(cof);
-        if (!unifier.cofEquiv(disj, new CofNF.Disj(cls_cof)))
+        assert disj != null;
+        if (!unifier.cofEquiv(disj, cls_cof.reduce(CofNF::or)))
           yield failF(new DoubleCheckError.RuleError(preterm, unifier.pos, expected));
         yield true;
       }

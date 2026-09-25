@@ -31,8 +31,7 @@ import java.util.function.Supplier;
 public interface Stateful {
   @NotNull TyckState state();
   default @Closed @NotNull Term whnf(@Closed @NotNull Term term) { return new Normalizer(state()).apply(term); }
-  default @Nullable CofNF.Disj expand(@Closed @NotNull Term term) { return new Normalizer(state()).expand(term); }
-  default @NotNull CofNF.Disj expandAnd(@Closed @NotNull CofNF.Disj a, @Closed @NotNull CofNF.Disj b) { return CofNF.and(a, b); }
+  default @Nullable CofNF.OrVar<CofNF.Disj> expand(@Closed @NotNull Term term) { return new Normalizer(state()).expand(term); }
   default @NotNull TermVisitor whnfVisitor() {
     return TermVisitor.expectTerm(this::whnf);
   }
@@ -78,24 +77,29 @@ public interface Stateful {
     return ret;
   }
 
-  default Term withConnection(@NotNull CofNF.Disj cof, @NotNull Supplier<Term> action, @NotNull Supplier<Term> ifBottom) {
-    Term ret = null;
-    for (var conj : cof.elements()) {
-      ret = withConjCof(conj, action, ifBottom);
-      if (ret instanceof ErrorTerm) {
-        return ret;
+  default <T> T withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cofOrVar, @NotNull Supplier<T> action, @NotNull Supplier<T> ifBottom) {
+    return switch (cofOrVar) {
+      case CofNF.Conc(var cof) -> {
+        T ret = null;
+        for (var conj : cof.elements()) {
+          ret = withConjCof(conj, action, ifBottom);
+          if (ret instanceof ErrorTerm) {
+            yield ret;
+          }
+        }
+        yield ret == null ? ifBottom.get() : ret;
       }
-    }
-    return ret == null ? ifBottom.get() : ret;
+      case CofNF.IsVar(var v) -> {
+        state().assume(v);
+        var ret = action.get();
+        state().unassume(v);
+        yield ret;
+      }
+    };
   }
 
-  default boolean withConnection(@NotNull CofNF.Disj cof, @NotNull Supplier<Boolean> action) {
-    for (var conj : cof.elements()) {
-      if (!withConjCof(conj, action, () -> true)) {
-        return false;
-      }
-    }
-    return true;
+  default boolean withConnection(@NotNull CofNF.OrVar<CofNF.Disj> cof, @NotNull Supplier<Boolean> action) {
+    return withConnection(cof, action, () -> true);
   }
 
 }

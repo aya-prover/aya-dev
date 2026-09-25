@@ -230,7 +230,7 @@ public class CorePrettier extends BasePrettier<Term> {
 
         yield letDoc;
       }
-      case CofNF.Disj disjCofNF -> visitCofDisj(disjCofNF);
+      case CofNF.Disj disjCofNF -> visitCofDisj(new CofNF.Conc<>(disjCofNF));
     };
   }
 
@@ -482,8 +482,11 @@ public class CorePrettier extends BasePrettier<Term> {
     };
   }
 
-  private @NotNull Doc visitCofDisj(@NotNull CofNF.Disj cof) {
-    return Doc.braced(Doc.join(COF_OR, cof.elements().map(this::visitCof)));
+  private @NotNull Doc visitCofDisj(@NotNull CofNF.OrVar<CofNF.Disj> cof) {
+    return switch (cof) {
+      case CofNF.IsVar(var v) -> varDoc(v);
+      case CofNF.Conc(var c) -> Doc.braced(Doc.join(COF_OR, c.elements().map(this::visitCof)));
+    };
   }
 
   // region Name Generation

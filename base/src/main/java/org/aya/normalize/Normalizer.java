@@ -51,9 +51,9 @@ public final class Normalizer implements UnaryOperator<Term> {
    * The function expand of the given cofibration,
    * and returns null when cof is not ready to evaluate.
    */
-  public @Nullable CofNF.Disj expand(@Closed @NotNull Term cof) {
+  public @Nullable CofNF.OrVar<CofNF.Disj> expand(@Closed @NotNull Term cof) {
     var wcof = apply(cof);
-    if (wcof instanceof CofNF.Disj nf) return nf;
+    if (wcof instanceof CofNF.Disj nf) return new CofNF.Conc<>(nf);
     if (!(wcof instanceof PrimCall(var ref, _, var args))) return null;
     return switch (ref.id()) {
       case COF_AND -> {
@@ -66,9 +66,9 @@ public final class Normalizer implements UnaryOperator<Term> {
         var anf = expand(args.get(0));
         var bnf = expand(args.get(1));
         if (anf == null || bnf == null) yield null;
-        yield new CofNF.Disj(anf.elements().appendedAll(bnf.elements()));
+        yield CofNF.or(anf, bnf);
       }
-      case COF_EQ -> new CofNF.Disj(new CofNF.Conj(new CofNF.EqCofTerm(args.get(0), args.get(1))));
+      case COF_EQ -> new CofNF.Conc<>(new CofNF.Disj(new CofNF.Conj(new CofNF.EqCofTerm(args.get(0), args.get(1)))));
       default -> null;
     };
   }
