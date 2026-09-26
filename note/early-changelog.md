@@ -1,5 +1,7 @@
 # Early changelog
 
+## 0.42
+
 ## 0.41
 
 Aya now runs on Java 27, which means the IntelliJ plugin is unusable again.
