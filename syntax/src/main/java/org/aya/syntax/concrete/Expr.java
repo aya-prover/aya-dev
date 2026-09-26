@@ -298,13 +298,17 @@ public sealed interface Expr extends AyaDocile {
   }
 
   record Partial(@NotNull ImmutableSeq<Clause> clauses) implements Expr {
-    public record Clause(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) {
+    public record Clause(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) implements SourceNode {
       public @NotNull Clause update(@NotNull WithPos<Expr> cof, @NotNull WithPos<Expr> tm) {
         return cof == cof() && tm == tm() ? this : new Clause(cof, tm);
       }
 
       public @NotNull Clause descent(@NotNull PosedUnaryOperator<@NotNull Expr> f) {
         return update(cof.descent(f), tm.descent(f));
+      }
+
+      @Override public @NotNull SourcePos sourcePos() {
+        return cof.sourcePos().union(tm.sourcePos());
       }
     }
 
