@@ -806,7 +806,7 @@ public record AyaProducer(
 
   private @NotNull Expr.Partial.Clause partialClause(@NotNull GenericNode<?> node) {
     var chd = node.childrenView().toSeq();
-    return new Expr.Partial.Clause((expr(chd.getFirst())),
+    return new Expr.Partial.Clause(expr(chd.getFirst()),
       expr(chd.getLast()));
   }
 

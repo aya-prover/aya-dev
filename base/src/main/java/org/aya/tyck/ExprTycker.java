@@ -177,7 +177,7 @@ public final class ExprTycker extends ScopedTycker {
         var cof = arg.get(0);
         var A = arg.get(1);
         // check each clause
-        MutableList<PartialTerm.Clause> cls = MutableList.create();
+        MutableList<WithPos<PartialTerm.Clause>> cls = MutableList.create();
         MutableList<Term> allCof = MutableList.create();
         for (var rcls : clause) {
           var clsCof = inherit(rcls.cof(), state().primFactory.getCall(PrimDef.ID.COF));
@@ -186,7 +186,7 @@ public final class ExprTycker extends ScopedTycker {
             yield fail(expr.data(), type, new PartialElError.BadPartialLHS(clsCof.wellTyped(), rcls.cof().sourcePos(), state()));
           }
           var clsRhs = withConnection(clsCofNF, () -> inherit(rcls.tm(), A).wellTyped(), () -> inherit(rcls.tm(), A).wellTyped());
-          cls.append(new PartialTerm.Clause(clsCofNF, clsRhs));
+          cls.append(new WithPos<>(rcls.sourcePos(), new PartialTerm.Clause(clsCofNF, clsRhs)));
           allCof.append(clsCof.wellTyped());
         }
         // coverage. cof <=> allCof
@@ -202,16 +202,20 @@ public final class ExprTycker extends ScopedTycker {
         if (!(unifier(expr.sourcePos(), Ordering.Eq).cofEquiv(disj, cnf)))
           yield fail(expr.data(), type, new PartialElError.CofMismatch(disj, cnf, expr.sourcePos(), state()));
         // boundary
-        for (@Closed var c1 : cls)
-          for (@Closed var c2 : cls) {
-            if (c1 == c2) continue;
+        var size = cls.size();
+        for (int i = 0; i < size; i++) {
+          @Closed var c1 = cls.get(i);
+          for (int j = i + 1; j < size; j++) {
+            @Closed var c2 = cls.get(j);
             var unifier = unifier(expr.sourcePos(), Ordering.Eq);
-            var intersect = CofNF.and(c1.cof(), c2.cof());
-            var compareYes = withConnection(intersect, () -> unifier.compare(c1.tm(), c2.tm(), A) == Decision.YES);
-            if (!compareYes)
-              yield fail(expr.data(), type, new PartialElError.ValueMismatch(c1, c2, intersect, expr.sourcePos(), state()));
+            var intersect = CofNF.and(c1.data().cof(), c2.data().cof());
+            var compareYes = withConnection(intersect,
+              () -> unifier.compare(c1.data().tm(), c2.data().tm(), A) == Decision.YES);
+            if (!compareYes) yield fail(expr.data(), type,
+              new PartialElError.ValueMismatch(c1, c2, intersect, expr.sourcePos(), state()));
           }
-        yield new Jdg.Default(new PartialTerm(cls.toSeq()), type);
+        }
+        yield new Jdg.Default(new PartialTerm(cls.map(WithPos::data)), type);
       }
       default -> inheritFallbackUnify(type, synthesize(expr), expr);
     };

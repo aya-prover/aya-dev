@@ -299,20 +299,25 @@ Let's learn from that.
 PartialDiffIntersection:
 In file $FILE:4:2 ->
 
-  2 │   open import relation::binary::equality::cubical
-  3 │   def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
-  4 │     partial
-    │ ╭───╯
-  5 │ │    [ i =f 0 => 3
-    │ │  
-  6 │ │    , j =f 0 => 3
-    │ │  
-  7 │ │    , j =f 1 => 1
-    │ │  
-  8 │ │   ]
-    │ ╰───╯
+  2 │       open import relation::binary::equality::cubical
+  3 │       def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
+  4 │         partial
+    │ ╭───────╯
+  5 │ │        [ i =f 0 => 3
+    │ │          ╰─────────╯ here
+  6 │ │        , j =f 0 => 3
+    │ │      
+  7 │ │        , j =f 1 => 1
+    │ │          ╰─────────╯ and here
+  8 │ │       ]
+    │ ╰───────╯
 
-Error: Two partial clauses are different in their intersection
+Error: These partial clauses do not agree with each other:
+         3
+       and
+         1
+       The intersection face is:
+         i = 0 ∧ j = 1
 
 1 error(s), 0 warning(s).
 Let's learn from that.
