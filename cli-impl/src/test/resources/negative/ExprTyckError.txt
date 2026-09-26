@@ -281,7 +281,7 @@ PartialMissingClause:
 In file $FILE:5:2 ->
 
   3 │   open import relation::binary::equality::cubical hiding (I)
-  4 │   def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat  =>
+  4 │   def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat =>
   5 │     partial
     │ ╭───╯
   6 │ │    [ i =f 0 => 3
@@ -300,7 +300,7 @@ PartialDiffIntersection:
 In file $FILE:4:2 ->
 
   2 │       open import relation::binary::equality::cubical
-  3 │       def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
+  3 │       def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat =>
   4 │         partial
     │ ╭───────╯
   5 │ │        [ i =f 0 => 3
@@ -318,6 +318,26 @@ Error: These partial clauses do not agree with each other:
          1
        The intersection face is:
          i = 0 ∧ j = 1
+
+1 error(s), 0 warning(s).
+Let's learn from that.
+
+TypeErrorInsidePartial:
+In file $FILE:4:22 ->
+
+  2 │   open import relation::binary::equality::cubical
+  3 │   def test (i j : I) : Partial (i =f j) Nat =>
+  4 │     partial [ i =f j => i ]
+    │                         ╰╯
+
+Error: Cannot check the expression
+         i
+       of type
+         I
+       against the type
+         Nat
+       Cofibrations in the context:
+         i = j
 
 1 error(s), 0 warning(s).
 Let's learn from that.

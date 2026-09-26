@@ -81,7 +81,7 @@ public interface ExprTyckError {
     open import arith::nat::base
     open import relation::binary::equality
     open import relation::binary::equality::cubical hiding (I)
-    def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat  =>
+    def test (i j : I) : Partial ((i =f 0) ∨f (j =f 1) ∨f (j =f 0)) Nat =>
       partial
       [ i =f 0 => 3
       , j =f 0 => 3
@@ -91,11 +91,18 @@ public interface ExprTyckError {
   @Language("Aya") String testPartialDiffIntersection = """
     open import arith::nat::base
     open import relation::binary::equality::cubical
-    def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat  =>
+    def test (i j : I) : Partial (((i =f 0) ∨f (j =f 1)) ∨f (j =f 0)) Nat =>
       partial
       [ i =f 0 => 3
       , j =f 0 => 3
       , j =f 1 => 1
       ]
+    """;
+
+  @Language("Aya") String testTypeErrorInsidePartial = """
+    open import arith::nat::base
+    open import relation::binary::equality::cubical
+    def test (i j : I) : Partial (i =f j) Nat =>
+      partial [ i =f j => i ]
     """;
 }
