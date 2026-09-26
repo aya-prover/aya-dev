@@ -1,5 +1,39 @@
 # Early changelog
 
+## 0.42
+
+## 0.41
+
+Aya now runs on Java 27, which means the IntelliJ plugin is unusable again.
+The header file hack might still work though, because there doesn't seem to be new language features in Java 26-27.
+There is no immediate plan to update the IntelliJ plugin, so this shouldn't be a big deal.
+
+This update is mainly for bumping dependencies, but it also polishes the unfinished cubical features.
+
+User-visible changes:
+
+- We can now re-export definitions from local submodules.
+- Support variable cofibrations and their type checking. For example, under `phi /\ psi`, `psi /\ phi` will be true.
+- New primitive `unPartial`: same as application of partial elements in Agda. It computes the value in the partial
+  element when the partial element turns out to be total.
+- New primitive `hcom`: basically what you can tell from the name. The exact definition is inspired from cooltt:
+  instead of separately take the cylinder _and_ the bottom, we take one partial element containing both information.
+  This induces a very elegant definition of `com`, heterogeneous composition.
+- REPL now supports operators defined by open rename infix. This hasn't been used at all in the past so we never
+  realized that it was not supported.
+
+Internal changes:
+
+- A lot of dedicated `Term` subclasses are replaced with prim calls for more uniform handling of terms.
+- The term traversal API `descent` is better: there is now a mini visitor.
+- Bump many dependencies.
+- Replace the dynamic forest implementation from Euler tour tree to a union find (generated on the fly).
+  This is because Euler tour tree does not support multigraph semantics which is what we turned out to need:
+  if we connect two nodes twice and disconnect them once, we need them to be still connected.
+- Optimize the efficiency of cofibration operations.
+- Module serialization works differently now in order to support submodule re-exporting (thanks to @HoshinoTented).
+  Instead of storing import/open commands, we store the actual definitions imported/re-exported.
+
 ## 0.40
 
 Aya now runs on Java 25.
@@ -10,7 +44,7 @@ The IntelliJ plugin will be temporarily unusable until [JBR-8242] is completed.
 User-visible new features:
 
 - There is now a pretty printer for the ANF IR. Use `:optimized-anf <def>` in the REPL to preview.
-  This does not meant the REPL will JIT-compile them, however. It's only available in library
+  This does not mean the REPL will JIT-compile them, however. It's only available in library
   checking mode.
 - There is now GitHub workflow to automatically run Aya to check snippets in PRs and issues.
 - Now `let`-bindings can be modified by `instance` to add it to instance search.
@@ -31,7 +65,7 @@ Internal changes:
 - `TermComparator` now returns a 3-valued `Decision` rather than a boolean.
 - The `deriveX` methods now accepts hints to avoid creating contexts unnecessarily.
 - `Pat.Con` now stores a nullable shape info that will be used in `PatToTerm` to correctly generate rule reducers.
-- Eliminated usages of `CountingReporter.clear` and cleaned up the inconsistent implementations.
+- Eliminate usages of `CountingReporter.clear` and cleaned up the inconsistent implementations.
 
 Website changes:
 

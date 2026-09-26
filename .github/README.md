@@ -19,7 +19,7 @@
 ## What to expect?
 
 It might be concerning to a lot of people that Aya is written in Java, because a common misconception is that
-whatever wriiten in Java will be (1) use loads of bloated dependencies and (2) require a Java runtime installed separately.
+whatever written in Java will be (1) use loads of bloated dependencies and (2) require a Java runtime installed separately.
 Neither of them are true: (1) Aya codebase is very small, and we rely on as little external dependencies as possible,
 (2) Aya releases are self-contained and are *designed to run on Java-free environments* (see [GitHub Releases]).
 

@@ -43,7 +43,7 @@ if (ossrhUsername.isNotEmpty()) nmcpSettings {
   centralPortal {
     username = ossrhUsername
     password = ossrhPassword
-    publishingType = if (System.getenv("CI").isEmpty()) "USER_MANAGED"
+    publishingType = if (System.getenv("CI") == null) "USER_MANAGED"
     else "AUTOMATIC"
   }
 }
